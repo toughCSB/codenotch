@@ -93,7 +93,7 @@ fn default_tray_providers() -> Vec<String> {
     vec!["claude".into(), "codex".into()]
 }
 fn default_antigravity_limit() -> String {
-    "automatic".into()
+    "weekly".into()
 }
 fn default_antigravity_model() -> String {
     "gemini".into()

@@ -87,6 +87,11 @@
   .c-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
   .c-title{font-size:14px;font-weight:700}
   .c-sub{font-size:11px;color:#808080;margin-bottom:10px}
+  /* The two resets people actually watch, called out large above the per-window detail list */
+  .reset-hero{display:flex;gap:8px;margin:2px 0 12px;padding:10px;background:#141414;border-radius:10px}
+  .reset-item{flex:1;min-width:0;text-align:center}
+  .reset-label{font-size:10px;font-weight:600;color:#808080;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;overflow-wrap:anywhere}
+  .reset-time{font-size:15px;font-weight:700;color:#fff;overflow-wrap:anywhere}
   .win{margin-top:10px}
   .w-row{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;flex-wrap:wrap;column-gap:8px}
   .w-label{color:#e8e8ea;font-weight:600;white-space:nowrap}
@@ -141,19 +146,23 @@ function smallPct(v){
 }
 function pctText(f){ const v=f*100; return v>0&&v<1?smallPct(v):String(Math.round(v)); }
 // Both ends, since vendors disagree on which they print; the left half comes from the rounded used half, as their dashboards do
+// Shows remaining, not used (떡배님's call) — kept upstream's precision handling near the 0%/100%
+// edges (a plan barely touched must not flatten to "100%", and one nearly spent must not read "0%").
 function usedCopy(w){
   const v=w.used*100;
-  let used, left;
-  if((v>0&&v<1)||(v>99&&v<100)){ used=smallPct(v); left=100-v>99.9?'>99.9':smallPct(Math.max(0,100-v)); }
-  else { const u=Math.round(v); used=String(u); left=String(Math.max(0,100-u)); }
-  if(w.derived) used='~'+used;
-  return uiLang==='ru'?`Использовано ${used}% · осталось ${left}%`:`${used}% Used · ${left}% left`;
+  let left;
+  if((v>0&&v<1)||(v>99&&v<100)) left=100-v>99.9?'>99.9':smallPct(Math.max(0,100-v));
+  else { const u=Math.round(v); left=String(Math.max(0,100-u)); }
+  if(w.derived) left='~'+left;
+  return `${left}% ${textCopy('Remaining')}`;
 }
 
 let usage={status:'',windows:[],fetched_at:0,note:''};
 let codexSnap={status:'absent',windows:[],fetched_at:0,note:''};
 let cursorSnap={status:'absent',windows:[],fetched_at:0,note:''};
 let agSnap={status:'absent',windows:[],fetched_at:0,note:''};
+let grokSnap={status:'absent',windows:[],fetched_at:0,note:''};
+let openCodeSnap={status:'absent',windows:[],fetched_at:0,note:''};
 let glyphs={}; // id → {kind:'mark'|'appicon', url}
 let activity=[]; // working state of the non-Claude providers: {provider,state:'busy'|'waiting',name,detail,since}
 let uiLang='en';
@@ -193,6 +202,9 @@ const RU_TEXT={
   'Sign in to Cursor to see usage.':'Войдите в Cursor, чтобы увидеть использование.',
   'Sign in to Codex to see usage.':'Войдите в Codex, чтобы увидеть использование.',
   'Sign in to Antigravity to see usage.':'Войдите в Antigravity, чтобы увидеть использование.',
+  'Sign in to Grok to see usage.':'Войдите в Grok, чтобы увидеть использование.',
+  'Sign in to OpenCode to see usage.':'Войдите в OpenCode, чтобы увидеть использование.',
+  'Remaining':'Осталось',
   'needs your input':'требуется ваш ответ',
   'Working in':'Работает в',
   'Notch size':'Размер панели'
@@ -263,9 +275,16 @@ function workState(id){
   if(acts.some(a=>a.state==='busy')) return 'running';
   return 'idle';
 }
+// Only Claude and Antigravity publish an official colour mark (bundled as-is, see glyphs/NOTICE.md);
+// OpenAI, Cursor, xAI and OpenCode are monochrome-only logos, so their outline mark is tinted with a
+// distinguishing accent instead — not an official brand colour, just a way to tell the cells apart.
+const BRAND_TINT={codex:'#10A37F',cursor:'#3B82F6',grok:'#8B5CF6',opencode:'#EC4899'};
 function glyphHtml(p,small){
   const g=glyphs[p.id];
-  if(g&&g.kind==='svg'&&g.svg) return `<span class="mark">${g.svg}</span>`;
+  if(g&&g.kind==='svg'&&g.svg){
+    const tint=BRAND_TINT[p.id];
+    return `<span class="mark"${tint?` style="color:${tint}"`:''}>${g.svg}</span>`;
+  }
   if(g&&g.url) return `<img class="${g.kind}" src="${g.url}" alt="${p.name}"${small?' style="width:16px;height:16px;border-radius:4px"':''}>`;
   return small?'':p.glyph; // fallback letter
 }
@@ -282,6 +301,8 @@ function providers(){
   if(codexSnap.status!=='absent') list.push({id:'codex',name:'Codex',glyph:'Cx',snap:codexSnap});
   if(cursorSnap.status!=='absent') list.push({id:'cursor',name:'Cursor',glyph:'Cu',snap:cursorSnap});
   if(agSnap.status!=='absent') list.push({id:'gemini',name:'Antigravity',glyph:'Ag',snap:agSnap});
+  if(grokSnap.status!=='absent') list.push({id:'grok',name:'Grok',glyph:'Gk',snap:grokSnap});
+  if(openCodeSnap.status!=='absent') list.push({id:'opencode',name:'OpenCode',glyph:'Oc',snap:openCodeSnap});
   if(Array.isArray(notchSlots)&&notchSlots.length){
     const picked=list.filter(p=>!!slotFor(p.id));
     // Never leave the notch with nothing in it: an empty result means the choice no longer matches
@@ -301,13 +322,20 @@ function laneIs(w,limit){
   const t=(w.id+' '+w.label).toLowerCase();
   return limit==='weekly'?t.includes('weekly'):['5h','5-hour','five hour','five-hour','hourly','session'].some(k=>t.includes(k));
 }
+// The two resets people actually watch, found by keyword regardless of the provider's own window
+// ids/labels — used for the hover card's large reset summary, independent of headlineOf's per-provider rule
+function windowLike(ws,kind){ return ws.find(w=>laneIs(w,kind))||null; }
 // The window a provider's ring shows: the same rule as ring_window in main.rs, which draws the tray
 function headlineOf(snap,id){
   const ws=snap.windows; if(!ws.length) return null;
   const byId=x=>ws.find(w=>w.id===x)||null;
-  if(id==='claude') return byId('session');
-  if(id==='codex') return ws[0];
-  if(id==='cursor') return byId('included')||byId('api');
+  // Weekly by default: the ring reads the window that decides whether the plan survives the
+  // week, not the fast-moving session window (still shown in full on the hover card).
+  if(id==='claude') return byId('weekly_all')||byId('seven_day')||byId('weekly_scoped')||byId('weekly_opus')||byId('session');
+  if(id==='codex') return byId('secondary')||ws[0];
+  if(id==='cursor') return byId('included')||byId('api'); // no weekly window: Cursor resets on its billing cycle instead
+  if(id==='grok') return byId('credits'); // Grok Build is already the weekly pool
+  if(id==='opencode') return byId('weekly')||byId('rolling');
   const fam=ws.filter(w=>laneFamily(w)===agPrefs.model), lanes=fam.length?fam:ws;
   if(agPrefs.limit!=='automatic'){ const w=tightestOf(lanes.filter(w=>laneIs(w,agPrefs.limit))); if(w) return w; }
   return tightestOf(lanes.filter(w=>w.used<1))||tightestOf(lanes)||lanes[0];
@@ -337,7 +365,7 @@ function renderRing(){
     const svg=cell.querySelector('svg.ring'), pct=cell.querySelector('.pct'), glyph=cell.querySelector('.glyph'), wrap=cell.querySelector('.ringwrap');
     const h=headlineOf(p.snap,p.id);
     let inner=`<circle cx="28" cy="28" r="22" fill="#2a2a2a"/><circle cx="28" cy="28" r="25" fill="none" stroke="${TRACK}" stroke-width="5"/>`;
-    if(h && h.count==null) inner+=svgArc(25,Math.min(h.used,1),tone(h.used),5);
+    if(h && h.count==null) inner+=svgArc(25,Math.max(0,1-Math.min(h.used,1)),tone(h.used),5);
     { // thin inner arc: spinning = working, amber pulse = waiting on you (one animation for all four, different sources)
       const ws=workState(p.id);
       if(ws==='running') inner+=`<g class="arc-spin">${svgArc(19,0.28,RUNGREEN,2.5)}</g>`;
@@ -345,8 +373,7 @@ function renderRing(){
     }
     svg.innerHTML=inner;
     if(p.snap.status==='needsAuth'||p.snap.status==='none') pct.textContent='—';
-    else if(h && h.count!=null) pct.textContent='~'+h.count;
-    else if(h) pct.textContent=(h.derived?'~':'')+pctText(h.used)+'%';
+    else if(h) pct.textContent=(h.derived?'~':'')+pctText(Math.max(0,1-Math.min(h.used,1)))+'%';
     else pct.textContent=p.snap.windows.length?'—':'…'; // its declared window is missing: a dash, not a wait
     glyph.classList.toggle('dim', !!(h && h.used>=1));
     wrap.classList.toggle('dim', staleOf(p.snap));
@@ -386,6 +413,19 @@ const STATE_DOT={running:RUNGREEN,attention:AMBER,done:'#57c7ff'};
 const SESSION_ROWS=5;
 function moreRow(n){ return n>0?`<div class="s-more">${uiLang==='ru'?`и ещё ${n}`:`and ${n} more`}</div>`:''; }
 
+// Countdown for the hover card's large reset numbers: "3d 14Hr", "5Hr 22Min", "42Min" — how long is
+// left, not the clock time it lands on (resetCopy, used in the small per-window rows, keeps doing that).
+function heroDuration(ms){
+  if(!ms) return '—';
+  const diff=ms-Date.now();
+  if(diff<=0) return uiLang==='ru'?'Сброс…':'Resetting…';
+  const totalMin=Math.max(1,Math.round(diff/60000));
+  const days=Math.floor(totalMin/1440), hours=Math.floor((totalMin%1440)/60), mins=totalMin%60;
+  if(days>0) return `${days}d ${hours}Hr`;
+  if(hours>0) return `${hours}Hr ${mins}Min`;
+  return `${mins}Min`;
+}
+
 let hoverId='claude';
 function renderCard(){
   const c=document.getElementById('card');
@@ -394,8 +434,21 @@ function renderCard(){
   const headIcon=glyphHtml(p,true);
   let html=`<div class="c-head">${headIcon}<span class="c-title">${uiLang==='ru'?'Использование '+p.name:p.name+' Usage'}</span></div>`;
   if(staleOf(snap)&&snap.fetched_at) html+=`<div class="c-sub">${textCopy('Updated')} ${ago(snap.fetched_at)}</div>`;
+  if(snap.windows.length){
+    // The two resets people actually watch, called out large above the detailed window list:
+    // the weekly-ish window is whatever the ring itself reads (headlineOf now defaults to it),
+    // the 5h-ish one is found by keyword since not every provider's headline is the short window.
+    const heroWeek=headlineOf(snap,p.id), hero5h=windowLike(snap.windows,'5h');
+    const heroItem=w=>`<div class="reset-item"><div class="reset-label">${esc(textCopy(w.label))}</div><div class="reset-time">${heroDuration(w.resets_at)}</div></div>`;
+    if(heroWeek||(hero5h&&hero5h!==heroWeek)){
+      html+=`<div class="reset-hero">`;
+      if(heroWeek) html+=heroItem(heroWeek);
+      if(hero5h&&hero5h!==heroWeek) html+=heroItem(hero5h);
+      html+=`</div>`;
+    }
+  }
   if(snap.status==='needsAuth'){
-    const who={claude:'Sign in to Claude Code to see usage.',cursor:'Sign in to Cursor to see usage.',codex:'Sign in to Codex to see usage.',gemini:'Sign in to Antigravity to see usage.'}[p.id]||'';
+    const who={claude:'Sign in to Claude Code to see usage.',cursor:'Sign in to Cursor to see usage.',codex:'Sign in to Codex to see usage.',gemini:'Sign in to Antigravity to see usage.',grok:'Sign in to Grok to see usage.',opencode:'Sign in to OpenCode to see usage.'}[p.id]||'';
     html+=`<div class="c-note">${textCopy(who)}<br>${esc(textCopy(snap.note||''))}</div>`;
   }else if(!snap.windows.length){
     html+=`<div class="c-note">${esc(textCopy(snap.note||'Waiting for first reading…'))}</div>`;
@@ -415,7 +468,7 @@ function renderCard(){
       }
       html+=`<div class="win">
         <div class="w-row"><span class="w-label">${esc(textCopy(w.label))}</span><span class="w-reset">${resetCopy(w.resets_at)}</span></div>
-        <div class="w-track"><div class="w-fill" style="width:${(Math.min(w.used,1)*100).toFixed(0)}%;background:${tone(w.used)}"></div></div>
+        <div class="w-track"><div class="w-fill" style="width:${((1-Math.min(w.used,1))*100).toFixed(0)}%;background:${tone(w.used)}"></div></div>
         <div class="w-used">${esc(usedCopy(w))}</div>
       </div>`;
     }
@@ -629,6 +682,10 @@ listen('cursor',e=>{cursorSnap=e.payload||cursorSnap;renderRing();if(card.classL
 invoke('get_cursor').then(u=>{cursorSnap=u||cursorSnap;renderRing();}).catch(()=>{});
 listen('antigravity',e=>{agSnap=e.payload||agSnap;renderRing();if(card.classList.contains('show'))renderCard();}).catch(()=>{});
 invoke('get_antigravity').then(u=>{agSnap=u||agSnap;renderRing();}).catch(()=>{});
+listen('grok',e=>{grokSnap=e.payload||grokSnap;renderRing();if(card.classList.contains('show'))renderCard();}).catch(()=>{});
+invoke('get_grok').then(u=>{grokSnap=u||grokSnap;renderRing();}).catch(()=>{});
+listen('opencode',e=>{openCodeSnap=e.payload||openCodeSnap;renderRing();if(card.classList.contains('show'))renderCard();}).catch(()=>{});
+invoke('get_opencode').then(u=>{openCodeSnap=u||openCodeSnap;renderRing();}).catch(()=>{});
 loadScale();
 invoke('get_notch_slots').then(v=>{if(Array.isArray(v)){notchSlots=v;renderRing();}}).catch(()=>{});
 listen('notch_slots',e=>{

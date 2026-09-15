@@ -2,9 +2,12 @@
 //!
 //! Rule: **no vendor logo is drawn by hand here**; only existing artwork is used, in this order:
 //!   1. User override: `%APPDATA%\codenotch\glyphs\<id>.svg|.png`, or `glyphs\` next to the exe;
-//!   2. Built in: the `glyphs/*.svg` compiled into the exe, from npm `@lobehub/icons-static-svg`
-//!      1.95.0 (MIT), files unmodified; trademark notice in glyphs/NOTICE.md;
-//!   3. The installed application's own icon (PrivateExtractIconsW on the exe resources, 64 px → PNG).
+//!   2. The installed application's own icon (PrivateExtractIconsW on the exe resources, 64 px →
+//!      PNG) — full colour, so a provider whose app is actually installed shows its real mark;
+//!   3. Built in: the `glyphs/*.svg` compiled into the exe, from npm `@lobehub/icons-static-svg`
+//!      1.95.0 (MIT), files unmodified; trademark notice in glyphs/NOTICE.md — the monochrome
+//!      fallback for a provider with no local app to extract an icon from (Grok, OpenCode: both
+//!      CLI-only on Windows).
 //!
 //! None of those → the page falls back to a letter.
 //! SVGs are inlined into the DOM as text (`fill="currentColor"` follows the CSS white/dimmed state);
@@ -26,14 +29,22 @@ pub struct Glyph {
     pub source: String,
 }
 
-pub const IDS: [&str; 4] = ["claude", "codex", "cursor", "gemini"];
+pub const IDS: [&str; 6] = ["claude", "codex", "cursor", "gemini", "grok", "opencode"];
 
-/// Built-in artwork (@lobehub/icons-static-svg, MIT): the OpenAI mark for codex (matching upstream's glyph choice), the Antigravity mark for gemini
-const BUILTIN: [(&str, &str); 4] = [
-    ("claude", include_str!("../glyphs/claude.svg")),
+/// Built-in artwork (@lobehub/icons-static-svg, MIT): the OpenAI mark for codex (matching upstream's
+/// glyph choice), the Antigravity mark for gemini. Claude and Antigravity have an official full-colour
+/// variant in the same package and use it directly (their own `fill` wins over the page's
+/// `currentColor` CSS, since a presentation attribute beats an inherited value); the rest have no
+/// official colour mark (OpenAI, Cursor, xAI and OpenCode all publish monochrome logos), so the page
+/// tints their monochrome outline with a distinguishing (not official) accent — see BRAND_TINT in
+/// ui/notch.html.
+const BUILTIN: [(&str, &str); 6] = [
+    ("claude", include_str!("../glyphs/claude-color.svg")),
     ("codex", include_str!("../glyphs/codex.svg")),
     ("cursor", include_str!("../glyphs/cursor.svg")),
-    ("gemini", include_str!("../glyphs/gemini.svg")),
+    ("gemini", include_str!("../glyphs/antigravity-color.svg")),
+    ("grok", include_str!("../glyphs/grok.svg")),
+    ("opencode", include_str!("../glyphs/opencode.svg")),
 ];
 
 /// Minimal SVG sanitising before inlining into the DOM: drop <script> blocks and on*="…" event
@@ -280,6 +291,14 @@ pub fn collect() -> HashMap<String, Glyph> {
             }
         }
         if found.is_none() {
+            for exe in app_candidates(id) {
+                if let Some(g) = from_exe(&exe) {
+                    found = Some(g);
+                    break;
+                }
+            }
+        }
+        if found.is_none() {
             if let Some((_, svg)) = BUILTIN.iter().find(|(k, _)| *k == id) {
                 found = Some(Glyph {
                     kind: "svg".into(),
@@ -287,14 +306,6 @@ pub fn collect() -> HashMap<String, Glyph> {
                     source: "built-in · @lobehub/icons-static-svg 1.95.0 (MIT)".into(),
                     ..Default::default()
                 });
-            }
-        }
-        if found.is_none() {
-            for exe in app_candidates(id) {
-                if let Some(g) = from_exe(&exe) {
-                    found = Some(g);
-                    break;
-                }
             }
         }
         if let Some(g) = found {
@@ -307,7 +318,7 @@ pub fn collect() -> HashMap<String, Glyph> {
 /// For doctor
 pub fn probe() -> String {
     let m = collect();
-    let mut lines = vec![format!("glyph directory: {} (drop claude/codex/cursor/gemini .svg or .png files here)", user_dir().display())];
+    let mut lines = vec![format!("glyph directory: {} (drop claude/codex/cursor/gemini/grok/opencode .svg or .png files here)", user_dir().display())];
     for id in IDS {
         lines.push(match m.get(id) {
             Some(g) => format!("  {id}: {} ← {}", g.kind, g.source),

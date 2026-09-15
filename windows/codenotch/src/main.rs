@@ -13,6 +13,8 @@ mod usage;
 mod codex;
 mod cursor;
 mod antigravity;
+mod grok;
+mod opencode;
 mod agy_cli;
 mod glyphs;
 mod trayicon;
@@ -38,6 +40,8 @@ pub struct AppState {
     pub codex: Mutex<usage::UsageSnapshot>,
     pub cursor: Mutex<usage::UsageSnapshot>,
     pub antigravity: Mutex<usage::UsageSnapshot>,
+    pub grok: Mutex<usage::UsageSnapshot>,
+    pub opencode: Mutex<usage::UsageSnapshot>,
     /// Provider glyph cache, collected at launch and again on a tray refresh
     pub glyphs: Mutex<std::collections::HashMap<String, glyphs::Glyph>>,
     /// Working state of the non-Claude providers (Cursor reports it; Codex and Antigravity are inferred from recent writes)
@@ -244,6 +248,8 @@ fn refresh_usage(app: AppHandle) {
     codex::request_refresh();
     cursor::request_refresh();
     antigravity::request_refresh();
+    grok::request_refresh();
+    opencode::request_refresh();
 }
 
 #[tauri::command]
@@ -293,6 +299,16 @@ fn get_codex(state: tauri::State<AppState>) -> usage::UsageSnapshot {
     state.codex.lock().unwrap().clone()
 }
 
+#[tauri::command]
+fn get_grok(state: tauri::State<AppState>) -> usage::UsageSnapshot {
+    state.grok.lock().unwrap().clone()
+}
+
+#[tauri::command]
+fn get_opencode(state: tauri::State<AppState>) -> usage::UsageSnapshot {
+    state.opencode.lock().unwrap().clone()
+}
+
 /// A click on a cell opens that provider's usage page
 #[tauri::command]
 fn open_provider_page(provider: String) {
@@ -300,6 +316,8 @@ fn open_provider_page(provider: String) {
         "codex" => "https://chatgpt.com/#settings/Account",
         "cursor" => "https://cursor.com/dashboard",
         "gemini" => "https://antigravity.google",
+        "grok" => "https://grok.com/?_s=usage",
+        "opencode" => "https://opencode.ai",
         _ => "https://claude.ai/settings/usage",
     };
     let mut cmd = std::process::Command::new("cmd");
@@ -592,9 +610,18 @@ fn ring_window<'a>(
 ) -> Option<&'a usage::LimitWindow> {
     let by_id = |id: &str| windows.iter().find(|w| w.id == id);
     match provider {
-        "claude" => by_id("session"),
-        "codex" => windows.first(),
+        // Weekly by default: the ring reads the window that actually decides whether the plan
+        // survives the week, not the fast-moving session window (still shown on the hover card).
+        "claude" => by_id("weekly_all")
+            .or_else(|| by_id("seven_day"))
+            .or_else(|| by_id("weekly_scoped"))
+            .or_else(|| by_id("weekly_opus"))
+            .or_else(|| by_id("session")),
+        "codex" => by_id("secondary").or_else(|| windows.first()),
+        // Cursor has no weekly window (its allowance resets on the billing cycle instead)
         "cursor" => by_id("included").or_else(|| by_id("api")),
+        "grok" => by_id("credits"), // Grok Build is already the weekly pool
+        "opencode" => by_id("weekly").or_else(|| by_id("rolling")),
         _ => antigravity_lane(windows, antigravity_limit, antigravity_model),
     }
 }
@@ -649,6 +676,8 @@ fn snapshot_of(app: &AppHandle, id: &str) -> usage::UsageSnapshot {
         "codex" => st.codex.lock().unwrap().clone(),
         "cursor" => st.cursor.lock().unwrap().clone(),
         "gemini" => st.antigravity.lock().unwrap().clone(),
+        "grok" => st.grok.lock().unwrap().clone(),
+        "opencode" => st.opencode.lock().unwrap().clone(),
         _ => st.usage.lock().unwrap().clone(),
     }
 }
@@ -918,12 +947,14 @@ pub fn provider_label(id: &str) -> &'static str {
         "codex" => "Codex",
         "cursor" => "Cursor",
         "gemini" => "Antigravity",
+        "grok" => "Grok",
+        "opencode" => "OpenCode",
         _ => "Claude",
     }
 }
 
 /// Every provider the tray menu can offer, in the order the notch shows them.
-pub const TRAY_PROVIDER_IDS: [&str; 4] = ["claude", "codex", "cursor", "gemini"];
+pub const TRAY_PROVIDER_IDS: [&str; 6] = ["claude", "codex", "cursor", "gemini", "grok", "opencode"];
 
 /// Draws the icon and writes the tooltip. Shared by the polling thread and by the settings window,
 /// so a change made in settings shows up at once rather than on the next poll.
@@ -1104,6 +1135,8 @@ fn main() {
             codex: Mutex::new(codex::load_persisted()),
             cursor: Mutex::new(cursor::load_persisted()),
             antigravity: Mutex::new(antigravity::load_persisted()),
+            grok: Mutex::new(grok::load_persisted()),
+            opencode: Mutex::new(opencode::load_persisted()),
             glyphs: Mutex::new(Default::default()),
             activity: Mutex::new(Vec::new()),
         })
@@ -1113,6 +1146,8 @@ fn main() {
             get_codex,
             get_cursor,
             get_antigravity,
+            get_grok,
+            get_opencode,
             get_glyphs,
             get_activity,
             open_data_dir,
@@ -1175,6 +1210,8 @@ fn main() {
             codex::start(handle.clone());
             cursor::start(handle.clone());
             antigravity::start(handle.clone());
+            grok::start(handle.clone());
+            opencode::start(handle.clone());
             activity::start(handle.clone());
             // Collecting glyphs may read icon resources out of a few executables; do it off the main thread and push when done
             let gh = handle.clone();
@@ -1316,20 +1353,30 @@ mod tests {
     }
 
     #[test]
-    fn claude_means_the_session_even_when_the_week_is_fuller() {
-        assert_eq!(pick("claude", &[win("session", 0.10), win("weekly_all", 0.60)]), Some("session"));
+    fn claude_means_weekly_even_when_the_session_is_fuller() {
+        assert_eq!(pick("claude", &[win("session", 0.60), win("weekly_all", 0.10)]), Some("weekly_all"));
+    }
+
+    #[test]
+    fn claude_falls_back_through_the_weekly_aliases_then_the_session() {
+        assert_eq!(pick("claude", &[win("session", 0.1), win("seven_day", 0.2)]), Some("seven_day"));
+        assert_eq!(pick("claude", &[win("session", 0.1), win("weekly_scoped", 0.2)]), Some("weekly_scoped"));
+        assert_eq!(pick("claude", &[win("session", 0.1)]), Some("session"));
     }
 
     #[test]
     fn a_missing_declared_window_is_a_dash_not_a_stand_in() {
-        assert_eq!(pick("claude", &[win("weekly_all", 0.60)]), None);
+        assert_eq!(pick("claude", &[win("something_else", 0.60)]), None);
     }
 
     #[test]
-    fn codex_means_its_first_window_and_cursor_its_included_usage() {
-        assert_eq!(pick("codex", &[win("primary", 0.2), win("secondary", 0.9)]), Some("primary"));
+    fn codex_means_its_weekly_secondary_window_and_cursor_its_included_usage() {
+        assert_eq!(pick("codex", &[win("primary", 0.2), win("secondary", 0.9)]), Some("secondary"));
+        assert_eq!(pick("codex", &[win("primary", 0.2)]), Some("primary"));
         assert_eq!(pick("cursor", &[win("included", 0.3), win("api", 0.9)]), Some("included"));
         assert_eq!(pick("cursor", &[win("api", 0.9), win("on_demand", 0.95)]), Some("api"));
+        assert_eq!(pick("opencode", &[win("rolling", 0.1), win("weekly", 0.4)]), Some("weekly"));
+        assert_eq!(pick("opencode", &[win("rolling", 0.1)]), Some("rolling"));
     }
 
     #[test]
