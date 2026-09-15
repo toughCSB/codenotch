@@ -1,3 +1,16 @@
+> **This is [toughCSB](https://github.com/toughCSB)'s fork.** The Windows port under
+> [`windows/`](windows/) has extra changes on top of upstream — new Grok/OpenCode providers,
+> remaining-quota display, weekly-by-default readings, a large reset countdown, and per-provider
+> icon colours. See [`windows/README.md`](windows/README.md) for the full (bilingual) writeup and
+> a [prebuilt Windows installer](../../releases). Everything below this note is the upstream
+> macOS project's own README, unchanged.
+>
+> **이 저장소는 [toughCSB](https://github.com/toughCSB)의 포크입니다.** [`windows/`](windows/)
+> 아래 Windows 포트에 원본 대비 추가 변경사항이 있습니다 — Grok/OpenCode provider 추가, 잔여량
+> 표시, 기본값 Weekly, 큰 리셋 카운트다운, provider별 아이콘 색상 구분. 자세한 내용(한글/영어)은
+> [`windows/README.md`](windows/README.md)에, [빌드된 Windows 설치파일](../../releases)도
+> 받을 수 있습니다. 이 안내 아래 내용은 원본 macOS 프로젝트의 README 그대로입니다.
+
 <div align="center">
 
 ![Codenotch](docs/design/codenotch-banner.png)
