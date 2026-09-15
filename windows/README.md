@@ -7,7 +7,19 @@ sits on the edge of your screen and answers two questions at a glance:
 Same design language as the macOS original (inverse-rounded pill, colour-graded rings,
 hover card with per-window bars), rebuilt for Windows in Rust + Tauri 2 / WebView2.
 No code is copied from the Swift app; the providers are reimplemented from their
-documented behaviour and the wire formats.
+documented behaviour and the wire formats. **Windows is a first-class target, not an
+afterthought** — this fork runs natively on Windows 11 (Rust + Tauri 2 / WebView2), no macOS
+required.
+
+![Codenotch pill and hover card on Windows](docs/screenshots/windows-hover-card.png)
+
+*The pill on the right edge (Claude, Codex, Antigravity, Grok, OpenCode — five providers, five
+distinguishable colours) and the Codex hover card: the large "4d 4Hr / 4Hr 59Min" box is the new
+weekly/5h reset countdown, and every bar reads remaining, not used.*
+
+*오른쪽 가장자리의 pill(Claude, Codex, Antigravity, Grok, OpenCode — provider 5개가 색으로
+구분됨)과 Codex의 hover 카드: 크게 표시된 "4d 4Hr / 4Hr 59Min" 박스가 새로 추가된 주간/5시간
+리셋 카운트다운이고, 모든 막대는 사용량이 아니라 잔여량 기준입니다.*
 
 ## What it shows
 
