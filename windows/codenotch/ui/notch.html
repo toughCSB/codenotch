@@ -275,10 +275,11 @@ function workState(id){
   if(acts.some(a=>a.state==='busy')) return 'running';
   return 'idle';
 }
-// Only Claude and Antigravity publish an official colour mark (bundled as-is, see glyphs/NOTICE.md);
-// OpenAI, Cursor, xAI and OpenCode are monochrome-only logos, so their outline mark is tinted with a
-// distinguishing accent instead — not an official brand colour, just a way to tell the cells apart.
-const BRAND_TINT={codex:'#10A37F',cursor:'#3B82F6',grok:'#8B5CF6',opencode:'#EC4899'};
+// Only Claude and Antigravity publish an official colour mark (bundled as-is, see glyphs/NOTICE.md).
+// OpenAI, Cursor and xAI are monochrome-only logos too, tinted with a distinguishing accent instead
+// (not an official brand colour). OpenCode's real mark is plain white, same as the page's default
+// glyph colour — so it is left untinted, matching the actual icon rather than inventing a colour for it.
+const BRAND_TINT={codex:'#10A37F',cursor:'#3B82F6',grok:'#8B5CF6'};
 function glyphHtml(p,small){
   const g=glyphs[p.id];
   if(g&&g.kind==='svg'&&g.svg){

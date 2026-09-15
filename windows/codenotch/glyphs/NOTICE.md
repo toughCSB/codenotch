@@ -17,9 +17,10 @@ The SVG files in this directory come from the npm package `@lobehub/icons-static
 | opencode.svg | icons/opencode.svg | OpenCode cell |
 
 Only Claude and Antigravity have an official colour variant in this package — OpenAI, Cursor, xAI
-(Grok) and OpenCode all publish monochrome-only logos. Their cells instead tint the monochrome mark
-with a distinguishing accent colour chosen for this app (not an official brand colour) — see
-`BRAND_TINT` in `ui/notch.html`.
+(Grok) and OpenCode all publish monochrome-only logos. OpenAI, Cursor and xAI's cells tint that
+monochrome mark with a distinguishing accent colour chosen for this app (not an official brand
+colour) — see `BRAND_TINT` in `ui/notch.html`. OpenCode's real mark is plain white, so its cell is
+left untinted rather than inventing a colour it doesn't actually have.
 
 MIT License — Copyright (c) LobeHub. See that repository's LICENSE.
 

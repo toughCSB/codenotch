@@ -71,9 +71,10 @@ override. The marks remain the trademarks of their owners.
 
 Glyph priority is: your override → the icon of the app actually installed on this machine (full
 colour) → the built-in mark. Claude and Antigravity ship an official full-colour mark; OpenAI
-(Codex), Cursor, xAI (Grok) and OpenCode publish monochrome-only logos, so those four are tinted
-with a distinguishing accent instead (not an official brand colour — see `BRAND_TINT` in
-`codenotch/ui/notch.html`) so the five-plus cells stay tellable apart at a glance.
+(Codex), Cursor and xAI (Grok) publish monochrome-only logos, so those three are tinted with a
+distinguishing accent instead (not an official brand colour — see `BRAND_TINT` in
+`codenotch/ui/notch.html`). OpenCode's real mark is plain white, so it is left untinted rather than
+inventing a colour for it.
 
 ## Layout
 
@@ -106,9 +107,10 @@ This fork ([toughCSB/codenotch](https://github.com/toughCSB/codenotch)) adds on 
   box now shows the weekly and 5-hour resets as a duration — `3d 14Hr`, `5Hr 22Min` — instead of
   making you read a clock time or day-of-week and do the subtraction yourself.
 - **Colour-tinted icons**: Claude and Antigravity already ship an official full-colour mark and now
-  use it. OpenAI (Codex), Cursor, xAI (Grok) and OpenCode publish monochrome-only logos — there is
-  no official colour to show — so those four get a distinguishing accent tint instead, clearly
-  **not** an official brand colour, just a way to tell six cells apart at a glance.
+  use it. OpenAI (Codex), Cursor and xAI (Grok) publish monochrome-only logos — there is no official
+  colour to show — so those three get a distinguishing accent tint instead, clearly **not** an
+  official brand colour, just a way to tell the cells apart at a glance. OpenCode's real mark is
+  plain white, so it is left untinted rather than inventing a colour it doesn't have.
 
 None of this touches the credential/security discipline of the upstream code: every provider still
 only *reads* an existing sign-in, never writes or refreshes a token, and a 401/403/429 is handled
@@ -134,9 +136,10 @@ the same conservative way (back off, mark stale, never invent a number).
   시간을 `3d 14Hr`, `5Hr 22Min` 같은 형식으로 크게 보여주는 박스를 추가했습니다. 시계 시각이나
   요일을 보고 직접 계산할 필요가 없습니다.
 - **아이콘 컬러 구분**: Claude와 Antigravity는 원래 공식 컬러 마크가 있어서 그걸 그대로 씁니다.
-  OpenAI(Codex)·Cursor·xAI(Grok)·OpenCode는 공식 로고 자체가 흑백 단색이라 보여줄 공식 컬러가
-  없어서, 이 네 개는 구분을 위한 강조색을 입혔습니다 — **공식 브랜드 컬러가 아니라** 여섯 개
-  셀을 한눈에 구분하기 위한 선택입니다.
+  OpenAI(Codex)·Cursor·xAI(Grok)는 공식 로고 자체가 흑백 단색이라 보여줄 공식 컬러가 없어서,
+  이 세 개는 구분을 위한 강조색을 입혔습니다 — **공식 브랜드 컬러가 아니라** 셀을 한눈에
+  구분하기 위한 선택입니다. OpenCode는 실제 아이콘 자체가 흰색이라 임의로 색을 입히지 않고
+  그대로 뒀습니다.
 
 이 변경들은 원본 코드의 크리덴셜/보안 원칙을 건드리지 않습니다: 모든 provider는 여전히 기존
 로그인 상태를 *읽기만* 하고 토큰을 쓰거나 갱신하지 않으며, 401/403/429는 기존과 동일하게
