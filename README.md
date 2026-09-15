@@ -1,15 +1,68 @@
-> **This is [toughCSB](https://github.com/toughCSB)'s fork.** The Windows port under
-> [`windows/`](windows/) has extra changes on top of upstream — new Grok/OpenCode providers,
-> remaining-quota display, weekly-by-default readings, a large reset countdown, and per-provider
-> icon colours. See [`windows/README.md`](windows/README.md) for the full (bilingual) writeup and
-> a [prebuilt Windows installer](../../releases). Everything below this note is the upstream
-> macOS project's own README, unchanged.
->
-> **이 저장소는 [toughCSB](https://github.com/toughCSB)의 포크입니다.** [`windows/`](windows/)
-> 아래 Windows 포트에 원본 대비 추가 변경사항이 있습니다 — Grok/OpenCode provider 추가, 잔여량
-> 표시, 기본값 Weekly, 큰 리셋 카운트다운, provider별 아이콘 색상 구분. 자세한 내용(한글/영어)은
-> [`windows/README.md`](windows/README.md)에, [빌드된 Windows 설치파일](../../releases)도
-> 받을 수 있습니다. 이 안내 아래 내용은 원본 macOS 프로젝트의 README 그대로입니다.
+# Codenotch for Windows — toughCSB's fork
+
+![Codenotch pill and hover card on Windows](windows/docs/screenshots/windows-hover-card.png)
+
+Fork of [vinzdg/codenotch](https://github.com/vinzdg/codenotch) — a small black notch pinned to
+the edge of your screen showing how much of each coding assistant's usage allowance is left, and
+whether it's still working right now. This fork's [`windows/`](windows/) port (Rust + Tauri 2 /
+WebView2) adds on top of upstream:
+
+- **Two more providers** — Grok and OpenCode (Go), alongside Claude, Codex, Cursor and Antigravity.
+- **Shows remaining, not used** — a plan at 24% used shows **76%**, everywhere: the ring, the
+  percentage, the hover card's bars.
+- **Weekly by default** — every ring reads its *weekly* window, not the fast-moving session/5h one
+  (still on the hover card in full).
+- **A big reset countdown** on the hover card — `3d 14Hr`, `5Hr 22Min` — instead of a clock time
+  you have to do the subtraction on yourself.
+- **Per-provider colours** — Claude and Antigravity's real official colour marks, plus a
+  distinguishing tint for the four brands that only publish monochrome logos (Codex, Cursor, Grok,
+  OpenCode) so all five-plus cells stay tellable apart at a glance.
+
+Full bilingual (English/한국어) writeup, provider details and build instructions:
+**[`windows/README.md`](windows/README.md)**.
+
+## Install on Windows
+
+Download and run the installer from **[Releases](../../releases/tag/windows-v0.3.0)**:
+[`Codenotch_0.3.0_x64-setup.exe`](../../releases/download/windows-v0.3.0/Codenotch_0.3.0_x64-setup.exe).
+Requires Windows 11 (WebView2 runtime ships by default). The installer adds a Start Menu shortcut
+and an uninstaller — no admin rights needed.
+
+Or build it yourself:
+
+```powershell
+git clone https://github.com/toughCSB/codenotch.git
+cd codenotch/windows/codenotch
+cargo build --release
+.\target\release\codenotch.exe          # pill appears on the right edge of the primary monitor
+.\target\release\codenotch.exe doctor   # self-diagnosis: credentials, data sources, icons, hooks
+```
+
+## 윈도우에 설치하기
+
+**[Releases](../../releases/tag/windows-v0.3.0)** 페이지에서 설치 파일을 받아 실행하세요:
+[`Codenotch_0.3.0_x64-setup.exe`](../../releases/download/windows-v0.3.0/Codenotch_0.3.0_x64-setup.exe).
+Windows 11 필요(WebView2 런타임은 기본 포함). 설치하면 시작 메뉴에 바로가기와 제거 프로그램이
+등록됩니다 — 관리자 권한 불필요.
+
+또는 직접 소스에서 빌드:
+
+```powershell
+git clone https://github.com/toughCSB/codenotch.git
+cd codenotch/windows/codenotch
+cargo build --release
+.\target\release\codenotch.exe          # 화면 오른쪽 가장자리에 pill이 나타남
+.\target\release\codenotch.exe doctor   # 자체 진단: 크리덴셜, 데이터소스, 아이콘, 훅
+```
+
+---
+
+## Original project (macOS) / 원본 프로젝트 (macOS)
+
+*Everything below this line is the upstream [vinzdg/codenotch](https://github.com/vinzdg/codenotch)
+project's own README, unchanged — it documents the macOS app this fork's Windows port is based on.*
+*아래는 원본 [vinzdg/codenotch](https://github.com/vinzdg/codenotch) 프로젝트의 README를 그대로
+둔 것입니다 — 이 Windows 포크가 기반으로 하는 macOS 앱에 대한 설명입니다.*
 
 <div align="center">
 
@@ -58,10 +111,6 @@ If macOS says the app is *damaged*, that is the quarantine flag rather than a ba
 
 Universal binary. macOS 15 or later. To build and install a copy from source
 instead, see [Building](#building).
-
-## Windows
-
-A Windows port — Rust/Tauri 2, same design and providers — lives in [`windows/`](windows/README.md).
 
 ## Connect your phone
 
