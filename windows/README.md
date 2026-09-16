@@ -14,12 +14,15 @@ required.
 ![Codenotch pill and hover card on Windows](docs/screenshots/windows-hover-card.png)
 
 *The pill on the right edge (Claude, Codex, Antigravity, Grok, OpenCode — five providers, five
-distinguishable colours) and the Codex hover card: the large "4d 4Hr / 4Hr 59Min" box is the new
-weekly/5h reset countdown, and every bar reads remaining, not used.*
+distinguishable colours, each ring wearing a small colour-coded M/W/5h badge for the window it is
+currently reading) and Claude's hover card: "Ring shows" switches that one provider between
+weekly / monthly / 5-hour without touching any other ring's choice, and the reset box and session
+list underneath are unchanged.*
 
 *오른쪽 가장자리의 pill(Claude, Codex, Antigravity, Grok, OpenCode — provider 5개가 색으로
-구분됨)과 Codex의 hover 카드: 크게 표시된 "4d 4Hr / 4Hr 59Min" 박스가 새로 추가된 주간/5시간
-리셋 카운트다운이고, 모든 막대는 사용량이 아니라 잔여량 기준입니다.*
+구분되고, 각 링에는 지금 어떤 윈도우를 보고 있는지 알려주는 작은 M/W/5h 색상 배지가 붙습니다)과
+Claude의 hover 카드: "표시 기준"에서 그 provider의 링만 주간/월간/5시간 중 하나로 바꿀 수 있고,
+다른 provider에는 영향을 주지 않습니다. 아래 리셋 박스와 세션 목록은 그대로입니다.*
 
 ## What it shows
 
@@ -111,6 +114,18 @@ This fork ([toughCSB/codenotch](https://github.com/toughCSB/codenotch)) adds on 
   colour to show — so those three get a distinguishing accent tint instead, clearly **not** an
   official brand colour, just a way to tell the cells apart at a glance. OpenCode's real mark is
   plain white, so it is left untinted rather than inventing a colour it doesn't have.
+- **Each ring's window is switchable on its own**: the hover card's "Ring shows" row picks
+  weekly / monthly / 5-hour for that one provider only — every other ring keeps its own choice. A
+  small colour-coded M/W/5h badge on the ring's corner always shows which one it is reading, so the
+  choice never has to be re-discovered by hovering.
+- **Settings follow the Windows language**: the settings window used to fall back to English for
+  every language but Russian even when the tray menu was already in Korean; it now uses the same
+  per-language dictionary and picks it up from the same place the tray does.
+- **Checks GitHub for updates**: Settings → About can check this fork's releases for a newer
+  Windows build and download the installer with one more click — nothing installs on its own.
+- **The pill re-snaps to the right edge on its own**: undocking a monitor, or any other change to
+  the display layout, used to leave the pill wherever it had last been placed; it now notices
+  within a couple of seconds and moves itself back to the edge.
 
 None of this touches the credential/security discipline of the upstream code: every provider still
 only *reads* an existing sign-in, never writes or refreshes a token, and a 401/403/429 is handled
@@ -140,6 +155,17 @@ the same conservative way (back off, mark stale, never invent a number).
   이 세 개는 구분을 위한 강조색을 입혔습니다 — **공식 브랜드 컬러가 아니라** 셀을 한눈에
   구분하기 위한 선택입니다. OpenCode는 실제 아이콘 자체가 흰색이라 임의로 색을 입히지 않고
   그대로 뒀습니다.
+- **각 링의 표시 기준을 따로 전환**: hover 카드의 "표시 기준" 줄에서 그 provider의 링만
+  주간/월간/5시간 중 하나로 바꿀 수 있고, 다른 provider는 각자 고른 값을 그대로 유지합니다.
+  링 모서리의 작은 M/W/5h 배지가 지금 어떤 기준인지 항상 보여줍니다.
+- **설정 창이 Windows 언어를 따름**: 예전엔 설정 창이 러시아어를 제외한 모든 언어에서 영어로만
+  나왔는데(트레이 메뉴는 이미 한국어 지원), 이제 트레이와 같은 언어별 딕셔너리를 써서 Windows
+  언어를 그대로 따라갑니다.
+- **GitHub 업데이트 확인**: 설정 → 정보에서 이 포크의 새 Windows 릴리스를 확인하고, 한 번 더
+  클릭하면 설치 프로그램을 내려받아 실행합니다 — 자동으로 설치되지는 않습니다.
+- **모니터 구성이 바뀌어도 자동으로 오른쪽 끝에 재배치**: 모니터를 뽑거나 연결하는 등 화면
+  배치가 바뀌면 예전엔 바가 마지막 위치에 그대로 남았는데, 이제 몇 초 안에 감지해서 스스로
+  오른쪽 끝으로 다시 붙습니다.
 
 이 변경들은 원본 코드의 크리덴셜/보안 원칙을 건드리지 않습니다: 모든 provider는 여전히 기존
 로그인 상태를 *읽기만* 하고 토큰을 쓰거나 갱신하지 않으며, 401/403/429는 기존과 동일하게

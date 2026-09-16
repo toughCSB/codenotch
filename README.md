@@ -17,14 +17,19 @@ WebView2) adds on top of upstream:
 - **Per-provider colours** — Claude and Antigravity's real official colour marks, plus a
   distinguishing tint for the four brands that only publish monochrome logos (Codex, Cursor, Grok,
   OpenCode) so all five-plus cells stay tellable apart at a glance.
+- **Switch one ring's window without touching the rest** — the hover card's "Ring shows" row
+  flips that one provider between weekly / monthly / 5-hour; a small colour-coded M/W/5h badge on
+  each ring's corner always shows which one it is currently reading.
+- **Checks GitHub for updates** — Settings → About can check this fork's releases for a newer
+  Windows build and download the installer with one more click; nothing installs on its own.
 
 Full bilingual (English/한국어) writeup, provider details and build instructions:
 **[`windows/README.md`](windows/README.md)**.
 
 ## Install on Windows
 
-Download and run the installer from **[Releases](../../releases/tag/windows-v0.3.0)**:
-[`Codenotch_0.3.0_x64-setup.exe`](../../releases/download/windows-v0.3.0/Codenotch_0.3.0_x64-setup.exe).
+Download and run the installer from **[Releases](../../releases/tag/windows-v0.4.0)**:
+[`Codenotch_0.4.0_x64-setup.exe`](../../releases/download/windows-v0.4.0/Codenotch_0.4.0_x64-setup.exe).
 Requires Windows 11 (WebView2 runtime ships by default). The installer adds a Start Menu shortcut
 and an uninstaller — no admin rights needed.
 
@@ -40,8 +45,8 @@ cargo build --release
 
 ## 윈도우에 설치하기
 
-**[Releases](../../releases/tag/windows-v0.3.0)** 페이지에서 설치 파일을 받아 실행하세요:
-[`Codenotch_0.3.0_x64-setup.exe`](../../releases/download/windows-v0.3.0/Codenotch_0.3.0_x64-setup.exe).
+**[Releases](../../releases/tag/windows-v0.4.0)** 페이지에서 설치 파일을 받아 실행하세요:
+[`Codenotch_0.4.0_x64-setup.exe`](../../releases/download/windows-v0.4.0/Codenotch_0.4.0_x64-setup.exe).
 Windows 11 필요(WebView2 런타임은 기본 포함). 설치하면 시작 메뉴에 바로가기와 제거 프로그램이
 등록됩니다 — 관리자 권한 불필요.
 
