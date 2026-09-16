@@ -30,8 +30,8 @@ Full bilingual (English/한국어) writeup, provider details and build instructi
 
 ## Install on Windows
 
-Download and run the installer from **[Releases](../../releases/tag/windows-v0.4.0)**:
-[`Codenotch_0.4.0_x64-setup.exe`](../../releases/download/windows-v0.4.0/Codenotch_0.4.0_x64-setup.exe).
+Download and run the installer from **[Releases](../../releases/tag/windows-v0.4.1)**:
+[`Codenotch_0.4.1_x64-setup.exe`](../../releases/download/windows-v0.4.1/Codenotch_0.4.1_x64-setup.exe).
 Requires Windows 11 (WebView2 runtime ships by default). The installer adds a Start Menu shortcut
 and an uninstaller — no admin rights needed.
 
@@ -47,8 +47,8 @@ cargo build --release
 
 ## 윈도우에 설치하기
 
-**[Releases](../../releases/tag/windows-v0.4.0)** 페이지에서 설치 파일을 받아 실행하세요:
-[`Codenotch_0.4.0_x64-setup.exe`](../../releases/download/windows-v0.4.0/Codenotch_0.4.0_x64-setup.exe).
+**[Releases](../../releases/tag/windows-v0.4.1)** 페이지에서 설치 파일을 받아 실행하세요:
+[`Codenotch_0.4.1_x64-setup.exe`](../../releases/download/windows-v0.4.1/Codenotch_0.4.1_x64-setup.exe).
 Windows 11 필요(WebView2 런타임은 기본 포함). 설치하면 시작 메뉴에 바로가기와 제거 프로그램이
 등록됩니다 — 관리자 권한 불필요.
 
