@@ -22,6 +22,8 @@ WebView2) adds on top of upstream:
   each ring's corner always shows which one it is currently reading.
 - **Checks GitHub for updates** — Settings → About can check this fork's releases for a newer
   Windows build and download the installer with one more click; nothing installs on its own.
+- **Reorder the pill's icons** — Settings → Notch has ▲▼ buttons on each provider so the order
+  they draw in is a choice, not fixed.
 
 Full bilingual (English/한국어) writeup, provider details and build instructions:
 **[`windows/README.md`](windows/README.md)**.

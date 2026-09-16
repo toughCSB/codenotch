@@ -126,6 +126,9 @@ This fork ([toughCSB/codenotch](https://github.com/toughCSB/codenotch)) adds on 
 - **The pill re-snaps to the right edge on its own**: undocking a monitor, or any other change to
   the display layout, used to leave the pill wherever it had last been placed; it now notices
   within a couple of seconds and moves itself back to the edge.
+- **Reorderable notch icons**: Settings → Notch now has ▲▼ buttons on each provider row, so which
+  ring draws first on the pill is a choice you make once, not the fixed
+  claude/codex/cursor/gemini/grok/opencode order every earlier build drew them in.
 
 None of this touches the credential/security discipline of the upstream code: every provider still
 only *reads* an existing sign-in, never writes or refreshes a token, and a 401/403/429 is handled
@@ -166,6 +169,9 @@ the same conservative way (back off, mark stale, never invent a number).
 - **모니터 구성이 바뀌어도 자동으로 오른쪽 끝에 재배치**: 모니터를 뽑거나 연결하는 등 화면
   배치가 바뀌면 예전엔 바가 마지막 위치에 그대로 남았는데, 이제 몇 초 안에 감지해서 스스로
   오른쪽 끝으로 다시 붙습니다.
+- **노치 아이콘 순서 변경**: 설정 → Notch의 각 provider 행에 ▲▼ 버튼이 생겨서, 바에 어떤
+  링이 먼저 그려질지 직접 정할 수 있습니다 — 예전엔 claude/codex/cursor/gemini/grok/opencode
+  고정 순서였습니다.
 
 이 변경들은 원본 코드의 크리덴셜/보안 원칙을 건드리지 않습니다: 모든 provider는 여전히 기존
 로그인 상태를 *읽기만* 하고 토큰을 쓰거나 갱신하지 않으며, 401/403/429는 기존과 동일하게
