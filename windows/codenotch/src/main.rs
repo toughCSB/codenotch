@@ -20,6 +20,7 @@ mod glyphs;
 mod trayicon;
 mod activity;
 mod diag;
+mod updater;
 mod watcher;
 
 use std::sync::Mutex;
@@ -29,7 +30,7 @@ use tauri::{AppHandle, Emitter, Manager};
 /// and its tail on the left. `fitZoom` in ui/notch.html divides by the same width.
 pub const NOTCH_W: f64 = 360.0;
 /// Hand-bumped build tag, written to run.log at startup so a log can always be matched to the exe that wrote it.
-pub const BUILD: &str = "r31";
+pub const BUILD: &str = "r38";
 pub const NOTCH_H: f64 = 520.0; // 300 clipped the card once it held three window blocks plus the session list; 460 clipped Antigravity's two model groups once the reading was stale and an agent was working
 
 pub struct AppState {
@@ -124,6 +125,40 @@ pub fn place_notch(app: &AppHandle) {
             ),
         );
     }
+}
+
+/// A cheap fingerprint of the current monitor layout: every monitor's position, size and scale,
+/// in the order Windows reports them. Two different layouts are astronomically unlikely to collide.
+fn monitor_fingerprint(app: &AppHandle) -> Option<String> {
+    let w = app.get_webview_window("notch")?;
+    let mons = w.available_monitors().ok()?;
+    Some(
+        mons.iter()
+            .map(|m| format!("{:?}:{:?}:{}", m.position(), m.size(), m.scale_factor()))
+            .collect::<Vec<_>>()
+            .join("|"),
+    )
+}
+
+/// `place_notch` only ever ran at startup or when the user asked for it (drag, "Reset position").
+/// Unplugging a monitor, docking a laptop, or an RDP session resizing the desktop all change the
+/// primary monitor's bounds without any of those, so the pill stayed wherever it had last been
+/// placed — sometimes short of the true right edge, sometimes off the bottom of a monitor that
+/// had since shrunk. Polling is simpler and just as reliable as subclassing the window for
+/// WM_DISPLAYCHANGE, and 2 s is fast enough that nobody notices the lag after a change.
+fn start_monitor_watcher(app: AppHandle) {
+    std::thread::spawn(move || {
+        let mut last = monitor_fingerprint(&app);
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(2));
+            let cur = monitor_fingerprint(&app);
+            if cur.is_some() && cur != last {
+                last = cur;
+                applog("monitor layout changed -> re-placing the notch");
+                place_notch(&app);
+            }
+        }
+    });
 }
 
 /// Older entry point name still used by tray.rs
@@ -269,7 +304,12 @@ fn get_glyphs(state: tauri::State<AppState>) -> std::collections::HashMap<String
 
 /// Collects the glyphs again and pushes them to the page (tray refresh, or the user just dropped in an override)
 pub fn reload_glyphs(app: &AppHandle) {
-    let m = glyphs::collect();
+    let prev = {
+        let st = app.state::<AppState>();
+        let g = st.glyphs.lock().unwrap().clone();
+        g
+    };
+    let m = glyphs::collect(&prev);
     let st = app.state::<AppState>();
     *st.glyphs.lock().unwrap() = m.clone();
     let _ = app.emit("glyphs", &m);
@@ -602,16 +642,14 @@ fn tightest<'a>(
 /// The window a provider's ring shows, declared per provider as the macOS providers declare
 /// `headlineID`: a window dropping out of a reply shows a dash instead of promoting another one
 /// into its place. `headlineOf` in ui/notch.html is the same rule, so the ring and the tray agree.
-fn ring_window<'a>(
-    provider: &str,
-    windows: &'a [usage::LimitWindow],
-    antigravity_limit: &str,
-    antigravity_model: &str,
-) -> Option<&'a usage::LimitWindow> {
+///
+/// A provider's own deterministic default, unrelated to any ring-limit choice — the priority chain
+/// that decides between windows that are really aliases of the same thing (Claude's plan can report
+/// `weekly_all`, `weekly_scoped` and `weekly_opus` in the same reply; only one of them is the number
+/// that actually gates the plan, and it must never lose to whichever alias happens to read higher).
+fn provider_default<'a>(provider: &str, windows: &'a [usage::LimitWindow]) -> Option<&'a usage::LimitWindow> {
     let by_id = |id: &str| windows.iter().find(|w| w.id == id);
     match provider {
-        // Weekly by default: the ring reads the window that actually decides whether the plan
-        // survives the week, not the fast-moving session window (still shown on the hover card).
         "claude" => by_id("weekly_all")
             .or_else(|| by_id("seven_day"))
             .or_else(|| by_id("weekly_scoped"))
@@ -622,8 +660,42 @@ fn ring_window<'a>(
         "cursor" => by_id("included").or_else(|| by_id("api")),
         "grok" => by_id("credits"), // Grok Build is already the weekly pool
         "opencode" => by_id("weekly").or_else(|| by_id("rolling")),
-        _ => antigravity_lane(windows, antigravity_limit, antigravity_model),
+        _ => None,
     }
+}
+
+/// `ring_limit` was Antigravity's own "Notch reads" choice; it now applies to every provider (떡배님's
+/// call): "automatic" keeps each provider's own default above, and "5h" / "weekly" / "monthly" pick
+/// whichever of that provider's own windows matches, falling back to the default when it has none.
+///
+/// "weekly" is also the overall default (every provider starts there), so it must never second-guess
+/// `provider_default` by re-picking among a provider's own weekly-ish aliases by raw usage instead of
+/// its declared priority — that is what let a barely-touched `weekly_all` lose to a near-exhausted
+/// `weekly_opus` before this was caught in review. Only a limit the provider's own default does *not*
+/// already sit in (asking Claude for "monthly", say) falls through to the keyword search below.
+fn ring_window<'a>(
+    provider: &str,
+    windows: &'a [usage::LimitWindow],
+    ring_limit: &str,
+    antigravity_model: &str,
+) -> Option<&'a usage::LimitWindow> {
+    // Antigravity keeps its own model-family filtering; antigravity_lane already understands
+    // "automatic" plus every explicit limit, so it takes the whole decision by itself.
+    if provider == "gemini" {
+        return antigravity_lane(windows, ring_limit, antigravity_model);
+    }
+    let default = provider_default(provider, windows);
+    if ring_limit == "automatic" {
+        return default;
+    }
+    if ring_limit == "weekly" {
+        if let Some(w) = default {
+            if lane_is(w, "weekly") {
+                return Some(w);
+            }
+        }
+    }
+    tightest(windows.iter().filter(|w| lane_is(w, ring_limit))).or(default)
 }
 
 /// Antigravity's lane, chosen as the Mac app's "Notch reads" and "Model data" choose it: within the
@@ -658,11 +730,12 @@ fn lane_family(w: &usage::LimitWindow) -> &'static str {
     }
 }
 
-/// Whether a lane is the 5-hour or the weekly one, by the words the Mac app looks for
+/// Whether a lane is the 5-hour, weekly or monthly one, by the words the Mac app looks for
 fn lane_is(w: &usage::LimitWindow, limit: &str) -> bool {
     let text = format!("{} {}", w.id, w.label).to_lowercase();
     match limit {
-        "weekly" => text.contains("weekly"),
+        "weekly" => text.contains("weekly") || text.contains("seven_day"),
+        "monthly" => text.contains("month") || text.contains("30d"),
         _ => ["5h", "5-hour", "five hour", "five-hour", "hourly", "session"]
             .iter()
             .any(|k| text.contains(k)),
@@ -682,6 +755,12 @@ fn snapshot_of(app: &AppHandle, id: &str) -> usage::UsageSnapshot {
     }
 }
 
+/// A provider's own ring metric — "weekly" unless it has its own entry in `ring_limits` (떡배님's
+/// ask: each provider is switched independently, not all of them at once).
+fn ring_limit_for(cfg: &config::Config, provider: &str) -> String {
+    cfg.ring_limits.get(provider).cloned().unwrap_or_else(|| "weekly".into())
+}
+
 /// A provider's ring as a whole percentage, for the tray icon and the settings picker. A count
 /// window has no percentage to draw, so it is a dash.
 fn ring_pct(app: &AppHandle, provider: &str) -> Option<u32> {
@@ -692,7 +771,7 @@ fn ring_pct(app: &AppHandle, provider: &str) -> Option<u32> {
     let (limit, model) = {
         let st = app.state::<AppState>();
         let c = st.cfg.lock().unwrap();
-        (c.antigravity_limit.clone(), c.antigravity_model.clone())
+        (ring_limit_for(&c, provider), c.antigravity_model.clone())
     };
     ring_window(provider, &snap.windows, &limit, &model)
         .filter(|w| w.count.is_none())
@@ -767,38 +846,58 @@ fn get_tray_preview(app: AppHandle, cfg: TrayConfig) -> Option<String> {
     trayicon::to_data_url(&rgba)
 }
 
-/// Antigravity's "Notch reads" and "Model data", as the Mac app has them.
-#[derive(serde::Serialize)]
-struct AntigravityPrefs {
-    limit: String,
-    model: String,
-}
+const RING_LIMIT_VALUES: [&str; 4] = ["automatic", "5h", "weekly", "monthly"];
 
+/// Every provider's ring metric ("Notch reads" in the Mac app, Antigravity-only there — 떡배님's
+/// ask: each provider now keeps its own choice rather than sharing one).
 #[tauri::command]
-fn get_antigravity_prefs(app: AppHandle) -> AntigravityPrefs {
+fn get_ring_limits(app: AppHandle) -> std::collections::HashMap<String, String> {
     let st = app.state::<AppState>();
     let c = st.cfg.lock().unwrap();
-    AntigravityPrefs { limit: c.antigravity_limit.clone(), model: c.antigravity_model.clone() }
+    TRAY_PROVIDER_IDS.iter().map(|id| (id.to_string(), ring_limit_for(&c, id))).collect()
 }
 
-/// Unknown values are refused rather than stored. The notch draws its own rings, so it is told.
+/// Sets one provider's ring metric and returns every provider's, so a caller can just replace its
+/// whole local copy. Unknown values are refused rather than stored.
 #[tauri::command]
-fn set_antigravity_prefs(app: AppHandle, limit: String, model: String) -> AntigravityPrefs {
-    let prefs = {
+fn set_ring_limit(app: AppHandle, provider: String, limit: String) -> std::collections::HashMap<String, String> {
+    let all = {
         let st = app.state::<AppState>();
         let mut c = st.cfg.lock().unwrap();
-        if ["automatic", "5h", "weekly"].contains(&limit.as_str()) {
-            c.antigravity_limit = limit;
+        if RING_LIMIT_VALUES.contains(&limit.as_str()) {
+            c.ring_limits.insert(provider, limit);
         }
+        config::save(&c);
+        TRAY_PROVIDER_IDS.iter().map(|id| (id.to_string(), ring_limit_for(&c, id))).collect::<std::collections::HashMap<_, _>>()
+    };
+    let _ = app.emit("ring_limits", &all);
+    repaint_tray(&app);
+    all
+}
+
+/// Antigravity's own "Model data" — which model family its lanes come from. Unrelated to the ring
+/// metric above; still Antigravity-only, as in the Mac app.
+#[tauri::command]
+fn get_antigravity_model(app: AppHandle) -> String {
+    let st = app.state::<AppState>();
+    let c = st.cfg.lock().unwrap();
+    c.antigravity_model.clone()
+}
+
+#[tauri::command]
+fn set_antigravity_model(app: AppHandle, model: String) -> String {
+    let value = {
+        let st = app.state::<AppState>();
+        let mut c = st.cfg.lock().unwrap();
         if ["gemini", "3p"].contains(&model.as_str()) {
             c.antigravity_model = model;
         }
         config::save(&c);
-        AntigravityPrefs { limit: c.antigravity_limit.clone(), model: c.antigravity_model.clone() }
+        c.antigravity_model.clone()
     };
-    let _ = app.emit("antigravity_prefs", &prefs);
+    let _ = app.emit("antigravity_model", &value);
     repaint_tray(&app);
-    prefs
+    value
 }
 
 /// Which providers get a ring on the notch. An empty list means every provider.
@@ -931,6 +1030,47 @@ fn set_hooks_installed(on: bool) -> Result<String, String> {
 #[tauri::command]
 fn reset_notch_position(app: AppHandle) {
     reset_bar(&app);
+}
+
+// ---------------- update check ----------------
+
+#[tauri::command]
+fn get_update_info() -> updater::UpdateInfo {
+    updater::last()
+}
+
+/// Runs the network check off the invoking thread — the settings window awaits the promise, but a
+/// blocking Tauri command would stall the WebView's own message loop while it waits on ureq.
+#[tauri::command]
+async fn check_for_update(app: AppHandle) -> updater::UpdateInfo {
+    tauri::async_runtime::spawn_blocking(move || updater::check(&app)).await.unwrap_or_default()
+}
+
+#[tauri::command]
+async fn install_update(app: AppHandle, asset_url: String, asset_name: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || updater::download_and_launch(&app, &asset_url, &asset_name))
+        .await
+        .map_err(|e| format!("{e}"))?
+}
+
+/// Unlike the other `open_*_page` commands, this URL comes from GitHub's API rather than a
+/// hardcoded literal — a compromised account or a MITM'd response could hand back something
+/// cmd.exe would treat specially (`%VAR%` expands inside `cmd /C start` even inside quotes). Two
+/// guards: only an actual https URL is ever opened, and it goes to `explorer.exe` as a single
+/// argument rather than through `cmd /C start`, which never runs a shell over the string at all.
+#[tauri::command]
+fn open_release_page(url: String) {
+    if !url.starts_with("https://") {
+        return;
+    }
+    let mut cmd = std::process::Command::new("explorer");
+    cmd.arg(&url);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x0800_0000);
+    }
+    let _ = cmd.spawn();
 }
 
 #[tauri::command]
@@ -1169,8 +1309,10 @@ fn main() {
             get_tray_preview,
             get_notch_slots,
             set_notch_slots,
-            get_antigravity_prefs,
-            set_antigravity_prefs,
+            get_ring_limits,
+            set_ring_limit,
+            get_antigravity_model,
+            set_antigravity_model,
             get_app_icon,
             get_ui_flags,
             set_ui_flags,
@@ -1181,7 +1323,11 @@ fn main() {
             get_hooks_installed,
             set_hooks_installed,
             reset_notch_position,
-            open_settings
+            open_settings,
+            get_update_info,
+            check_for_update,
+            install_update,
+            open_release_page
         ])
         .setup(move |app| {
             let handle = app.handle().clone();
@@ -1217,6 +1363,8 @@ fn main() {
             let gh = handle.clone();
             std::thread::spawn(move || reload_glyphs(&gh));
             start_pointer_watchdog(handle.clone());
+            start_monitor_watcher(handle.clone());
+            updater::start(handle.clone());
             // Seen-clears-it scan
             let acker = handle.clone();
             std::thread::spawn(move || {
@@ -1414,5 +1562,47 @@ mod tests {
     fn a_request_count_still_leads_when_it_is_all_there_is() {
         let requests = LimitWindow { id: "requests".into(), count: Some(79), ..Default::default() };
         assert_eq!(pick("gemini", std::slice::from_ref(&requests)), Some("requests"));
+    }
+
+    /// The ring-limit toggle used to be Antigravity-only; it now reaches every provider, picking
+    /// whichever of that provider's own windows matches the chosen cadence.
+    fn ring_for<'a>(provider: &str, windows: &'a [LimitWindow], limit: &str) -> Option<&'a str> {
+        ring_window(provider, windows, limit, "gemini").map(|w| w.id.as_str())
+    }
+
+    #[test]
+    fn an_explicit_limit_overrides_a_providers_own_default() {
+        // Claude's own default is weekly_all; a window that actually matches "monthly" text must
+        // win over it even though weekly_all is what "automatic" would have picked.
+        let ws = [win("weekly_all", 0.1), LimitWindow { id: "monthly_extra".into(), label: "Monthly limit".into(), used: 0.9, ..Default::default() }];
+        assert_eq!(ring_for("claude", &ws, "monthly"), Some("monthly_extra"));
+    }
+
+    /// Regression for a review finding: Claude can report weekly_all, weekly_scoped and
+    /// weekly_opus in the same reply, and all three contain "weekly" — asking for the "weekly"
+    /// ring (the overall default) must not let a heavily-used alias outrank weekly_all, the one
+    /// that actually decides whether the plan survives the week.
+    #[test]
+    fn weekly_never_lets_a_fuller_alias_outrank_weekly_all() {
+        let ws = [win("weekly_all", 0.05), win("weekly_opus", 0.99), win("session", 0.5)];
+        assert_eq!(ring_for("claude", &ws, "weekly"), Some("weekly_all"));
+    }
+
+    #[test]
+    fn a_provider_with_no_matching_lane_keeps_its_own_default() {
+        // Cursor has no weekly window at all; asking for one anyway must not blank the ring out.
+        let ws = [win("included", 0.3), win("api", 0.9)];
+        assert_eq!(ring_for("cursor", &ws, "weekly"), Some("included"));
+    }
+
+    #[test]
+    fn monthly_is_matched_by_id_or_label() {
+        let ws = [win("weekly", 0.1), win("monthly", 0.4)];
+        assert_eq!(ring_for("opencode", &ws, "monthly"), Some("monthly"));
+        let codex_ws = [
+            LimitWindow { id: "primary".into(), label: "5h limit".into(), used: 0.1, ..Default::default() },
+            LimitWindow { id: "secondary".into(), label: "Monthly limit".into(), used: 0.6, ..Default::default() },
+        ];
+        assert_eq!(ring_for("codex", &codex_ws, "monthly"), Some("secondary"));
     }
 }

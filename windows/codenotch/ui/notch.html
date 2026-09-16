@@ -38,6 +38,19 @@
   .cell{display:flex;flex-direction:column;align-items:center;gap:6px}
   .ringwrap{position:relative;width:56px;height:56px}
   .ringwrap > svg.ring{position:absolute;inset:0;overflow:visible} /* pins only the ring itself; an inline logo svg must not match this or it ends up in the top-left corner */
+  /* Which window the ring is reading right now — M/W/5h, top-left of the ring so it reads at a
+     glance without a hover; blank for "automatic" (not one fixed cadence to abbreviate). */
+  .limit-badge{
+    position:absolute;top:-5px;left:-5px;min-width:20px;height:18px;padding:0 4px;
+    border-radius:9px;background:#141414;border:1px solid #5a5a5a;
+    font-size:11px;font-weight:400;color:#f0f0f0;line-height:17px;text-align:center;
+    letter-spacing:-.2px;font-variant-numeric:normal;pointer-events:none;
+  }
+  .limit-badge:empty{display:none}
+  /* One colour per cadence so W/M/5h are told apart at a glance, not just by the letter */
+  .limit-badge.lim-weekly{border-color:#4EA1FF;color:#8ec4ff}
+  .limit-badge.lim-monthly{border-color:#B47CFF;color:#d3b3ff}
+  .limit-badge.lim-5h{border-color:#FF9F45;color:#ffc389}
   .glyph{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:20px;font-weight:700;color:#e8e8ea;letter-spacing:-.5px;
@@ -88,6 +101,15 @@
   .c-title{font-size:14px;font-weight:700}
   .c-sub{font-size:11px;color:#808080;margin-bottom:10px}
   /* The two resets people actually watch, called out large above the per-window detail list */
+  /* Quick switch for which window the ring/graph reads — weekly by default, one click to change it */
+  .c-limit{display:flex;align-items:center;gap:6px;margin:2px 0 10px;flex-wrap:wrap}
+  .c-limit-label{font-size:10px;font-weight:600;color:#808080;text-transform:uppercase;letter-spacing:.3px}
+  .lim-btn{
+    background:#141414;border:1px solid #242424;border-radius:7px;color:#b0b0b3;font:inherit;
+    font-size:11px;padding:3px 8px;cursor:pointer;
+  }
+  .lim-btn:hover{border-color:#3f3f3f;color:#e8e8ea}
+  .lim-btn.on{background:#2a2a2a;border-color:#8a8a8a;color:#fff;font-weight:600}
   .reset-hero{display:flex;gap:8px;margin:2px 0 12px;padding:10px;background:#141414;border-radius:10px}
   .reset-item{flex:1;min-width:0;text-align:center}
   .reset-label{font-size:10px;font-weight:600;color:#808080;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;overflow-wrap:anywhere}
@@ -207,10 +229,17 @@ const RU_TEXT={
   'Remaining':'Осталось',
   'needs your input':'требуется ваш ответ',
   'Working in':'Работает в',
-  'Notch size':'Размер панели'
+  'Notch size':'Размер панели',
+  'Ring shows':'Кольцо показывает', 'Weekly':'Недельный', 'Monthly':'Месячный', '5h':'5 часов'
+};
+// Korean support started with just this new control (떡배님's ask) rather than a full pass over
+// every string above — missing keys fall back to the English text unchanged.
+const KO_TEXT={
+  'Ring shows':'표시 기준', 'Weekly':'주간', 'Monthly':'월간', '5h':'5시간'
 };
 function textCopy(value){
   if(!value) return '';
+  if(uiLang==='ko') return KO_TEXT[value]||value;
   if(uiLang!=='ru') return value;
   if(RU_TEXT[value]) return RU_TEXT[value];
   return String(value)
@@ -252,7 +281,7 @@ function textCopy(value){
     .replace(/Cursor session was rejected — sign in again in the editor/g,'Сеанс Cursor отклонён — снова войдите в редакторе');
 }
 function setUiLanguage(lang){
-  const next=lang==='ru'?'ru':'en';
+  const next=lang==='ru'?'ru':lang==='ko'?'ko':'en';
   if(uiLang===next) return;
   uiLang=next;
   renderRing();
@@ -280,11 +309,33 @@ function workState(id){
 // (not an official brand colour). OpenCode's real mark is plain white, same as the page's default
 // glyph colour — so it is left untinted, matching the actual icon rather than inventing a colour for it.
 const BRAND_TINT={codex:'#10A37F',cursor:'#3B82F6',grok:'#8B5CF6'};
+// Antigravity's full-colour mark uses <mask>/<filter> defs with fixed ids (see glyphs/NOTICE.md's
+// source package). The pill cell and the hover-card header can both inline the same glyph at once,
+// and renderCard() replaces #card's innerHTML on every hover change — so two copies of the same id
+// end up in the DOM, and once the older copy is torn down, the surviving mask="url(#id)" reference
+// dangles and the browser renders the shape unmasked: a plain colourful block instead of the mark's
+// real outline (looked like a flickering, then a stuck, square). Every inlined copy gets its own
+// suffix on every id it defines and every #id it references, so no two copies can ever collide.
+let glyphInstanceSeq=0;
+function uniqueSvgIds(svgText,tag){
+  const ids=new Set();
+  svgText.replace(/\bid="([^"]+)"/g,(_,id)=>{ids.add(id);return _;});
+  if(!ids.size) return svgText;
+  const suffix='__'+tag+(glyphInstanceSeq++);
+  let out=svgText;
+  for(const id of ids){
+    const esc=id.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    out=out.replace(new RegExp('id="'+esc+'"','g'),'id="'+id+suffix+'"');
+    out=out.replace(new RegExp('#'+esc+'\\b','g'),'#'+id+suffix);
+  }
+  return out;
+}
 function glyphHtml(p,small){
   const g=glyphs[p.id];
   if(g&&g.kind==='svg'&&g.svg){
     const tint=BRAND_TINT[p.id];
-    return `<span class="mark"${tint?` style="color:${tint}"`:''}>${g.svg}</span>`;
+    const svg=uniqueSvgIds(g.svg,p.id+(small?'c':'p'));
+    return `<span class="mark"${tint?` style="color:${tint}"`:''}>${svg}</span>`;
   }
   if(g&&g.url) return `<img class="${g.kind}" src="${g.url}" alt="${p.name}"${small?' style="width:16px;height:16px;border-radius:4px"':''}>`;
   return small?'':p.glyph; // fallback letter
@@ -312,8 +363,20 @@ function providers(){
   }
   return list;
 }
-// Antigravity's "Notch reads" and "Model data", as in the Mac app; chosen in settings
-let agPrefs={limit:'automatic',model:'gemini'};
+// Antigravity's own "Model data" family choice — unrelated to the ring metric below, still
+// Antigravity-only; chosen here or in settings.
+let agPrefs={model:'gemini'};
+// Every provider's own ring metric ("Notch reads" in the Mac app, Antigravity-only there — 떡배님's
+// ask: each provider keeps its own choice, not one shared setting). id -> 'automatic'|'weekly'|
+// 'monthly'|'5h'; missing = 'weekly', the overall default.
+let ringLimits={};
+function limitFor(id){ return ringLimits[id]||'weekly'; }
+// Short badge text for the ring's top-left corner: M/W/5h, or blank for "automatic" — that one is
+// not a fixed cadence to abbreviate, so there is nothing honest to print there. Each cadence also
+// gets its own border/text colour (lim-weekly/lim-monthly/lim-5h) so the three are told apart by
+// colour as well as letter.
+function limitBadge(limit){ return limit==='monthly'?'M':limit==='weekly'?'W':limit==='5h'?'5h':''; }
+function limitBadgeClass(limit){ return limit==='monthly'?'lim-monthly':limit==='weekly'?'lim-weekly':limit==='5h'?'lim-5h':''; }
 // The tightest metered window, ties going to the lower id so the choice never flickers
 function tightestOf(ws){
   return ws.filter(w=>w.count==null).reduce((a,b)=>!a||b.used>a.used||(b.used===a.used&&b.id<a.id)?b:a,null);
@@ -321,15 +384,26 @@ function tightestOf(ws){
 function laneFamily(w){ const id=w.id.toLowerCase(); return id.startsWith('gemini')?'gemini':(id.startsWith('3p')||id.startsWith('claude'))?'3p':''; }
 function laneIs(w,limit){
   const t=(w.id+' '+w.label).toLowerCase();
-  return limit==='weekly'?t.includes('weekly'):['5h','5-hour','five hour','five-hour','hourly','session'].some(k=>t.includes(k));
+  if(limit==='weekly') return t.includes('weekly')||t.includes('seven_day');
+  if(limit==='monthly') return t.includes('month')||t.includes('30d');
+  return ['5h','5-hour','five hour','five-hour','hourly','session'].some(k=>t.includes(k));
 }
 // The two resets people actually watch, found by keyword regardless of the provider's own window
 // ids/labels — used for the hover card's large reset summary, independent of headlineOf's per-provider rule
 function windowLike(ws,kind){ return ws.find(w=>laneIs(w,kind))||null; }
-// The window a provider's ring shows: the same rule as ring_window in main.rs, which draws the tray
+// The window a provider's ring shows: the same rule as ring_window in main.rs, which draws the tray.
+// limitFor(id) was Antigravity's own "Notch reads" choice; it now reaches every provider, each with
+// its own value (떡배님's ask — switching one provider must never move another's): "automatic" keeps
+// that provider's own default below, "5h"/"weekly"/"monthly" pick whichever of its own windows
+// matches, falling back to the default when it has none.
 function headlineOf(snap,id){
   const ws=snap.windows; if(!ws.length) return null;
   const byId=x=>ws.find(w=>w.id===x)||null;
+  const lim=limitFor(id);
+  if(id!=='gemini' && lim!=='automatic'){
+    const w=tightestOf(ws.filter(w=>laneIs(w,lim)));
+    if(w) return w;
+  }
   // Weekly by default: the ring reads the window that decides whether the plan survives the
   // week, not the fast-moving session window (still shown in full on the hover card).
   if(id==='claude') return byId('weekly_all')||byId('seven_day')||byId('weekly_scoped')||byId('weekly_opus')||byId('session');
@@ -338,7 +412,8 @@ function headlineOf(snap,id){
   if(id==='grok') return byId('credits'); // Grok Build is already the weekly pool
   if(id==='opencode') return byId('weekly')||byId('rolling');
   const fam=ws.filter(w=>laneFamily(w)===agPrefs.model), lanes=fam.length?fam:ws;
-  if(agPrefs.limit!=='automatic'){ const w=tightestOf(lanes.filter(w=>laneIs(w,agPrefs.limit))); if(w) return w; }
+  const gLim=limitFor('gemini');
+  if(gLim!=='automatic'){ const w=tightestOf(lanes.filter(w=>laneIs(w,gLim))); if(w) return w; }
   return tightestOf(lanes.filter(w=>w.used<1))||tightestOf(lanes)||lanes[0];
 }
 function staleOf(snap){ if(snap.status==='stale') return true; return snap.fetched_at>0 && (Date.now()-snap.fetched_at)>5*60*1000; }
@@ -357,13 +432,18 @@ function renderRing(){
   const want=ps.map(p=>p.id+':'+(glyphs[p.id]?glyphs[p.id].kind:'-')).join(',');
   if(pill.dataset.cells!==want){
     pill.innerHTML=ps.map(p=>`<div class="cell" data-p="${p.id}">
-      <div class="ringwrap"><svg class="ring" viewBox="0 0 56 56"></svg><div class="glyph ${(!glyphs[p.id]&&p.glyph.length>1)?'small':''}">${glyphHtml(p)}</div></div>
+      <div class="ringwrap"><svg class="ring" viewBox="0 0 56 56"></svg><div class="glyph ${(!glyphs[p.id]&&p.glyph.length>1)?'small':''}">${glyphHtml(p)}</div><span class="limit-badge"></span></div>
       <div class="pct">—</div></div>`).join('');
     pill.dataset.cells=want;
   }
   for(const p of ps){
     const cell=pill.querySelector(`.cell[data-p="${p.id}"]`); if(!cell) continue;
-    const svg=cell.querySelector('svg.ring'), pct=cell.querySelector('.pct'), glyph=cell.querySelector('.glyph'), wrap=cell.querySelector('.ringwrap');
+    const svg=cell.querySelector('svg.ring'), pct=cell.querySelector('.pct'), glyph=cell.querySelector('.glyph'), wrap=cell.querySelector('.ringwrap'), badge=cell.querySelector('.limit-badge');
+    if(badge){
+      const lim=limitFor(p.id);
+      badge.textContent=limitBadge(lim);
+      badge.className='limit-badge '+limitBadgeClass(lim);
+    }
     const h=headlineOf(p.snap,p.id);
     let inner=`<circle cx="28" cy="28" r="22" fill="#2a2a2a"/><circle cx="28" cy="28" r="25" fill="none" stroke="${TRACK}" stroke-width="5"/>`;
     if(h && h.count==null) inner+=svgArc(25,Math.max(0,1-Math.min(h.used,1)),tone(h.used),5);
@@ -427,6 +507,27 @@ function heroDuration(ms){
   return `${mins}Min`;
 }
 
+const LIMIT_CHOICES=['weekly','monthly','5h'];
+// Per-provider (떡배님's ask): the buttons act on whichever provider's card is open, never on every
+// ring at once — id is baked into the button so a click can never be mistaken for the wrong provider.
+function limitRowHtml(id){
+  const cur=limitFor(id);
+  const btn=v=>`<button class="lim-btn${cur===v?' on':''}" data-lim="${v}">${esc(textCopy(v==='weekly'?'Weekly':v==='monthly'?'Monthly':'5h'))}</button>`;
+  return `<div class="c-limit"><span class="c-limit-label">${esc(textCopy('Ring shows'))}</span>${LIMIT_CHOICES.map(btn).join('')}</div>`;
+}
+function wireLimitRow(id){
+  const row=document.querySelector('#card .c-limit'); if(!row) return;
+  row.querySelectorAll('.lim-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const v=b.dataset.lim; if(v===limitFor(id)) return;
+      ringLimits={...ringLimits,[id]:v};
+      renderRing();
+      if(card.classList.contains('show')){renderCard();armWatchdog();}
+      invoke('set_ring_limit',{provider:id,limit:v}).catch(e=>notice('set_ring_limit failed: '+e));
+    });
+  });
+}
+
 let hoverId='claude';
 function renderCard(){
   const c=document.getElementById('card');
@@ -434,6 +535,7 @@ function renderCard(){
   const snap=p.snap;
   const headIcon=glyphHtml(p,true);
   let html=`<div class="c-head">${headIcon}<span class="c-title">${uiLang==='ru'?'Использование '+p.name:p.name+' Usage'}</span></div>`;
+  html+=limitRowHtml(p.id);
   if(staleOf(snap)&&snap.fetched_at) html+=`<div class="c-sub">${textCopy('Updated')} ${ago(snap.fetched_at)}</div>`;
   if(snap.windows.length){
     // The two resets people actually watch, called out large above the detailed window list:
@@ -500,6 +602,7 @@ function renderCard(){
   html+=`<div class="c-scale"><input id="scale-range" type="range" min="40" max="100" step="5" value="${scalePct}" aria-label="${textCopy('Notch size')}" title="${textCopy('Notch size')}"><span class="c-scale-val" id="scale-val">${scalePct}%</span></div>`;
   c.innerHTML=html;
   wireScaleRow();
+  wireLimitRow(p.id);
   placeCard();
 }
 // The card follows the hovered cell: vertically centred on it (kept inside the window), tail pointing at it
@@ -694,8 +797,10 @@ listen('notch_slots',e=>{
   renderRing();
   if(card.classList.contains('show')){renderCard();armWatchdog();}
 }).catch(()=>{});
-invoke('get_antigravity_prefs').then(p=>{if(p){agPrefs=p;renderRing();}}).catch(()=>{});
-listen('antigravity_prefs',e=>{if(e.payload){agPrefs=e.payload;renderRing();}}).catch(()=>{});
+invoke('get_antigravity_model').then(m=>{if(m){agPrefs={...agPrefs,model:m};renderRing();}}).catch(()=>{});
+listen('antigravity_model',e=>{if(e.payload){agPrefs={...agPrefs,model:e.payload};renderRing();if(card.classList.contains('show')){renderCard();armWatchdog();}}}).catch(()=>{});
+invoke('get_ring_limits').then(v=>{if(v){ringLimits=v;renderRing();}}).catch(()=>{});
+listen('ring_limits',e=>{if(e.payload){ringLimits=e.payload;renderRing();if(card.classList.contains('show')){renderCard();armWatchdog();}}}).catch(()=>{});
 listen('glyphs',e=>{glyphs=e.payload||glyphs;renderRing();if(card.classList.contains('show'))renderCard();}).catch(()=>{});
 listen('activity',e=>{activity=e.payload||activity;renderRing();if(card.classList.contains('show'))renderCard();}).catch(()=>{});
 invoke('get_activity').then(a=>{activity=a||activity;renderRing();}).catch(()=>{});

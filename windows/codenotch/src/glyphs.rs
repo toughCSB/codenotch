@@ -275,8 +275,16 @@ fn encode_png(w: u32, h: u32, rgba: &[u8]) -> Option<Vec<u8>> {
     Some(out)
 }
 
-/// Collects every provider glyph (once at startup, again on the tray's refresh)
-pub fn collect() -> HashMap<String, Glyph> {
+/// Collects every provider glyph (once at startup, again on the tray's refresh).
+///
+/// `prev` is the map this same function returned last time (empty on the very first call).
+/// `PrivateExtractIconsW` on a running app's exe is not perfectly reliable call to call — a
+/// transient failure used to fall all the way through to the built-in monochrome mark, so the
+/// glyph's shape flipped between the app's own colour icon and the built-in outline on every
+/// refresh (#antigravity-icon-flicker). An app icon that was read successfully before is now kept
+/// across a failed re-attempt, as long as the same exe is still a candidate for this id, so a
+/// flaky extraction no longer changes what is on screen.
+pub fn collect(prev: &HashMap<String, Glyph>) -> HashMap<String, Glyph> {
     let mut map = HashMap::new();
     let dirs = glyph_dirs();
     for id in IDS {
@@ -290,11 +298,19 @@ pub fn collect() -> HashMap<String, Glyph> {
                 }
             }
         }
+        let candidates = app_candidates(id);
         if found.is_none() {
-            for exe in app_candidates(id) {
-                if let Some(g) = from_exe(&exe) {
+            for exe in &candidates {
+                if let Some(g) = from_exe(exe) {
                     found = Some(g);
                     break;
+                }
+            }
+        }
+        if found.is_none() {
+            if let Some(prev_g) = prev.get(id) {
+                if prev_g.kind == "appicon" && candidates.iter().any(|p| p.display().to_string() == prev_g.source) {
+                    found = Some(prev_g.clone());
                 }
             }
         }
@@ -315,9 +331,9 @@ pub fn collect() -> HashMap<String, Glyph> {
     map
 }
 
-/// For doctor
+/// For doctor — a one-shot diagnostic with no previous run to stick with
 pub fn probe() -> String {
-    let m = collect();
+    let m = collect(&HashMap::new());
     let mut lines = vec![format!("glyph directory: {} (drop claude/codex/cursor/gemini/grok/opencode .svg or .png files here)", user_dir().display())];
     for id in IDS {
         lines.push(match m.get(id) {

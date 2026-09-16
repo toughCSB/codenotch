@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// How small the notch may be drawn, as a multiple of its designed size. Below roughly 0.4 the
@@ -59,9 +60,12 @@ pub struct Config {
     /// Which providers get a ring on the notch, in order. An empty list means every provider.
     #[serde(default)]
     pub notch_slots: Vec<TraySlot>,
-    /// Antigravity's lane on the ring, as the Mac app's "Notch reads": "automatic", "5h" or "weekly"
-    #[serde(default = "default_antigravity_limit")]
-    pub antigravity_limit: String,
+    /// Each provider's own ring metric — 떡배님's ask: not one setting for every ring, but a choice
+    /// per provider (id → "automatic" | "5h" | "weekly" | "monthly"). Missing = "weekly", the
+    /// overall default. Started as Antigravity's own "Notch reads" (the Mac app's term); now every
+    /// provider gets an entry, keyed the same as the notch/tray ids.
+    #[serde(default)]
+    pub ring_limits: HashMap<String, String>,
     /// The model family that choice looks at, as the Mac app's "Model data": "gemini" or "3p"
     #[serde(default = "default_antigravity_model")]
     pub antigravity_model: String,
@@ -92,9 +96,6 @@ fn default_tray_mode() -> String {
 fn default_tray_providers() -> Vec<String> {
     vec!["claude".into(), "codex".into()]
 }
-fn default_antigravity_limit() -> String {
-    "weekly".into()
-}
 fn default_antigravity_model() -> String {
     "gemini".into()
 }
@@ -122,7 +123,7 @@ impl Default for Config {
             tray_slots: Vec::new(), // filled in by load(), from tray_providers
             notch_providers: Vec::new(), // empty = show them all
             notch_slots: Vec::new(),     // filled in by load(), from notch_providers
-            antigravity_limit: default_antigravity_limit(),
+            ring_limits: HashMap::new(),
             antigravity_model: default_antigravity_model(),
             notch_visible: true,
             tray_visible: true,
@@ -176,6 +177,19 @@ pub fn load() -> Config {
             .iter()
             .map(|p| TraySlot { provider: p.clone() })
             .collect();
+    }
+
+    // Migration: `ring_limits` replaces the older `antigravity_limit`, a single value that used to
+    // apply to Antigravity alone. An existing file's choice is carried over as Antigravity's own
+    // entry rather than silently reverting it to "weekly" on upgrade.
+    if cfg.ring_limits.is_empty() {
+        if let Some(old) = raw
+            .as_deref()
+            .and_then(|t| serde_json::from_str::<serde_json::Value>(t).ok())
+            .and_then(|v| v.get("antigravity_limit").and_then(|l| l.as_str()).map(str::to_string))
+        {
+            cfg.ring_limits.insert("gemini".into(), old);
+        }
     }
 
     // Both hidden would leave the app unreachable: no pill, no tray icon, no way to open settings.
