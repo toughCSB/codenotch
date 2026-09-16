@@ -212,11 +212,23 @@
   /* Notch providers — the picker's rows again, ticked rather than chosen */
   .np-list{margin-top:12px}
   .np-row{margin-bottom:10px}
+  .np-line{display:flex;align-items:center;gap:6px}
+  .np-line .p-item{flex:1 1 auto;min-width:0}
   .np-ag{display:flex;align-items:center;gap:8px;margin:6px 0 0 29px;font-size:11px;color:#808080}
   .np-right{margin-left:auto;display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
   .np-right .p-status{margin-left:0}
   .np-lock{font-size:10px;color:#808080;font-style:italic}
   .p-item.lock{cursor:default}
+  /* Up/down reorder buttons — the pill and the tray both draw providers in this order */
+  .np-move{display:flex;flex-direction:column;flex:0 0 auto;gap:2px}
+  .np-arrow{
+    background:#0a0a0a;border:1px solid #2e2e2e;border-radius:6px;color:#b0b0b3;font:inherit;
+    font-size:10px;line-height:1;width:20px;height:15px;padding:0;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .np-arrow:hover{border-color:#3f3f3f;color:#e8e8ea}
+  .np-arrow:disabled{opacity:.3;cursor:default}
+  .np-arrow:disabled:hover{border-color:#2e2e2e;color:#b0b0b3}
 
   /* Notch size */
   .c-scale{display:flex;align-items:center;gap:10px;margin-top:12px}
@@ -612,6 +624,7 @@ const KO_STATIC = {
   'Notch size':'노치 바 크기', 'Codenotch':'Codenotch', 'Tray icon preview':'트레이 아이콘 미리보기', 'Codenotch logo':'Codenotch 로고', 'Tray icon at':'아이콘 크기', 'pixels':'픽셀',
   'Down the right-hand edge':'오른쪽 끝을 따라', 'Down the left-hand edge':'왼쪽 끝을 따라', 'Top half':'위쪽 절반', 'Bottom half':'아래쪽 절반', 'Column':'열', 'Remove column':'열 삭제',
   'Model data':'모델 데이터',
+  'Move up':'위로 이동', 'Move down':'아래로 이동',
   'Updates':'업데이트', 'Check for updates':'업데이트 확인', 'Check now':'지금 확인', 'Checking…':'확인 중…',
   'Checking for an update…':'업데이트 확인 중…',
   'Checks this fork\'s GitHub releases for a newer Windows build.':'이 포크의 GitHub 릴리스에서 더 새로운 Windows 빌드가 있는지 확인합니다.',
@@ -1105,19 +1118,40 @@ function notchSlotOf(id){
   return null;
 }
 
+/* Every provider, in the order the pill would actually draw them: the ones that are on, in their
+   saved order (떡배님's ask — the notch and the tray both draw providers in whatever order this
+   list is saved in), then any switched-off ones after, in their usual order — reordering only
+   ever concerns what is actually showing. */
+function notchDisplayOrder(){
+  const list = providerList();
+  const onIds = notchOn().map(sl => sl.provider);
+  const onSet = new Set(onIds);
+  const byId = id => list.find(p => p.id === id);
+  return onIds.map(byId).filter(Boolean).concat(list.filter(p => !onSet.has(p.id)));
+}
+
 function renderNotch(){
   const host = document.getElementById('notch-list');
   const note = document.getElementById('notch-note');
   if(!host || !note) return;
-  const list = providerList();
   const on = notchOn();
+  const onIds = on.map(sl => sl.provider);
   let html = '';
-  for(const p of list){
+  for(const p of notchDisplayOrder()){
     const sl = notchSlotOf(p.id);
     const ticked = !!sl;
     const only = ticked && on.length === 1;     // the last one standing: it cannot be unticked
     const st = statusText(p);                   // the tray picker's words: "not signed in", etc.
-    html += '<div class="np-row">'
+    const idx = onIds.indexOf(p.id);
+    const moveHtml = ticked
+      ? '<span class="np-move">'
+        + '<button class="np-arrow" data-up="' + esc(p.id) + '"' + (idx <= 0 ? ' disabled' : '')
+        + ' aria-label="' + esc(ui('Move up', 'Move up')) + '" title="' + esc(ui('Move up', 'Move up')) + '">&#9650;</button>'
+        + '<button class="np-arrow" data-down="' + esc(p.id) + '"' + (idx < 0 || idx >= onIds.length - 1 ? ' disabled' : '')
+        + ' aria-label="' + esc(ui('Move down', 'Move down')) + '" title="' + esc(ui('Move down', 'Move down')) + '">&#9660;</button>'
+        + '</span>'
+      : '';
+    html += '<div class="np-row"><div class="np-line">'
       + '<button class="p-item' + (ticked ? ' on' : '') + (only ? ' lock' : '') + '"'
       + ' data-np="' + esc(p.id) + '" role="checkbox" aria-checked="' + ticked + '">'
       + '<span class="p-tick">' + (ticked ? '&#10003;' : '') + '</span>'
@@ -1125,7 +1159,9 @@ function renderNotch(){
       + '<span class="np-right">'
       + (st ? '<span class="p-status warn">' + esc(st) + '</span>' : '')
       + (only ? '<span class="np-lock">' + esc(ui('kept', 'kept')) + '</span>' : '')
-      + '</span></button>';
+      + '</span></button>'
+      + moveHtml
+      + '</div>';
     html += limitPicker(p.id, ringLimits[p.id] || 'weekly', ticked);
     if(p.id === 'gemini'){
       html += agPicker('model', ui('Model data', 'Model data'), AG_MODELS, agPrefs.model, ticked);
@@ -1137,12 +1173,15 @@ function renderNotch(){
     + '. ' + ui('One provider always stays ticked, so the pill is never empty.', 'One provider always stays ticked, so the pill is never empty.');
 }
 
-/* Everything ticked is stored as an EMPTY list, not as four slots. Empty means "all" to the Rust
-   side, so a provider added in a future version turns up on the notch by itself; a list of today's
-   four ids would silently exclude it forever. */
+/* Everything ticked, in exactly today's canonical order, is stored as an EMPTY list rather than as
+   an explicit one. Empty means "all, in whatever order is canonical" to the Rust side, so a
+   provider added in a future version turns up on the notch by itself. A custom order is never
+   collapsed this way — only a list that is genuinely equivalent to "all of them" is, so
+   reordering (moveNotch) is never silently lost the next time every provider happens to be on. */
 function saveNotch(next){
   const ids = providerList().map(p => p.id);
-  const store = next.length === ids.length ? [] : next;
+  const isCanonicalAll = next.length === ids.length && next.every((sl, i) => sl.provider === ids[i]);
+  const store = isCanonicalAll ? [] : next;
   const prev = notchSlots;
   notchSlots = store;
   renderNotch();
@@ -1158,7 +1197,7 @@ function saveNotch(next){
 function toggleNotch(id){
   const ids = providerList().map(p => p.id);
   if(ids.indexOf(id) < 0) return;
-  let on = notchOn().slice();
+  let on = notchOn().slice();      // keeps whatever order (custom or canonical) is already saved
   const at = on.findIndex(sl => sl.provider === id);
   if(at >= 0){
     /* Unticking the last one is refused rather than saved. An empty list means "all" everywhere
@@ -1167,13 +1206,27 @@ function toggleNotch(id){
     if(on.length <= 1){ toast(ui('At least one provider stays on the notch', 'At least one provider stays on the notch')); return; }
     on.splice(at, 1);
   } else {
-    on.push({ provider:id });
+    on.push({ provider:id });      // a provider switched back on joins the end, not an old position
   }
-  on.sort((a, b) => ids.indexOf(a.provider) - ids.indexOf(b.provider));  // fixed order, not click order
+  saveNotch(on);
+}
+
+/* Reorders one provider by one place among the ones that are on — 떡배님's ask: which icon comes
+   first on the pill (and the tray) is its own setting, not fixed. */
+function moveNotch(id, dir){
+  const on = notchOn().slice();
+  const at = on.findIndex(sl => sl.provider === id);
+  const to = at + dir;
+  if(at < 0 || to < 0 || to >= on.length) return;
+  const tmp = on[at]; on[at] = on[to]; on[to] = tmp;
   saveNotch(on);
 }
 
 document.getElementById('notch-list').addEventListener('click', e => {
+  const up = e.target.closest('[data-up]');
+  if(up){ moveNotch(up.dataset.up, -1); return; }
+  const down = e.target.closest('[data-down]');
+  if(down){ moveNotch(down.dataset.down, 1); return; }
   const b = e.target.closest('[data-np]');
   if(b) toggleNotch(b.dataset.np);
 });
