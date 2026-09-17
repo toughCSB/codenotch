@@ -32,6 +32,54 @@ enum ReleaseNotes {
     static var all: [ReleaseNote] {
         [
             ReleaseNote(
+                version: "1.13.1",
+                headline: L10n.t("Fixes a crash on Chinese Macs, and a Deny on the keychain question now means no."),
+                changes: [
+                    ReleaseNote.Change(
+                        title: L10n.t("No more crash in Simplified Chinese"),
+                        detail: L10n.t("With the app in 简体中文, a provider past 80% crashed Codenotch a few seconds after launch. Every translation is now checked for this.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Deny means no"),
+                        detail: L10n.t("Answering Deny when macOS asks about a saved login now stops Codenotch reading that account from any source, until you choose Allow access… again.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Fewer file access prompts"),
+                        detail: L10n.t("Renewing Claude's login no longer starts your MCP servers and hooks, and Kimi sessions are matched without looking inside your folders, so macOS no longer asks about Documents, Desktop or network volumes on Codenotch's behalf.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Smaller fixes"),
+                        detail: L10n.t("Kiro reads usage from newer kiro-cli versions, GLM Start Plan says why it has no usage, a Claude account with no published limits says so instead of waiting, and the Windows notch clears a stuck waiting card after a day.")
+                    ),
+                ]
+            ),
+            ReleaseNote(
+                version: "1.13.0",
+                headline: L10n.t("Much lighter on your battery, Grok and screen edges on Windows, and a Windows Settings window that opens again."),
+                changes: [
+                    ReleaseNote.Change(
+                        title: L10n.t("Lighter on the battery"),
+                        detail: L10n.t("Codenotch idles at a fraction of the CPU it used, and moving the pointer costs less than half as much. The working spinner is drawn by the system instead of redrawing the notch every frame, and full-screen apps are checked every two seconds rather than on every movement.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Windows Settings opens again"),
+                        detail: L10n.t("In 1.12.0 the Settings window on Windows opened empty. It is fixed, and a check now stops that kind of mistake from shipping.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Grok, any screen edge, and readings in the tray on Windows"),
+                        detail: L10n.t("Grok joins the Windows notch, the notch can sit on any edge of any monitor, and the tray menu shows each provider's readings.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Ghostty tabs"),
+                        detail: L10n.t("Clicking a session running in Ghostty selects its tab rather than only bringing Ghostty forward.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Smaller fixes"),
+                        detail: L10n.t("Codex sessions are read from the end of the file instead of all of it, the Codex card hides an empty reset-credits section, and a Claude token on Windows that fails to renew is retried instead of freezing the card.")
+                    ),
+                ]
+            ),
+            ReleaseNote(
                 version: "1.12.0",
                 headline: L10n.t("An installer for Windows, Ukrainian, Dark glass, and limits you set yourself."),
                 changes: [

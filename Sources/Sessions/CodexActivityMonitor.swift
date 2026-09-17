@@ -12,164 +12,88 @@ struct CodexRolloutActivity {
         case success
     }
 
-    /// What one record can say about the turn.
-    private enum Event: Equatable {
-        case started
-        case completed
-        case aborted
-    }
+    /// One window into the end of the rollout. Rollouts run to hundreds of
+    /// megabytes, so the file is walked backwards in slices rather than read
+    /// whole — the same `tail` trick the Claude and Antigravity readers use.
+    private static let windowBytes: UInt64 = 256 * 1024
+    /// How far back a lifecycle event may be before the search gives up. A
+    /// mid-turn rollout keeps its `task_started` arbitrarily far behind the
+    /// writes streaming in — walking to it would read the whole file on every
+    /// tick. A fresh file with no lifecycle event in its last megabyte is a
+    /// turn in progress in every realistic case, and the caller maps a miss
+    /// to `.busy` — the same answer the full scan would give.
+    private static let maxWindows = 4
 
-    /// The bytes a record has to contain before it is worth parsing.
-    ///
-    /// A rollout is almost entirely records that cannot change the answer —
-    /// messages, tool output, token counts — and JSON-parsing every one of them
-    /// every couple of seconds is what made this expensive. On a 38 MB
-    /// conversation it held the main thread at most of a core, and the notch
-    /// answered the pointer late because of it. The byte test below costs a
-    /// fraction of the parse, so only the few records that pass it are decoded.
-    private static let needles: [(bytes: [UInt8], type: String, event: Event)] = [
-        (Array(#""task_started""#.utf8), "task_started", .started),
-        (Array(#""task_complete""#.utf8), "task_complete", .completed),
-        (Array(#""turn_aborted""#.utf8), "turn_aborted", .aborted),
-    ]
-
-    /// How far a reading has got through one rollout, and what it left behind.
-    struct Cursor: Equatable {
-        var offset: UInt64
-        var modified: Date?
-        var state: State?
-    }
-
-    /// The state the rollout's newest lifecycle event leaves behind.
-    ///
-    /// `nil` is what a rollout with no lifecycle event at all reports, and also
-    /// what an aborted turn reports: an abort completed nothing, and nil lets
-    /// the activity monitor drop it without announcing.
-    ///
-    /// A rollout is appended to for the life of a conversation, and this is
-    /// asked for every couple of seconds while one is running. Reading the file
-    /// from the top each time was the whole cost of that: every record decoded
-    /// again, on the main thread, at most of a core on a 38 MB conversation —
-    /// which is why the notch answered the pointer late. Only what has been
-    /// appended since the last read can change the answer, so a repeat read
-    /// looks at that and nothing else. The answer itself is unchanged: a cursor
-    /// records where a reading got to, it does not read differently.
     static func state(from url: URL) -> State? {
-        cursors.state(of: url)
-    }
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? handle.close() }
+        guard var windowEnd = try? handle.seekToEnd() else { return nil }
 
-    /// Every lifecycle event in `data`, applied in order, so the newest wins.
-    ///
-    /// `item_completed` and every other record is ignored: commands and other
-    /// child items emit those too, and a turn is complete only after Codex
-    /// writes `task_complete`.
-    private static func state(of data: Data, carrying carried: State?) -> State? {
-        var state = carried
-        for line in data.split(separator: 0x0A) {
-            guard let event = event(in: line) else { continue }
-            switch event {
-            case .started:   state = .busy
-            case .completed: state = .success
-            // An aborted turn is not a successful completion.
-            case .aborted:   state = nil
+        // The newest lifecycle event wins, so windows are scanned newest
+        // first and the first match is the answer. A window's first line is
+        // cut in half by the read; the fragment is carried into the earlier
+        // window, where the rest of it lives, rather than parsed half a line.
+        var carried = Data()
+        var windows = 0
+        while windowEnd > 0, windows < maxWindows {
+            windows += 1
+            let windowStart = windowEnd > windowBytes ? windowEnd - windowBytes : 0
+            guard (try? handle.seek(toOffset: windowStart)) != nil else { return nil }
+
+            // `read(upToCount:)` may legally deliver fewer bytes than asked
+            // for, and a window that came back short would silently lose the
+            // lines its tail never reached — and join `carried` to a stretch
+            // of file it does not follow. Read until the window is filled.
+            // An error still fails the scan; hitting EOF early means the
+            // file shrank between the seek and the read (rotation), and what
+            // arrived is still contiguous with `windowStart`.
+            var window = Data()
+            window.reserveCapacity(Int(windowEnd - windowStart))
+            while window.count < Int(windowEnd - windowStart) {
+                guard let chunk = try? handle.read(
+                    upToCount: Int(windowEnd - windowStart) - window.count
+                ) else { return nil }
+                if chunk.isEmpty { break }
+                window.append(chunk)
             }
-        }
-        return state
-    }
-
-    /// Where each rollout that has been read got to.
-    ///
-    /// Guarded by a lock rather than confined to an actor because `state(from:)`
-    /// answers whoever asks; the app asks from the main thread. Bounded, because
-    /// a rollout file never goes away on its own and one entry per conversation
-    /// would accumulate for as long as the app runs — and dropping an entry only
-    /// costs the next reading of that rollout its head start.
-    private static let cursors = CursorStore()
-
-    private final class CursorStore {
-        private let lock = NSLock()
-        private var cursors: [String: Cursor] = [:]
-        private let limit = 16
-
-        func state(of url: URL) -> State? {
-            let path = url.path
-            let attributes = try? FileManager.default.attributesOfItem(atPath: path)
-            let size = (attributes?[.size] as? NSNumber)?.uint64Value ?? 0
-            let modified = attributes?[.modificationDate] as? Date
-
-            lock.lock()
-            defer { lock.unlock() }
-
-            var carried = cursors[path]
-            // A file that shrank, or one rewritten where it stood, is not the
-            // file that was read: start again rather than trust the offset.
-            if let cursor = carried, cursor.offset > size || (cursor.modified != modified && cursor.offset == size) {
-                carried = nil
-            }
-            if let cursor = carried, cursor.offset == size {
-                return cursor.state
+            // `carried` continues the line this window's start cut — but only
+            // when the read reached `windowEnd`, where the fragment begins. A
+            // short window ends somewhere else entirely, and joining the two
+            // would fabricate a line out of unrelated bytes.
+            if window.count == Int(windowEnd - windowStart) {
+                window.append(carried)
             }
 
-            guard let read = read(url, from: carried?.offset ?? 0) else {
-                return carried?.state
-            }
-            let state = CodexRolloutActivity.state(of: read.bytes, carrying: carried?.state)
-            if cursors.count >= limit, cursors[path] == nil, let oldest = cursors.keys.first {
-                cursors.removeValue(forKey: oldest)
-            }
-            cursors[path] = Cursor(offset: read.offset, modified: modified, state: state)
-            return state
-        }
+            // A window that opens on a newline was not cut mid-line: its first
+            // line is whole, and the earlier window's last line is the one
+            // missing its newline. Carrying anything back would glue the two.
+            let startsOnALineBreak = window.first == UInt8(ascii: "\n")
+            var lines = window.split(separator: UInt8(ascii: "\n"), omittingEmptySubsequences: true)
+            carried = windowStart > 0 && !startsOnALineBreak && !lines.isEmpty
+                ? Data(lines.removeFirst()) : Data()
 
-        /// Everything from `offset` on, and the size that was read to.
-        private func read(_ url: URL, from offset: UInt64) -> (bytes: Data, offset: UInt64)? {
-            guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
-            defer { try? handle.close() }
-            guard let size = try? handle.seekToEnd(),
-                  (try? handle.seek(toOffset: min(offset, size))) != nil,
-                  let data = try? handle.readToEnd() else { return nil }
-            return (data, size)
-        }
-    }
+            for line in lines.reversed() {
+                guard let record = try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any],
+                      record["type"] as? String == "event_msg",
+                      let payload = record["payload"] as? [String: Any],
+                      let type = payload["type"] as? String else { continue }
 
-    /// The lifecycle event a record reports, or `nil` for a record that reports
-    /// none — which is most of them.
-    private static func event(in line: Data) -> Event? {
-        // A record that does not even contain the words is not worth a parse.
-        guard let needle = needles.first(where: { mentions(line, $0.bytes) }) else { return nil }
-        guard let object = try? JSONSerialization.jsonObject(with: line),
-              let record = object as? [String: Any],
-              record["type"] as? String == "event_msg",
-              let payload = record["payload"] as? [String: Any],
-              payload["type"] as? String == needle.type
-        else { return nil }
-        return needle.event
-    }
-
-    /// A byte-window search, so a record can be rejected without being parsed.
-    private static func mentions(_ line: Data, _ needle: [UInt8]) -> Bool {
-        let count = line.count
-        guard !needle.isEmpty, count >= needle.count else { return false }
-        return line.withUnsafeBytes { raw -> Bool in
-            guard let base = raw.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
-                return false
-            }
-            let last = count - needle.count
-            var offset = 0
-            while offset <= last {
-                if base[offset] == needle[0] {
-                    var i = 1
-                    var matched = true
-                    while i < needle.count {
-                        if base[offset + i] != needle[i] { matched = false; break }
-                        i += 1
-                    }
-                    if matched { return true }
+                switch type {
+                case "task_started":
+                    return .busy
+                case "task_complete":
+                    return .success
+                case "turn_aborted":
+                    // An aborted turn is not a successful completion. Returning
+                    // nil lets the activity monitor drop it without announcing.
+                    return nil
+                default:
+                    continue
                 }
-                offset += 1
             }
-            return false
+            windowEnd = windowStart
         }
+        return nil
     }
 }
 
@@ -227,25 +151,32 @@ final class CodexActivityMonitor: ObservableObject, AgentActivityMonitor {
         timer = nil
     }
 
+    private let storeCache = CodexStoreCache()
+
     private func rescan() {
         let found = Self.read(stateStore: stateStore, desktopStore: desktopStore,
-                              staleAfter: staleAfter, profile: profile)
+                              staleAfter: staleAfter, profile: profile, cache: storeCache)
         guard found != sessions else { return }
         sessions = found
     }
 
     static func read(stateStore: URL, desktopStore: URL,
                      staleAfter: TimeInterval, now: Date = Date(),
-                     profile: CodexProfile = .default()) -> [AgentSession] {
+                     profile: CodexProfile = .default(),
+                     cache: CodexStoreCache = CodexStoreCache()) -> [AgentSession] {
         // Both surfaces, because "Codex" is two programs that record their work
         // in different places: the CLI and the VS Code extension append to a
         // rollout, and the desktop app writes to its own catalogue. Whichever
         // moved last is the one that is working.
         var candidates: [(id: String, name: String, at: Date, state: AgentSession.State)] = []
 
-        if let rollout = CodexStore.newestRollout(in: stateStore),
+        if let rollout = cache.newestRollout(in: stateStore),
            let modified = (try? FileManager.default
-               .attributesOfItem(atPath: rollout.path))?[.modificationDate] as? Date {
+               .attributesOfItem(atPath: rollout.path))?[.modificationDate] as? Date,
+           // A stale rollout never survives `session` below, so parsing it is
+           // wasted work — and the parse is the expensive part. Only a file
+           // fresh enough to matter reaches `state(from:)`.
+           now.timeIntervalSince(modified) <= staleAfter {
             let state: AgentSession.State
             switch CodexRolloutActivity.state(from: rollout) {
             case .success: state = .success
@@ -254,7 +185,7 @@ final class CodexActivityMonitor: ObservableObject, AgentActivityMonitor {
             candidates.append((id: "\(profile.id).\(rollout.lastPathComponent)",
                                name: profile.displayName, at: modified, state: state))
         }
-        if let desktop = CodexStore.newestDesktopThread(in: desktopStore) {
+        if let desktop = cache.newestDesktopThread(in: desktopStore) {
             candidates.append((id: "\(profile.id).desktop", name: desktop.title,
                                at: desktop.updatedAt, state: .busy))
         }

@@ -1177,11 +1177,11 @@ struct SettingsView: View {
 
     /// Said before it happens rather than after. A system dialogue asking to
     /// read a *credential*, from an app installed a minute ago, looks alarming
-    /// unless it was expected — and choosing Allow instead of Always Allow makes
+    /// unless it was expected — and choosing Allow instead of Always Allow made
     /// it return on every read, which is what "it asks every time" turns out to
     /// be.
     static var keychainCopy: String {
-        L10n.t("macOS will ask once for permission to read Claude Code's, Antigravity's and cursor-agent's saved logins. Choose Always Allow — plain Allow makes it ask again every time.")
+        L10n.t("macOS may ask before Codenotch reads Claude Code's, Antigravity's or cursor-agent's saved login. Background refreshes never show that question; it appears only when you click Allow access…, and Deny stops Codenotch reading that login until you ask again.")
     }
 
     /// A provider has just been switched on: put it after the ones already
@@ -1529,7 +1529,7 @@ private struct AccountRow: View {
                         // Not "it will stop asking": for Claude it will not.
                         // Claude Code recreates its login when the token
                         // rotates, and a recreated item forgets the grant.
-                        .help(L10n.t("Asks macOS for \(provider.name)'s saved login again. Always Allow means it is asked less often."))
+                        .help(L10n.t("Asks macOS for \(provider.name)'s saved login again. Deny stops Codenotch reading it until you ask again."))
                 }
 
                 if isConnected, let destination {
