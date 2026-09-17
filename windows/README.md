@@ -129,6 +129,11 @@ This fork ([toughCSB/codenotch](https://github.com/toughCSB/codenotch)) adds on 
 - **Reorderable notch icons**: Settings → Notch now has ▲▼ buttons on each provider row, so which
   ring draws first on the pill is a choice you make once, not the fixed
   claude/codex/cursor/gemini/grok/opencode order every earlier build drew them in.
+- **Always-on-top switch**: right-click the notch for an intuitive, checkable menu item, or use
+  Settings → Behaviour, to let it sink behind other windows instead of always staying on top.
+  Windows can occasionally hand topmost to another app on its own (a game going exclusive-fullscreen,
+  for instance); a background watchdog reasserts the setting every few seconds while it is on,
+  rather than trusting a single Win32 call to stick for the life of the process.
 
 None of this touches the credential/security discipline of the upstream code: every provider still
 only *reads* an existing sign-in, never writes or refreshes a token, and a 401/403/429 is handled
@@ -172,6 +177,10 @@ the same conservative way (back off, mark stale, never invent a number).
 - **노치 아이콘 순서 변경**: 설정 → Notch의 각 provider 행에 ▲▼ 버튼이 생겨서, 바에 어떤
   링이 먼저 그려질지 직접 정할 수 있습니다 — 예전엔 claude/codex/cursor/gemini/grok/opencode
   고정 순서였습니다.
+- **항상 위에 표시 켜고 끄기**: 노치를 우클릭하면 직관적인 체크 메뉴가 뜨고, 설정 → 동작에서도
+  바꿀 수 있습니다 — 끄면 일반 창처럼 다른 창 뒤로 숨습니다. Windows가 (전체화면 게임 등으로)
+  다른 앱에 최상위를 넘겨주는 경우가 있어서, 한 번의 설정 호출만 믿지 않고 켜져 있는 동안
+  몇 초마다 백그라운드에서 다시 적용합니다.
 
 이 변경들은 원본 코드의 크리덴셜/보안 원칙을 건드리지 않습니다: 모든 provider는 여전히 기존
 로그인 상태를 *읽기만* 하고 토큰을 쓰거나 갱신하지 않으며, 401/403/429는 기존과 동일하게

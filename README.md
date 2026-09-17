@@ -1,6 +1,53 @@
-# Codenotch for Windows — toughCSB's fork
+# Codenotch for Windows — toughCSB의 포크
 
 ![Codenotch pill and hover card on Windows](windows/docs/screenshots/windows-hover-card.png)
+
+[vinzdg/codenotch](https://github.com/vinzdg/codenotch)의 포크입니다 — 화면 가장자리에 붙어서
+각 코딩 어시스턴트의 사용량이 얼마나 남았는지, 지금도 작동 중인지 한눈에 보여주는 작은 검은색
+노치입니다. 이 포크의 [`windows/`](windows/) 포트(Rust + Tauri 2 / WebView2)는 원본 위에 다음을
+추가했습니다:
+
+- **provider 2개 추가** — Claude, Codex, Cursor, Antigravity에 더해 Grok과 OpenCode (Go).
+- **사용량이 아니라 잔여량 표시** — 24% 사용했다면 링, 퍼센트, hover 카드 막대 어디서나
+  **76%**로 표시됩니다.
+- **기본값이 주간(Weekly)** — 모든 링이 기본적으로 *주간* 윈도우를 읽습니다 (세션/5시간처럼
+  빠르게 움직이는 값은 hover 카드에 그대로 남아 있습니다).
+- **hover 카드에 큰 리셋 카운트다운** — `3d 14Hr`, `5Hr 22Min` — 시계 시각을 보고 직접 빼기
+  계산할 필요가 없습니다.
+- **provider별 색 구분** — Claude와 Antigravity는 실제 공식 컬러 마크를 쓰고, 흑백 로고뿐인
+  나머지 네 개(Codex, Cursor, Grok, OpenCode)는 구분용 강조색을 입혔습니다.
+- **다른 provider는 안 건드리고 링 하나의 기준만 전환** — hover 카드의 "표시 기준" 줄에서 그
+  provider만 주간/월간/5시간으로 바꿀 수 있고, 각 링 모서리의 M/W/5h 배지가 지금 기준을
+  보여줍니다.
+- **GitHub에서 업데이트 확인** — 설정 → 정보에서 새 Windows 빌드를 확인하고, 클릭 한 번으로
+  설치 프로그램을 받아 실행합니다.
+- **바 아이콘 순서 변경** — 설정 → Notch에 ▲▼ 버튼이 있어 아이콘이 그려지는 순서를 직접 정할
+  수 있습니다.
+- **항상 위에 표시 켜고 끄기** — 노치를 우클릭하거나 설정에서, 다른 창 뒤로 숨을지 항상 맨
+  위에 있을지 정할 수 있습니다.
+
+전체 이중언어(영어/한국어) 설명, provider 상세, 빌드 방법:
+**[`windows/README.md`](windows/README.md)**.
+
+## 윈도우에 설치하기
+
+**[Releases](../../releases/tag/windows-v0.4.2)** 페이지에서 설치 파일을 받아 실행하세요:
+[`Codenotch_0.4.2_x64-setup.exe`](../../releases/download/windows-v0.4.2/Codenotch_0.4.2_x64-setup.exe).
+Windows 11 필요(WebView2 런타임은 기본 포함). 설치하면 시작 메뉴에 바로가기와 제거 프로그램이
+등록됩니다 — 관리자 권한 불필요.
+
+또는 직접 소스에서 빌드:
+
+```powershell
+git clone https://github.com/toughCSB/codenotch.git
+cd codenotch/windows/codenotch
+cargo build --release
+.\target\release\codenotch.exe          # 화면 오른쪽 가장자리에 pill이 나타남
+.\target\release\codenotch.exe doctor   # 자체 진단: 크리덴셜, 데이터소스, 아이콘, 훅
+```
+
+<details>
+<summary>🇺🇸 Read this in English (click to expand)</summary>
 
 Fork of [vinzdg/codenotch](https://github.com/vinzdg/codenotch) — a small black notch pinned to
 the edge of your screen showing how much of each coding assistant's usage allowance is left, and
@@ -24,14 +71,16 @@ WebView2) adds on top of upstream:
   Windows build and download the installer with one more click; nothing installs on its own.
 - **Reorder the pill's icons** — Settings → Notch has ▲▼ buttons on each provider so the order
   they draw in is a choice, not fixed.
+- **Always-on-top switch** — right-click the notch, or use Settings, to let it sink behind other
+  windows instead of always staying on top.
 
 Full bilingual (English/한국어) writeup, provider details and build instructions:
 **[`windows/README.md`](windows/README.md)**.
 
-## Install on Windows
+### Install on Windows
 
-Download and run the installer from **[Releases](../../releases/tag/windows-v0.4.1)**:
-[`Codenotch_0.4.1_x64-setup.exe`](../../releases/download/windows-v0.4.1/Codenotch_0.4.1_x64-setup.exe).
+Download and run the installer from **[Releases](../../releases/tag/windows-v0.4.2)**:
+[`Codenotch_0.4.2_x64-setup.exe`](../../releases/download/windows-v0.4.2/Codenotch_0.4.2_x64-setup.exe).
 Requires Windows 11 (WebView2 runtime ships by default). The installer adds a Start Menu shortcut
 and an uninstaller — no admin rights needed.
 
@@ -45,22 +94,7 @@ cargo build --release
 .\target\release\codenotch.exe doctor   # self-diagnosis: credentials, data sources, icons, hooks
 ```
 
-## 윈도우에 설치하기
-
-**[Releases](../../releases/tag/windows-v0.4.1)** 페이지에서 설치 파일을 받아 실행하세요:
-[`Codenotch_0.4.1_x64-setup.exe`](../../releases/download/windows-v0.4.1/Codenotch_0.4.1_x64-setup.exe).
-Windows 11 필요(WebView2 런타임은 기본 포함). 설치하면 시작 메뉴에 바로가기와 제거 프로그램이
-등록됩니다 — 관리자 권한 불필요.
-
-또는 직접 소스에서 빌드:
-
-```powershell
-git clone https://github.com/toughCSB/codenotch.git
-cd codenotch/windows/codenotch
-cargo build --release
-.\target\release\codenotch.exe          # 화면 오른쪽 가장자리에 pill이 나타남
-.\target\release\codenotch.exe doctor   # 자체 진단: 크리덴셜, 데이터소스, 아이콘, 훅
-```
+</details>
 
 ---
 
