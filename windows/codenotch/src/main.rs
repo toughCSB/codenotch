@@ -61,7 +61,7 @@ fn resolved_lang(raw: &str) -> String {
 pub fn ui_scale(app: &AppHandle) -> f64 {
     let st = app.state::<AppState>();
     let c = st.cfg.lock().unwrap();
-    c.scale.clamp(config::SCALE_MIN, config::SCALE_MAX)
+    config::snap_scale(c.scale)
 }
 
 pub fn broadcast(app: &AppHandle) {
@@ -256,6 +256,7 @@ pub fn apply_lang(app: &AppHandle, lang: &str) {
     // settings window's thread left the tray with a menu that would never open again.
     tray::refresh_menu(app);
     broadcast(app);
+    antigravity::emit_current(app);
 }
 
 // ---------------- commands ----------------
@@ -289,7 +290,9 @@ fn refresh_usage(app: AppHandle) {
 
 #[tauri::command]
 fn get_antigravity(state: tauri::State<AppState>) -> usage::UsageSnapshot {
-    state.antigravity.lock().unwrap().clone()
+    let lang = state.cfg.lock().unwrap().lang.clone();
+    let snap = state.antigravity.lock().unwrap().clone();
+    antigravity::localized_snapshot_for_lang(snap, &lang)
 }
 
 #[tauri::command]
@@ -618,7 +621,7 @@ fn set_scale(app: AppHandle, scale: f64) {
     let value = {
         let st = app.state::<AppState>();
         let mut c = st.cfg.lock().unwrap();
-        c.scale = scale.clamp(config::SCALE_MIN, config::SCALE_MAX);
+        c.scale = config::snap_scale(scale);
         config::save(&c);
         c.scale
     };
@@ -734,9 +737,9 @@ fn lane_family(w: &usage::LimitWindow) -> &'static str {
 fn lane_is(w: &usage::LimitWindow, limit: &str) -> bool {
     let text = format!("{} {}", w.id, w.label).to_lowercase();
     match limit {
-        "weekly" => text.contains("weekly") || text.contains("seven_day"),
+        "weekly" => text.contains("weekly") || text.contains("week") || text.contains("seven_day"),
         "monthly" => text.contains("month") || text.contains("30d"),
-        _ => ["5h", "5-hour", "five hour", "five-hour", "hourly", "session"]
+        _ => ["5h", "5-hour", "5 hour", "five hour", "five-hour", "hourly", "session", "rolling"]
             .iter()
             .any(|k| text.contains(k)),
     }
@@ -1095,6 +1098,11 @@ fn get_update_info() -> updater::UpdateInfo {
     updater::last()
 }
 
+#[tauri::command]
+fn get_upstream_update_info() -> updater::UpstreamInfo {
+    updater::upstream_last()
+}
+
 /// Runs the network check off the invoking thread — the settings window awaits the promise, but a
 /// blocking Tauri command would stall the WebView's own message loop while it waits on ureq.
 #[tauri::command]
@@ -1103,8 +1111,13 @@ async fn check_for_update(app: AppHandle) -> updater::UpdateInfo {
 }
 
 #[tauri::command]
-async fn install_update(app: AppHandle, asset_url: String, asset_name: String) -> Result<(), String> {
-    tauri::async_runtime::spawn_blocking(move || updater::download_and_launch(&app, &asset_url, &asset_name))
+async fn check_upstream_update(app: AppHandle) -> updater::UpstreamInfo {
+    tauri::async_runtime::spawn_blocking(move || updater::check_upstream(&app)).await.unwrap_or_default()
+}
+
+#[tauri::command]
+async fn install_update(app: AppHandle) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || updater::download_and_launch(&app))
         .await
         .map_err(|e| format!("{e}"))?
 }
@@ -1381,7 +1394,9 @@ fn main() {
             reset_notch_position,
             open_settings,
             get_update_info,
+            get_upstream_update_info,
             check_for_update,
+            check_upstream_update,
             install_update,
             open_release_page,
             get_always_on_top,

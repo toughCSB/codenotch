@@ -78,7 +78,7 @@ fn handle(app: &AppHandle, id: &str) {
             let a = app.clone();
             std::thread::spawn(move || crate::reload_glyphs(&a));
         }
-        "settings" => crate::settings_window::open(app),
+        "settings" => crate::open_settings(app.clone()),
         "quit" => app.exit(0),
         _ => {}
     }

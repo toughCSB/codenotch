@@ -1,6 +1,9 @@
-//! Update check against GitHub Releases.
+//! Two deliberately separate GitHub Release checks.
 //!
-//! No signing keys, no `latest.json` manifest, no auto-apply: this fork's releases are still a
+//! The original `vinzdg/codenotch` check is informational only: its result contains no asset URL
+//! and therefore has no path to the installer. This fork's releases are a second check and the only
+//! source `download_and_launch` accepts. No signing keys, no `latest.json` manifest, no auto-apply:
+//! this fork's releases are still a
 //! human building `cargo tauri build` and dragging the installer onto a GitHub release by hand
 //! (see windows/README.md), so a full `tauri-plugin-updater` pipeline would be new infrastructure
 //! this app does not otherwise need. Instead: ask GitHub's public releases API whether a newer
@@ -13,7 +16,8 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
-const REPO: &str = "toughCSB/codenotch";
+const FORK_REPO: &str = "toughCSB/codenotch";
+const UPSTREAM_REPO: &str = "vinzdg/codenotch";
 /// This fork tags its Windows releases separately from the Mac app's plain `vX.Y.Z` ones.
 const TAG_PREFIX: &str = "windows-v";
 
@@ -33,8 +37,25 @@ pub struct UpdateInfo {
 
 static LAST: Mutex<Option<UpdateInfo>> = Mutex::new(None);
 
+/// The original app's latest release. Deliberately no downloadable asset fields: upstream can be
+/// inspected from this fork, but can never be installed over it.
+#[derive(Clone, Serialize, Default)]
+pub struct UpstreamInfo {
+    pub checking: bool,
+    pub checked: bool,
+    pub latest: String,
+    pub html_url: String,
+    pub error: String,
+}
+
+static UPSTREAM_LAST: Mutex<Option<UpstreamInfo>> = Mutex::new(None);
+
 pub fn last() -> UpdateInfo {
     LAST.lock().unwrap().clone().unwrap_or_default()
+}
+
+pub fn upstream_last() -> UpstreamInfo {
+    UPSTREAM_LAST.lock().unwrap().clone().unwrap_or_default()
 }
 
 #[derive(serde::Deserialize)]
@@ -83,7 +104,7 @@ const PER_PAGE: u32 = 30;
 fn fetch_latest() -> Result<(String, String, Option<GhAsset>), String> {
     let mut last_err = "no Windows release found".to_string();
     for page in 1..=MAX_PAGES {
-        let url = format!("https://api.github.com/repos/{REPO}/releases?per_page={PER_PAGE}&page={page}");
+        let url = format!("https://api.github.com/repos/{FORK_REPO}/releases?per_page={PER_PAGE}&page={page}");
         let resp = ureq::get(&url)
             .set("User-Agent", concat!("codenotch/", env!("CARGO_PKG_VERSION"), " (Windows)"))
             .set("Accept", "application/vnd.github+json")
@@ -104,6 +125,41 @@ fn fetch_latest() -> Result<(String, String, Option<GhAsset>), String> {
         last_err = format!("no Windows release found in the {} most recent releases", page * PER_PAGE);
     }
     Err(last_err)
+}
+
+fn fetch_upstream_latest() -> Result<(String, String), String> {
+    let url = format!("https://api.github.com/repos/{UPSTREAM_REPO}/releases/latest");
+    let rel: GhRelease = ureq::get(&url)
+        .set("User-Agent", concat!("codenotch/", env!("CARGO_PKG_VERSION"), " (Windows)"))
+        .set("Accept", "application/vnd.github+json")
+        .timeout(Duration::from_secs(15))
+        .call()
+        .map_err(|e| format!("{e}"))?
+        .into_json()
+        .map_err(|e| format!("parse: {e}"))?;
+    if rel.draft || rel.prerelease {
+        return Err("the latest upstream release is not a stable release".into());
+    }
+    Ok((rel.tag_name.trim_start_matches('v').to_string(), rel.html_url))
+}
+
+/// Reports the original project's latest release. There is intentionally no install counterpart.
+pub fn check_upstream(app: &AppHandle) -> UpstreamInfo {
+    let mut info = UpstreamInfo { checking: true, ..Default::default() };
+    *UPSTREAM_LAST.lock().unwrap() = Some(info.clone());
+    let _ = app.emit("upstream_update_info", &info);
+    match fetch_upstream_latest() {
+        Ok((latest, html_url)) => {
+            info.latest = latest;
+            info.html_url = html_url;
+        }
+        Err(error) => info.error = error,
+    }
+    info.checking = false;
+    info.checked = true;
+    *UPSTREAM_LAST.lock().unwrap() = Some(info.clone());
+    let _ = app.emit("upstream_update_info", &info);
+    info
 }
 
 /// Runs the check inline (on whatever thread calls it — callers hop to a background thread first)
@@ -141,14 +197,21 @@ pub fn start(app: AppHandle) {
     std::thread::spawn(move || {
         std::thread::sleep(Duration::from_secs(20));
         check(&app);
+        check_upstream(&app);
     });
 }
 
 /// Downloads the release's installer to a temp file and launches it, then quits Codenotch so the
 /// installer is not fighting the running exe for its own file lock. The installer's own window is
 /// what the user watches from here — nothing here runs silently or without that visible step.
-pub fn download_and_launch(app: &AppHandle, asset_url: &str, asset_name: &str) -> Result<(), String> {
-    let resp = ureq::get(asset_url)
+pub fn download_and_launch(app: &AppHandle) -> Result<(), String> {
+    // Never accept a URL from the page. Only the asset returned by this fork's last successful
+    // release check may become executable; the original-project check has no asset field at all.
+    let info = last();
+    if !info.available || info.asset_url.is_empty() {
+        return Err("no installable update for this Windows app was checked".into());
+    }
+    let resp = ureq::get(&info.asset_url)
         .set("User-Agent", concat!("codenotch/", env!("CARGO_PKG_VERSION"), " (Windows)"))
         .timeout(Duration::from_secs(120))
         .call()
@@ -158,7 +221,7 @@ pub fn download_and_launch(app: &AppHandle, asset_url: &str, asset_name: &str) -
     if bytes.is_empty() {
         return Err("downloaded file is empty".into());
     }
-    let name = if asset_name.is_empty() { "CodenotchSetup.exe" } else { asset_name };
+    let name = if info.asset_name.is_empty() { "CodenotchSetup.exe" } else { &info.asset_name };
     let path = std::env::temp_dir().join(name);
     std::fs::write(&path, &bytes).map_err(|e| format!("could not save installer: {e}"))?;
     std::process::Command::new(&path)

@@ -401,6 +401,7 @@
               <option value="ja">&#26085;&#26412;&#35486;</option>
               <option value="ko">&#54620;&#44397;&#50612;</option>
               <option value="ru">Русский</option>
+              <option value="uk">Українська</option>
             </select>
           </div>
         </div>
@@ -437,7 +438,7 @@
           <img class="about-mark" data-logo src="tray.png" alt="Codenotch">
           <div>
             <div class="about-name">Codenotch</div>
-            <div class="about-ver">Version <span id="about-version">0.3.0</span></div>
+            <div class="about-ver">Version <span id="about-version">0.5.0</span></div>
           </div>
         </div>
         <div class="c-note dim" style="margin-top:10px">Shows how much of your Claude, Codex, Cursor and Antigravity allowance you have used, in the taskbar icon and in a pill at the edge of the screen.</div>
@@ -447,10 +448,24 @@
         <div class="b-head">Updates</div>
         <div class="row">
           <div class="r-text">
-            <div class="r-name">Check for updates</div>
-            <div class="r-why" id="update-status">Checks this fork's GitHub releases for a newer Windows build.</div>
+            <div class="r-name">Original Codenotch releases</div>
+            <div class="r-why" id="upstream-status">Informational only. This checks what the original project has shipped and can never install it over this Windows app.</div>
           </div>
-          <div class="r-ctl"><button class="btn" id="btn-checkupdate">Check now</button></div>
+          <div class="r-ctl"><button class="btn" id="btn-checkupstream">Check upstream</button></div>
+        </div>
+        <div class="row" id="upstream-row" hidden>
+          <div class="r-text">
+            <div class="r-name" id="upstream-name">Latest original release</div>
+            <div class="r-why">Reporting only — no original-app installer is downloaded.</div>
+          </div>
+          <div class="r-ctl"><button class="btn" id="btn-viewupstream">View release</button></div>
+        </div>
+        <div class="row">
+          <div class="r-text">
+            <div class="r-name">Update this Windows app</div>
+            <div class="r-why" id="update-status">Separately checks this fork's Windows releases. Only an installer from this check can update Codenotch.</div>
+          </div>
+          <div class="r-ctl"><button class="btn" id="btn-checkupdate">Check this app</button></div>
         </div>
         <div class="row" id="update-row" hidden>
           <div class="r-text">
@@ -556,7 +571,7 @@ const RU_STATIC = {
   'Put the notch back':'Вернуть панель', 'Reset position':'Сбросить положение', 'Saved':'Сохранено',
   'Numbers':'Числа', 'two readings':'два показания', 'Bars':'Полосы', '1 to 5 columns':'от 1 до 5 столбцов', 'Plain icon':'Обычный значок', 'just the logo':'только логотип',
   'kept':'оставлено', 'Showing':'Показывается', 'Showing in':'Показывается в',
-  'Notch reads':'Показания панели', 'Automatic':'Автоматически', '5-Hour Limit':'Лимит на 5 часов', 'Weekly Limit':'Недельный лимит',
+  'Notch reads':'Показания панели', 'Default':'По умолчанию', '5-Hour Limit':'Лимит на 5 часов', 'Weekly Limit':'Недельный лимит',
   'Gemini Models':'Модели Gemini', 'Claude and GPT models':'Модели Claude и GPT',
   '"%@" is no longer available':'«%@» больше недоступен', '%@ — that slot now shows another provider.':'%@ — теперь слот показывает другого провайдера.',
   'One provider always stays ticked, so the pill is never empty.':'Хотя бы один провайдер всегда выбран, поэтому панель не бывает пустой.',
@@ -583,7 +598,15 @@ const RU_STATIC = {
   'Windows picks one of these depending on the display. If a number is unreadable here, it will be unreadable in the taskbar.':'Windows выбирает один из вариантов в зависимости от масштаба экрана. Если число не читается здесь, в панели задач оно тоже не будет читаться.',
   'Notch size':'Размер панели', 'Codenotch':'Codenotch', 'Tray icon preview':'Предпросмотр значка', 'Codenotch logo':'Логотип Codenotch', 'Tray icon at':'Значок размером', 'pixels':'пикселей',
   'Down the right-hand edge':'У правого края', 'Down the left-hand edge':'У левого края', 'Top half':'Верхняя половина', 'Bottom half':'Нижняя половина', 'Column':'Столбец', 'Remove column':'Удалить столбец',
-  'Monthly Limit':'Месячный лимит', 'Model data':'Данные модели'
+  'Monthly Limit':'Месячный лимит', 'Model data':'Данные модели',
+  'Updates':'Обновления', 'Checking…':'Проверка…',
+  'Original Codenotch releases':'Релизы оригинального Codenotch', 'Check upstream':'Проверить оригинал',
+  'Informational only. This checks what the original project has shipped and can never install it over this Windows app.':'Только информация: проверяет релизы оригинального проекта и никогда не устанавливает их поверх этого приложения Windows.',
+  'Latest original release':'Последний оригинальный релиз', 'Reporting only — no original-app installer is downloaded.':'Только отчёт — установщик оригинального приложения не загружается.',
+  'Update this Windows app':'Обновить это приложение Windows', 'Check this app':'Проверить это приложение',
+  'Separately checks this fork\'s Windows releases. Only an installer from this check can update Codenotch.':'Отдельно проверяет Windows-релизы этого форка. Codenotch может обновить только установщик из этой проверки.',
+  'Checking the original project…':'Проверка оригинального проекта…', 'Could not check the original project: ':'Не удалось проверить оригинальный проект: ',
+  'Latest upstream release: Codenotch %@.':'Последний релиз оригинала: Codenotch %@.'
 };
 /* 떡배님's ask: every settings screen in Korean. Same DOM-walking mechanism as RU_STATIC above —
    any exact-match English text node or aria-label/title/alt gets swapped for this. */
@@ -612,8 +635,8 @@ const KO_STATIC = {
   'Put the notch back':'노치 바 위치 되돌리기', 'Reset position':'위치 초기화', 'Saved':'저장됨',
   'Numbers':'숫자', 'two readings':'두 항목', 'Bars':'막대', '1 to 5 columns':'1~5개 열', 'Plain icon':'기본 아이콘', 'just the logo':'로고만 표시',
   'kept':'유지됨', 'Showing':'표시 중', 'Showing in':'표시 위치',
-  'Notch reads':'표시 기준', 'Automatic':'자동', '5-Hour Limit':'5시간 리밋', 'Weekly Limit':'주간 리밋', 'Monthly Limit':'월간 리밋',
-  'Gemini Models':'Gemini 모델', 'Claude and GPT models':'Claude·GPT 모델',
+  'Notch reads':'표시 기준', 'Default':'기본', '5-Hour Limit':'5시간 한도', 'Weekly Limit':'주간 한도', 'Monthly Limit':'월간 한도',
+  'Gemini Models':'Gemini 모델', 'Claude and GPT models':'Claude 및 GPT 모델',
   '"%@" is no longer available':'"%@"을(를) 더 이상 사용할 수 없습니다', '%@ — that slot now shows another provider.':'%@ — 이 항목은 이제 다른 provider를 표시합니다.',
   'One provider always stays ticked, so the pill is never empty.':'항상 최소 하나의 provider는 선택된 상태로 유지되어, 바가 비어 있지 않습니다.',
   'The taskbar icon shows the plain Codenotch logo.':'트레이 아이콘에 기본 Codenotch 로고가 표시됩니다.',
@@ -638,9 +661,15 @@ const KO_STATIC = {
   'Move up':'위로 이동', 'Move down':'아래로 이동',
   'Always on top':'항상 위에 표시', 'Keep the notch above every other window':'노치를 다른 모든 창보다 위에 유지',
   'On by default. Turn it off and the pill behaves like an ordinary window, sinking behind whatever you click into instead of staying on top. The same switch is on the notch\'s own right-click menu.':'기본적으로 켜져 있습니다. 끄면 바가 일반 창처럼 동작해서, 항상 위에 있는 대신 클릭한 다른 창 뒤로 숨습니다. 같은 설정을 노치를 우클릭해서도 바꿀 수 있습니다.',
-  'Updates':'업데이트', 'Check for updates':'업데이트 확인', 'Check now':'지금 확인', 'Checking…':'확인 중…',
+  'Updates':'업데이트', 'Check now':'지금 확인', 'Checking…':'확인 중…',
+  'Original Codenotch releases':'원본 Codenotch 릴리스', 'Check upstream':'원본 확인',
+  'Informational only. This checks what the original project has shipped and can never install it over this Windows app.':'정보 확인 전용입니다. 원본 프로젝트의 릴리스를 확인하지만 이 Windows 앱 위에 설치하지 않습니다.',
+  'Latest original release':'원본 최신 릴리스', 'Reporting only — no original-app installer is downloaded.':'정보만 표시하며 원본 앱 설치 파일은 다운로드하지 않습니다.',
+  'Update this Windows app':'이 Windows 앱 업데이트', 'Check this app':'이 앱 확인',
+  'Separately checks this fork\'s Windows releases. Only an installer from this check can update Codenotch.':'이 포크의 Windows 릴리스를 별도로 확인합니다. 이 확인에서 찾은 설치 파일만 Codenotch를 업데이트할 수 있습니다.',
+  'Checking the original project…':'원본 프로젝트 확인 중…', 'Could not check the original project: ':'원본 프로젝트를 확인할 수 없습니다: ',
+  'Latest upstream release: Codenotch %@.':'원본 최신 릴리스: Codenotch %@.',
   'Checking for an update…':'업데이트 확인 중…',
-  'Checks this fork\'s GitHub releases for a newer Windows build.':'이 포크의 GitHub 릴리스에서 더 새로운 Windows 빌드가 있는지 확인합니다.',
   'Could not check for an update: ':'업데이트를 확인할 수 없습니다: ',
   'You have the latest version (':'최신 버전을 사용 중입니다 (',
   'A newer version is available.':'새 버전이 있습니다.',
@@ -648,15 +677,28 @@ const KO_STATIC = {
   'You have %@. Downloading starts the installer, which closes Codenotch to replace it.':'현재 %@ 버전입니다. 다운로드하면 설치 프로그램이 실행되며, 교체를 위해 Codenotch가 종료됩니다.',
   'Downloading…':'다운로드 중…', 'Download & install':'다운로드 후 설치', 'View release':'릴리스 보기'
 };
+// The rest of these pages still fall back to English for languages whose full static pass has not
+// landed yet. Antigravity's app-owned group/lane copy is complete for every language the port
+// ships, matching the Rust-side keys exactly.
+const ZH_STATIC = {
+  'Default':'默认', '5-Hour Limit':'5 小时额度', 'Weekly Limit':'每周额度',
+  'Gemini Models':'Gemini 模型', 'Claude and GPT models':'Claude 和 GPT 模型'
+};
+const JA_STATIC = {
+  'Default':'デフォルト', '5-Hour Limit':'5 時間の上限', 'Weekly Limit':'週間の上限',
+  'Gemini Models':'Gemini モデル', 'Claude and GPT models':'Claude と GPT のモデル'
+};
+const UK_STATIC = {
+  'Default':'Типово', '5-Hour Limit':'Ліміт 5 годин', 'Weekly Limit':'Тижневий ліміт',
+  'Gemini Models':'Моделі Gemini', 'Claude and GPT models':'Моделі Claude і GPT'
+};
 const STATUS_TEXT = {
   en:{ ok:'', stale:'last reading is old', needsAuth:'not signed in', absent:'not installed', none:'nothing to report', error:'not reachable' },
   ru:{ ok:'', stale:'данные устарели', needsAuth:'не выполнен вход', absent:'не установлен', none:'нет данных', error:'недоступен' },
   ko:{ ok:'', stale:'마지막 정보가 오래됨', needsAuth:'로그인 필요', absent:'설치되지 않음', none:'표시할 데이터 없음', error:'연결할 수 없음' }
 };
 let uiLang = 'en';
-/* One dict per language, keyed the same way RU_STATIC always was; 'ko' just adds a second entry
-   to what used to be an if/else for Russian alone. */
-const STATIC_DICTS = { ru:RU_STATIC, ko:KO_STATIC };
+const STATIC_DICTS = { zh:ZH_STATIC, ja:JA_STATIC, ko:KO_STATIC, ru:RU_STATIC, uk:UK_STATIC };
 function ui(key, fallback){ const d = STATIC_DICTS[uiLang]; return (d && d[key]) || fallback; }
 function applyStaticUi(){
   const dict = STATIC_DICTS[uiLang] || null;
@@ -683,9 +725,7 @@ function applyStaticUi(){
   }
 }
 function setUiLanguage(lang){
-  uiLang = lang === 'ru' || (lang === 'auto' && /^ru(?:-|$)/i.test(navigator.language || '')) ? 'ru'
-    : lang === 'ko' || (lang === 'auto' && /^ko(?:-|$)/i.test(navigator.language || '')) ? 'ko'
-    : 'en';
+  uiLang = STATIC_DICTS[lang] ? lang : 'en';
   applyStaticUi();
   render();
 }
@@ -1102,7 +1142,7 @@ let notchSlots = [];       // exactly what is stored: [] = all of them
    provider's ring must never move another's — the hover card on the pill itself offers the same
    choice per provider it is opened for). "Model data" — which model family Antigravity's lanes
    come from — is a separate, Antigravity-only axis. */
-const AG_LIMITS = [['automatic', 'Automatic'], ['5h', '5-Hour Limit'], ['weekly', 'Weekly Limit'], ['monthly', 'Monthly Limit']];
+const AG_LIMITS = [['automatic', 'Default'], ['5h', '5-Hour Limit'], ['weekly', 'Weekly Limit'], ['monthly', 'Monthly Limit']];
 const AG_MODELS = [['gemini', 'Gemini Models'], ['3p', 'Claude and GPT models']];
 let agPrefs = { model:'gemini' };
 let ringLimits = {};             // provider id -> 'automatic'|'5h'|'weekly'|'monthly'; missing = 'weekly'
@@ -1387,7 +1427,7 @@ const hooksSwitch = remoteSwitch('sw-hooks', 'get_hooks_installed', 'set_hooks_i
 const aotSwitch = remoteSwitch('sw-aot', 'get_always_on_top', 'set_always_on_top', 'Always on top');
 
 /* ---- language ----------------------------------------------------------- */
-const LANGS = ['auto', 'en', 'zh', 'ja', 'ko', 'ru'];
+const LANGS = ['auto', 'en', 'zh', 'ja', 'ko', 'ru', 'uk'];
 document.getElementById('lang').addEventListener('change', e => {
   const previous = e.target.dataset.previous || 'auto';
   const v = LANGS.indexOf(e.target.value) >= 0 ? e.target.value : 'auto';
@@ -1411,9 +1451,36 @@ document.getElementById('btn-resetpos').addEventListener('click', () => {
     .then(() => toast(ui('The notch is back in the middle', 'The notch is back in the middle')))
     .catch(e => strip('reset_notch_position failed: ' + errText(e)));
 });
-/* ---- update check ---------------------------------------------------------
-   No auto-apply: a click downloads the installer and hands off to it (see updater.rs), so this is
-   only ever reporting a state Rust already has and reacting to a click, never acting on its own. */
+/* ---- update checks --------------------------------------------------------
+   Original Codenotch is report-only. This fork is a separate check, and its checked asset is the
+   only one Rust will hand to the installer. */
+function renderUpstreamUpdate(info){
+  const status = document.getElementById('upstream-status');
+  const row = document.getElementById('upstream-row');
+  const name = document.getElementById('upstream-name');
+  const btn = document.getElementById('btn-checkupstream');
+  if(!status || !row || !btn) return;
+  btn.disabled = !!(info && info.checking);
+  btn.textContent = (info && info.checking) ? ui('Checking…', 'Checking…') : ui('Check upstream', 'Check upstream');
+  if(info && info.checking){
+    status.textContent = ui('Checking the original project…', 'Checking the original project…');
+    row.hidden = true;
+  }else if(!info || !info.checked){
+    status.textContent = ui(
+      'Informational only. This checks what the original project has shipped and can never install it over this Windows app.',
+      'Informational only. This checks what the original project has shipped and can never install it over this Windows app.'
+    );
+    row.hidden = true;
+  }else if(info.error){
+    status.textContent = ui('Could not check the original project: ', 'Could not check the original project: ') + info.error;
+    row.hidden = true;
+  }else{
+    status.textContent = ui('Latest upstream release: Codenotch %@.', 'Latest upstream release: Codenotch %@.').replace('%@', info.latest);
+    name.textContent = ui('Latest original release', 'Latest original release') + ': ' + info.latest;
+    row.hidden = false;
+  }
+}
+
 function renderUpdate(info){
   const status = document.getElementById('update-status');
   const row = document.getElementById('update-row');
@@ -1422,14 +1489,17 @@ function renderUpdate(info){
   const btnCheck = document.getElementById('btn-checkupdate');
   if(!status || !row) return;
   btnCheck.disabled = !!(info && info.checking);
-  btnCheck.textContent = (info && info.checking) ? ui('Checking…', 'Checking…') : ui('Check now', 'Check now');
+  btnCheck.textContent = (info && info.checking) ? ui('Checking…', 'Checking…') : ui('Check this app', 'Check this app');
   if(info && info.checking){
     status.textContent = ui('Checking for an update…', 'Checking for an update…');
     row.hidden = true;
     return;
   }
   if(!info || !info.checked){
-    status.textContent = ui('Checks this fork\'s GitHub releases for a newer Windows build.', 'Checks this fork\'s GitHub releases for a newer Windows build.');
+    status.textContent = ui(
+      'Separately checks this fork\'s Windows releases. Only an installer from this check can update Codenotch.',
+      'Separately checks this fork\'s Windows releases. Only an installer from this check can update Codenotch.'
+    );
     row.hidden = true;
     return;
   }
@@ -1450,6 +1520,15 @@ function renderUpdate(info){
   document.getElementById('btn-installupdate').disabled = !info.asset_url;
 }
 let lastUpdateInfo = null;
+let lastUpstreamInfo = null;
+document.getElementById('btn-checkupstream').addEventListener('click', () => {
+  renderUpstreamUpdate({ checking:true, checked:true });
+  invoke('check_upstream_update').then(info => { lastUpstreamInfo = info; renderUpstreamUpdate(info); })
+    .catch(e => strip('check_upstream_update failed: ' + errText(e)));
+});
+document.getElementById('btn-viewupstream').addEventListener('click', () => {
+  if(lastUpstreamInfo && lastUpstreamInfo.html_url) invoke('open_release_page', { url:lastUpstreamInfo.html_url }).catch(() => {});
+});
 document.getElementById('btn-checkupdate').addEventListener('click', () => {
   renderUpdate({ checking:true, checked:true });
   invoke('check_for_update').then(info => { lastUpdateInfo = info; renderUpdate(info); })
@@ -1463,13 +1542,15 @@ document.getElementById('btn-installupdate').addEventListener('click', () => {
   const btn = document.getElementById('btn-installupdate');
   btn.disabled = true;
   btn.textContent = ui('Downloading…', 'Downloading…');
-  invoke('install_update', { assetUrl: lastUpdateInfo.asset_url, assetName: lastUpdateInfo.asset_name || '' })
+  invoke('install_update')
     .catch(e => { btn.disabled = false; btn.textContent = ui('Download & install', 'Download & install'); strip('install_update failed: ' + errText(e)); });
 });
 call('get_update_info', undefined, null).then(info => { if(info){ lastUpdateInfo = info; renderUpdate(info); } });
+call('get_upstream_update_info', undefined, null).then(info => { if(info){ lastUpstreamInfo = info; renderUpstreamUpdate(info); } });
 try {
   if(window.__TAURI__ && window.__TAURI__.event && typeof window.__TAURI__.event.listen === 'function'){
     window.__TAURI__.event.listen('update_info', e => { lastUpdateInfo = e.payload; renderUpdate(e.payload); });
+    window.__TAURI__.event.listen('upstream_update_info', e => { lastUpstreamInfo = e.payload; renderUpstreamUpdate(e.payload); });
   }
 } catch(e) { /* global Tauri event API not available: the "Check now" button still works on its own */ }
 

@@ -522,31 +522,32 @@ mod tests {
     #[test]
     fn test_parse_quota_official_sample_and_errors() {
         let text = "Quota:\nGemini Models Weekly Limit Remaining 94% 2026-09-12T01:47:23Z\nGemini Models Five Hour Limit Remaining 78% 2026-09-10T06:12:31Z\nClaude and GPT models Weekly Limit Remaining 100% 2026-09-17T01:47:23Z\nClaude and GPT models Five Hour Limit Remaining 100% 2026-09-10T08:13:44Z";
-        let windows = parse_quota(text).expect("valid sample quota");
+        let mut windows = parse_quota(text).expect("valid sample quota");
+        crate::antigravity::localize_windows(&mut windows, "ko");
         assert_eq!(windows.len(), 4);
 
         // Grouped by model and named by lane, 5-hour first, as the Mac card shows them
         assert_eq!(windows[0].id, "Gemini Models Five Hour Limit");
-        assert_eq!(windows[0].label, "5-hour Limit");
-        assert_eq!(windows[0].group.as_deref(), Some("Gemini Models"));
+        assert_eq!(windows[0].label, "5시간 한도");
+        assert_eq!(windows[0].group.as_deref(), Some("Gemini 모델"));
         assert!((windows[0].used - 0.22).abs() < 1e-5);
         assert!(windows[0].resets_at.is_some());
 
         assert_eq!(windows[1].id, "Gemini Models Weekly Limit");
-        assert_eq!(windows[1].label, "Weekly Limit");
-        assert_eq!(windows[1].group.as_deref(), Some("Gemini Models"));
+        assert_eq!(windows[1].label, "주간 한도");
+        assert_eq!(windows[1].group.as_deref(), Some("Gemini 모델"));
         assert!((windows[1].used - 0.06).abs() < 1e-5);
         assert!(windows[1].resets_at.is_some());
 
         assert_eq!(windows[2].id, "Claude and GPT models Five Hour Limit");
-        assert_eq!(windows[2].label, "5-hour Limit");
-        assert_eq!(windows[2].group.as_deref(), Some("Claude and GPT models"));
+        assert_eq!(windows[2].label, "5시간 한도");
+        assert_eq!(windows[2].group.as_deref(), Some("Claude 및 GPT 모델"));
         assert_eq!(windows[2].used, 0.0);
         assert!(windows[2].resets_at.is_some());
 
         assert_eq!(windows[3].id, "Claude and GPT models Weekly Limit");
-        assert_eq!(windows[3].label, "Weekly Limit");
-        assert_eq!(windows[3].group.as_deref(), Some("Claude and GPT models"));
+        assert_eq!(windows[3].label, "주간 한도");
+        assert_eq!(windows[3].group.as_deref(), Some("Claude 및 GPT 모델"));
         assert_eq!(windows[3].used, 0.0);
         assert!(windows[3].resets_at.is_some());
 
@@ -571,9 +572,10 @@ mod tests {
             clean,
             "Quota:\nGemini Models Weekly Limit Remaining 94% 2026-09-12T01:47:23Z\n"
         );
-        let parsed = parse_quota(&clean).expect("parsed sanitized quota");
+        let mut parsed = parse_quota(&clean).expect("parsed sanitized quota");
+        crate::antigravity::localize_windows(&mut parsed, "ko");
         assert_eq!(parsed.len(), 1);
-        assert_eq!(parsed[0].label, "Weekly Limit");
+        assert_eq!(parsed[0].label, "주간 한도");
     }
 
     #[test]

@@ -325,6 +325,55 @@ pub(crate) fn lane_name(id: &str) -> Option<&'static str> {
     }
 }
 
+/// Translate only Antigravity's app-owned presentation copy. Provider ids stay untouched because
+/// cadence and model-family selection deliberately read those stable English ids.
+pub(crate) fn localize_windows(windows: &mut [LimitWindow], lang: &str) {
+    fn translated(lang: &str, value: &str) -> String {
+        match value {
+            "Gemini Models" | "Claude and GPT models" | "5-hour Limit" | "Weekly Limit" => {
+                crate::i18n::tr(lang, value).to_string()
+            }
+            _ => value.to_string(),
+        }
+    }
+
+    for window in windows {
+        window.label = translated(lang, &window.label);
+        if let Some(group) = &window.group {
+            window.group = Some(translated(lang, group));
+        }
+    }
+}
+
+pub(crate) fn localized_snapshot_for_lang(mut snap: UsageSnapshot, lang: &str) -> UsageSnapshot {
+    localize_windows(&mut snap.windows, lang);
+    snap
+}
+
+fn localized_snapshot(app: &AppHandle, snap: UsageSnapshot) -> UsageSnapshot {
+    let lang = {
+        let st = app.state::<AppState>();
+        let value = st.cfg.lock().unwrap().lang.clone();
+        value
+    };
+    localized_snapshot_for_lang(snap, &lang)
+}
+
+fn emit_snapshot(app: &AppHandle, snap: UsageSnapshot) {
+    let shown = localized_snapshot(app, snap);
+    let _ = app.emit("antigravity", &shown);
+}
+
+/// Re-emit the canonical stored reading in the newly selected UI language.
+pub(crate) fn emit_current(app: &AppHandle) {
+    let snap = {
+        let st = app.state::<AppState>();
+        let value = st.antigravity.lock().unwrap().clone();
+        value
+    };
+    emit_snapshot(app, snap);
+}
+
 /// The Mac card's order: groups as the source lists them, and in each the 5-hour lane before the
 /// weekly one. The language server and the CLI both send weekly first.
 pub(crate) fn order_lanes(windows: &mut [LimitWindow]) {
@@ -654,7 +703,7 @@ fn broadcast(app: &AppHandle, snap: UsageSnapshot) {
     let st = app.state::<AppState>();
     *st.antigravity.lock().unwrap() = snap.clone();
     persist(&snap);
-    let _ = app.emit("antigravity", &snap);
+    emit_snapshot(app, snap);
 }
 
 fn sleep_interruptible(secs: u64) {
@@ -680,9 +729,7 @@ fn start_cli(app: AppHandle) {
 
     std::thread::spawn(move || {
         {
-            let st = app.state::<AppState>();
-            let snap = st.antigravity.lock().unwrap().clone();
-            let _ = app.emit("antigravity", &snap);
+            emit_current(&app);
         }
 
         let mut last_attempt: Option<Instant> = None;
@@ -728,7 +775,7 @@ fn start_cli(app: AppHandle) {
 
             *st.antigravity.lock().unwrap() = snap.clone();
             persist(&snap);
-            let _ = app.emit("antigravity", &snap);
+            emit_snapshot(&app, snap);
         }
     });
 
@@ -738,9 +785,7 @@ fn start_cli(app: AppHandle) {
 fn start_legacy(app: AppHandle) {
     std::thread::spawn(move || {
         {
-            let st = app.state::<AppState>();
-            let snap = st.antigravity.lock().unwrap().clone();
-            let _ = app.emit("antigravity", &snap);
+            emit_current(&app);
         }
         if !legacy_present() {
             broadcast(&app, UsageSnapshot { status: "absent".into(), ..Default::default() });
@@ -905,17 +950,18 @@ mod tests {
             { "displayName": "Claude and GPT models", "buckets": [
                 { "bucketId": "3p-weekly", "remainingFraction": 1.0 },
                 { "bucketId": "3p-5h", "remainingFraction": 1.0 } ] } ] } });
-        let lanes: Vec<String> = super::windows_from_bridge(&reply)
-            .into_iter()
+        let mut windows = super::windows_from_bridge(&reply);
+        super::localize_windows(&mut windows, "ko");
+        let lanes: Vec<String> = windows.into_iter()
             .map(|w| format!("{} › {} ({})", w.group.unwrap_or_default(), w.label, w.id))
             .collect();
         assert_eq!(
             lanes,
             [
-                "Gemini Models › 5-hour Limit (gemini-5h)",
-                "Gemini Models › Weekly Limit (gemini-weekly)",
-                "Claude and GPT models › 5-hour Limit (3p-5h)",
-                "Claude and GPT models › Weekly Limit (3p-weekly)",
+                "Gemini 모델 › 5시간 한도 (gemini-5h)",
+                "Gemini 모델 › 주간 한도 (gemini-weekly)",
+                "Claude 및 GPT 모델 › 5시간 한도 (3p-5h)",
+                "Claude 및 GPT 모델 › 주간 한도 (3p-weekly)",
             ]
         );
     }

@@ -78,6 +78,33 @@ fn is_24h_pattern(pattern: &str) -> bool {
 pub fn tr(lang: &str, key: &str) -> &'static str {
     let l = if lang == "auto" { resolve_auto() } else { lang };
     match (l, key) {
+        // Antigravity window copy. These keys deliberately stay identical to the English source
+        // strings used by both WebView dictionaries: the window id remains provider-owned English,
+        // while only the group and label shown to the user are translated.
+        ("zh", "Gemini Models") => "Gemini 模型",
+        ("zh", "Claude and GPT models") => "Claude 和 GPT 模型",
+        ("zh", "5-hour Limit") => "5 小时额度",
+        ("zh", "Weekly Limit") => "每周额度",
+        ("ja", "Gemini Models") => "Gemini モデル",
+        ("ja", "Claude and GPT models") => "Claude と GPT のモデル",
+        ("ja", "5-hour Limit") => "5 時間の上限",
+        ("ja", "Weekly Limit") => "週間の上限",
+        ("ko", "Gemini Models") => "Gemini 모델",
+        ("ko", "Claude and GPT models") => "Claude 및 GPT 모델",
+        ("ko", "5-hour Limit") => "5시간 한도",
+        ("ko", "Weekly Limit") => "주간 한도",
+        ("ru", "Gemini Models") => "Модели Gemini",
+        ("ru", "Claude and GPT models") => "Модели Claude и GPT",
+        ("ru", "5-hour Limit") => "Лимит на 5 часов",
+        ("ru", "Weekly Limit") => "Недельный лимит",
+        ("uk", "Gemini Models") => "Моделі Gemini",
+        ("uk", "Claude and GPT models") => "Моделі Claude і GPT",
+        ("uk", "5-hour Limit") => "Ліміт 5 годин",
+        ("uk", "Weekly Limit") => "Тижневий ліміт",
+        (_, "Gemini Models") => "Gemini Models",
+        (_, "Claude and GPT models") => "Claude and GPT models",
+        (_, "5-hour Limit") => "5-hour Limit",
+        (_, "Weekly Limit") => "Weekly Limit",
         ("zh", "install") => "安装 Claude Code 钩子",
         ("zh", "uninstall") => "卸载钩子",
         ("zh", "language") => "语言",
@@ -253,6 +280,23 @@ mod tests {
     #[test]
     fn unknown_language_keeps_the_english_fallback() {
         assert_eq!(tr("xx", "settings"), "Settings…");
+    }
+
+    #[test]
+    fn antigravity_copy_is_localized_in_every_shipped_language() {
+        let cases = [
+            ("zh", ["Gemini 模型", "Claude 和 GPT 模型", "5 小时额度", "每周额度"]),
+            ("ja", ["Gemini モデル", "Claude と GPT のモデル", "5 時間の上限", "週間の上限"]),
+            ("ko", ["Gemini 모델", "Claude 및 GPT 모델", "5시간 한도", "주간 한도"]),
+            ("ru", ["Модели Gemini", "Модели Claude и GPT", "Лимит на 5 часов", "Недельный лимит"]),
+            ("uk", ["Моделі Gemini", "Моделі Claude і GPT", "Ліміт 5 годин", "Тижневий ліміт"]),
+        ];
+        let keys = ["Gemini Models", "Claude and GPT models", "5-hour Limit", "Weekly Limit"];
+        for (lang, expected) in cases {
+            for (key, value) in keys.iter().zip(expected) {
+                assert_eq!(tr(lang, key), value, "missing {lang} translation for {key}");
+            }
+        }
     }
 
     #[test]

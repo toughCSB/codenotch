@@ -38,8 +38,8 @@
   .cell{display:flex;flex-direction:column;align-items:center;gap:6px}
   .ringwrap{position:relative;width:56px;height:56px}
   .ringwrap > svg.ring{position:absolute;inset:0;overflow:visible} /* pins only the ring itself; an inline logo svg must not match this or it ends up in the top-left corner */
-  /* Which window the ring is reading right now — M/W/5h, top-left of the ring so it reads at a
-     glance without a hover; blank for "automatic" (not one fixed cadence to abbreviate). */
+  /* Which window the ring actually resolved to — M/W/5h, top-left of the ring so it reads at a
+     glance without a hover. */
   .limit-badge{
     position:absolute;top:-5px;left:-5px;min-width:20px;height:18px;padding:0 4px;
     border-radius:9px;background:#141414;border:1px solid #5a5a5a;
@@ -59,7 +59,7 @@
   /* Glyphs: mark = the provider's own brand mark (monochrome, shown white); appicon = the installed app's icon (colour, rounded and shrunk) */
   .glyph img,.glyph svg{display:block;pointer-events:none;user-select:none}
   .glyph .mark{display:block;width:26px;height:26px;color:#e8e8ea}
-  .glyph .mark svg{width:26px;height:26px;fill:currentColor} /* inline SVG follows currentColor, so it dims together with the cell */
+  .glyph .mark svg{width:26px;height:26px;fill:currentColor}
   .glyph img.png{width:26px;height:26px;object-fit:contain}
   .glyph img.appicon{width:30px;height:30px;border-radius:8px;object-fit:cover}
   .c-head .mark{display:inline-block;width:16px;height:16px;color:#e8e8ea;margin-right:2px}
@@ -247,20 +247,33 @@ const RU_TEXT={
   'needs your input':'требуется ваш ответ',
   'Working in':'Работает в',
   'Notch size':'Размер панели',
-  'Ring shows':'Кольцо показывает', 'Weekly':'Недельный', 'Monthly':'Месячный', '5h':'5 часов',
+  'Ring shows':'Кольцо показывает', 'Default':'По умолчанию', 'Weekly':'Недельный', 'Monthly':'Месячный', '5h':'5 часов',
   'Always on top':'Поверх всех окон'
 };
-// Korean support started with just this new control (떡배님's ask) rather than a full pass over
-// every string above — missing keys fall back to the English text unchanged.
 const KO_TEXT={
-  'Ring shows':'표시 기준', 'Weekly':'주간', 'Monthly':'월간', '5h':'5시간',
+  'Gemini Models':'Gemini 모델', 'Claude and GPT models':'Claude 및 GPT 모델',
+  '5-hour Limit':'5시간 한도', 'Weekly Limit':'주간 한도',
+  'Ring shows':'표시 기준', 'Default':'기본', 'Weekly':'주간', 'Monthly':'월간', '5h':'5시간',
   'Always on top':'항상 위에 표시'
 };
+const ZH_TEXT={
+  'Gemini Models':'Gemini 模型', 'Claude and GPT models':'Claude 和 GPT 模型',
+  '5-hour Limit':'5 小时额度', 'Weekly Limit':'每周额度', 'Default':'默认'
+};
+const JA_TEXT={
+  'Gemini Models':'Gemini モデル', 'Claude and GPT models':'Claude と GPT のモデル',
+  '5-hour Limit':'5 時間の上限', 'Weekly Limit':'週間の上限', 'Default':'デフォルト'
+};
+const UK_TEXT={
+  'Gemini Models':'Моделі Gemini', 'Claude and GPT models':'Моделі Claude і GPT',
+  '5-hour Limit':'Ліміт 5 годин', 'Weekly Limit':'Тижневий ліміт', 'Default':'Типово'
+};
+const TEXT_DICTS={ru:RU_TEXT,ko:KO_TEXT,zh:ZH_TEXT,ja:JA_TEXT,uk:UK_TEXT};
 function textCopy(value){
   if(!value) return '';
-  if(uiLang==='ko') return KO_TEXT[value]||value;
+  const dict=TEXT_DICTS[uiLang];
+  if(dict&&dict[value]) return dict[value];
   if(uiLang!=='ru') return value;
-  if(RU_TEXT[value]) return RU_TEXT[value];
   return String(value)
     .replace(/^(\d+)m limit$/,'Лимит на $1 мин')
     .replace(/^(\d+)h limit$/,'Лимит на $1 ч')
@@ -300,7 +313,7 @@ function textCopy(value){
     .replace(/Cursor session was rejected — sign in again in the editor/g,'Сеанс Cursor отклонён — снова войдите в редакторе');
 }
 function setUiLanguage(lang){
-  const next=lang==='ru'?'ru':lang==='ko'?'ko':'en';
+  const next=TEXT_DICTS[lang]?lang:'en';
   if(uiLang===next) return;
   uiLang=next;
   renderRing();
@@ -389,8 +402,7 @@ let agPrefs={model:'gemini'};
 // 'monthly'|'5h'; missing = 'weekly', the overall default.
 let ringLimits={};
 function limitFor(id){ return ringLimits[id]||'weekly'; }
-// Short badge text for the ring's top-left corner: M/W/5h, or blank for "automatic" — that one is
-// not a fixed cadence to abbreviate, so there is nothing honest to print there. Each cadence also
+// Short badge text for the ring's top-left corner: M/W/5h. Each cadence also
 // gets its own border/text colour (lim-weekly/lim-monthly/lim-5h) so the three are told apart by
 // colour as well as letter.
 function limitBadge(limit){ return limit==='monthly'?'M':limit==='weekly'?'W':limit==='5h'?'5h':''; }
@@ -402,9 +414,16 @@ function tightestOf(ws){
 function laneFamily(w){ const id=w.id.toLowerCase(); return id.startsWith('gemini')?'gemini':(id.startsWith('3p')||id.startsWith('claude'))?'3p':''; }
 function laneIs(w,limit){
   const t=(w.id+' '+w.label).toLowerCase();
-  if(limit==='weekly') return t.includes('weekly')||t.includes('seven_day');
+  if(limit==='weekly') return t.includes('weekly')||t.includes('week')||t.includes('seven_day');
   if(limit==='monthly') return t.includes('month')||t.includes('30d');
-  return ['5h','5-hour','five hour','five-hour','hourly','session'].some(k=>t.includes(k));
+  return ['5h','5-hour','5 hour','five hour','five-hour','hourly','session','rolling'].some(k=>t.includes(k));
+}
+function cadenceOf(w){
+  if(!w) return '';
+  if(laneIs(w,'monthly')) return 'monthly';
+  if(laneIs(w,'weekly')) return 'weekly';
+  if(laneIs(w,'5h')) return '5h';
+  return '';
 }
 // The two resets people actually watch, found by keyword regardless of the provider's own window
 // ids/labels — used for the hover card's large reset summary, independent of headlineOf's per-provider rule
@@ -456,15 +475,18 @@ function renderRing(){
   }
   for(const p of ps){
     const cell=pill.querySelector(`.cell[data-p="${p.id}"]`); if(!cell) continue;
-    const svg=cell.querySelector('svg.ring'), pct=cell.querySelector('.pct'), glyph=cell.querySelector('.glyph'), wrap=cell.querySelector('.ringwrap'), badge=cell.querySelector('.limit-badge');
+    const svg=cell.querySelector('svg.ring'), pct=cell.querySelector('.pct'), glyph=cell.querySelector('.glyph'), badge=cell.querySelector('.limit-badge');
+    const h=headlineOf(p.snap,p.id);
     if(badge){
-      const lim=limitFor(p.id);
+      // The badge names the window the ring actually resolved to. A requested cadence can fall
+      // back when that provider has no such window, so echoing the preference here can lie.
+      const lim=cadenceOf(h);
       badge.textContent=limitBadge(lim);
       badge.className='limit-badge '+limitBadgeClass(lim);
     }
-    const h=headlineOf(p.snap,p.id);
-    let inner=`<circle cx="28" cy="28" r="22" fill="#2a2a2a"/><circle cx="28" cy="28" r="25" fill="none" stroke="${TRACK}" stroke-width="5"/>`;
-    if(h && h.count==null) inner+=svgArc(25,Math.max(0,1-Math.min(h.used,1)),tone(h.used),5);
+    let reading=`<circle cx="28" cy="28" r="22" fill="#2a2a2a"/><circle cx="28" cy="28" r="25" fill="none" stroke="${TRACK}" stroke-width="5"/>`;
+    if(h && h.count==null) reading+=svgArc(25,Math.max(0,1-Math.min(h.used,1)),tone(h.used),5);
+    let inner=`<g class="usage-reading">${reading}</g>`;
     { // thin inner arc: spinning = working, amber pulse = waiting on you (one animation for all four, different sources)
       const ws=workState(p.id);
       if(ws==='running') inner+=`<g class="arc-spin">${svgArc(19,0.28,RUNGREEN,2.5)}</g>`;
@@ -475,7 +497,10 @@ function renderRing(){
     else if(h) pct.textContent=(h.derived?'~':'')+pctText(Math.max(0,1-Math.min(h.used,1)))+'%';
     else pct.textContent=p.snap.windows.length?'—':'…'; // its declared window is missing: a dash, not a wait
     glyph.classList.toggle('dim', !!(h && h.used>=1));
-    wrap.classList.toggle('dim', staleOf(p.snap));
+    // A stale reading dims only what went stale: the arcs and track. The provider mark is still
+    // first-hand brand artwork, so Claude keeps Anthropic orange instead of turning brown.
+    const usageReading=svg.querySelector('.usage-reading');
+    if(usageReading) usageReading.classList.toggle('dim', staleOf(p.snap));
   }
   reportHot(); // a provider appearing or leaving resizes the pill
 }
@@ -525,12 +550,12 @@ function heroDuration(ms){
   return `${mins}Min`;
 }
 
-const LIMIT_CHOICES=['weekly','monthly','5h'];
+const LIMIT_CHOICES=['automatic','weekly','monthly','5h'];
 // Per-provider (떡배님's ask): the buttons act on whichever provider's card is open, never on every
 // ring at once — id is baked into the button so a click can never be mistaken for the wrong provider.
 function limitRowHtml(id){
   const cur=limitFor(id);
-  const btn=v=>`<button class="lim-btn${cur===v?' on':''}" data-lim="${v}">${esc(textCopy(v==='weekly'?'Weekly':v==='monthly'?'Monthly':'5h'))}</button>`;
+  const btn=v=>`<button class="lim-btn${cur===v?' on':''}" data-lim="${v}">${esc(textCopy(v==='automatic'?'Default':v==='weekly'?'Weekly':v==='monthly'?'Monthly':'5h'))}</button>`;
   return `<div class="c-limit"><span class="c-limit-label">${esc(textCopy('Ring shows'))}</span>${LIMIT_CHOICES.map(btn).join('')}</div>`;
 }
 function wireLimitRow(id){
@@ -553,21 +578,23 @@ function renderCard(){
   const snap=p.snap;
   const headIcon=glyphHtml(p,true);
   let html=`<div class="c-head">${headIcon}<span class="c-title">${uiLang==='ru'?'Использование '+p.name:p.name+' Usage'}</span></div>`;
-  html+=limitRowHtml(p.id);
-  if(staleOf(snap)&&snap.fetched_at) html+=`<div class="c-sub">${textCopy('Updated')} ${ago(snap.fetched_at)}</div>`;
   if(snap.windows.length){
-    // The two resets people actually watch, called out large above the detailed window list:
-    // the weekly-ish window is whatever the ring itself reads (headlineOf now defaults to it),
-    // the 5h-ish one is found by keyword since not every provider's headline is the short window.
-    const heroWeek=headlineOf(snap,p.id), hero5h=windowLike(snap.windows,'5h');
+    // The two resets people actually watch lead directly under the header. Antigravity has one
+    // 5-hour lane per model family, so resolve that lane in the same selected family as the ring.
+    const heroLead=headlineOf(snap,p.id);
+    const family=p.id==='gemini'?snap.windows.filter(w=>laneFamily(w)===agPrefs.model):snap.windows;
+    const candidates=family.length?family:snap.windows;
+    const hero5h=tightestOf(candidates.filter(w=>laneIs(w,'5h')));
     const heroItem=w=>`<div class="reset-item"><div class="reset-label">${esc(textCopy(w.label))}</div><div class="reset-time">${heroDuration(w.resets_at)}</div></div>`;
-    if(heroWeek||(hero5h&&hero5h!==heroWeek)){
+    if(heroLead||(hero5h&&hero5h!==heroLead)){
       html+=`<div class="reset-hero">`;
-      if(heroWeek) html+=heroItem(heroWeek);
-      if(hero5h&&hero5h!==heroWeek) html+=heroItem(hero5h);
+      if(heroLead) html+=heroItem(heroLead);
+      if(hero5h&&hero5h!==heroLead) html+=heroItem(hero5h);
       html+=`</div>`;
     }
   }
+  html+=limitRowHtml(p.id);
+  if(staleOf(snap)&&snap.fetched_at) html+=`<div class="c-sub">${textCopy('Updated')} ${ago(snap.fetched_at)}</div>`;
   if(snap.status==='needsAuth'){
     const who={claude:'Sign in to Claude Code to see usage.',cursor:'Sign in to Cursor to see usage.',codex:'Sign in to Codex to see usage.',gemini:'Sign in to Antigravity to see usage.',grok:'Sign in to Grok to see usage.',opencode:'Sign in to OpenCode to see usage.'}[p.id]||'';
     html+=`<div class="c-note">${textCopy(who)}<br>${esc(textCopy(snap.note||''))}</div>`;
