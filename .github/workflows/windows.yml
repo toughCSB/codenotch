@@ -16,7 +16,9 @@ on:
 
 jobs:
   build:
-    if: github.repository == 'vinzdg/codenotch'
+    # Both copies run this. The guard named only upstream, so nothing here ever
+    # ran on the fork — which is where the work happens.
+    if: github.repository == 'toughCSB/codenotch' || github.repository == 'vinzdg/codenotch'
     name: Build and test
     runs-on: windows-latest
     defaults:

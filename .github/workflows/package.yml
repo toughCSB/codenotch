@@ -13,7 +13,9 @@ on:
 
 jobs:
   package:
-    if: github.repository == 'vinzdg/codenotch'
+    # Both copies run this. The guard named only upstream, so nothing here ever
+    # ran on the fork — which is where the work happens.
+    if: github.repository == 'toughCSB/codenotch' || github.repository == 'vinzdg/codenotch'
     name: Unsigned app bundle
     # Only the preview release step writes anything; the token is read-only by
     # default on this repository, and `gh release create` fails without this.
