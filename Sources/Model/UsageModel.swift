@@ -282,6 +282,23 @@ struct ProviderSnapshot: Identifiable, Equatable {
     /// `percentBasis` is: the ring, the menu and the hover card all read the
     /// snapshot, and a choice that lives in three places is three answers.
     var ringCadence: RingCadence = .automatic
+    /// Which cadences this reading can be switched between, in the order the
+    /// switch draws them and never the default — that is always on offer and
+    /// the switch puts it first.
+    ///
+    /// Stamped by the store rather than worked out here, because only the store
+    /// still holds the provider, and for Antigravity the windows alone do not
+    /// answer: each of its cadences arrives as two lanes — one per model family
+    /// — and a rule that insists on a single answer finds none. That is what
+    /// left Antigravity's card offering Weekly with no 5-hour switch at all,
+    /// while the same provider answered both in Settings, which asks the
+    /// provider directly.
+    var offeredCadences: [RingCadence] = []
+    /// The window each offered cadence means, resolved once as the reading goes
+    /// in. The reset summary reads this: for Antigravity the 5-hour limit is a
+    /// choice between two lanes that the shared rule refuses to make, and the
+    /// provider's own answer is the one the ring is already drawing.
+    var cadenceWindows: [RingCadence: String] = [:]
     /// How full the loaded context was on the last request, from the runtime's
     /// own log. The local ring's arc: a window filling up is the one fraction
     /// a local model has, where a cloud ring has a quota.
@@ -442,9 +459,10 @@ struct ProviderSnapshot: Identifiable, Equatable {
         if let lead = windows.first(where: { $0.id == headlineID }) ?? windows.first(where: { $0.resetsAt != nil }) {
             ids.append(lead.id)
         }
-        if let short = HeadlineWindow.window(answering: .fiveHour, in: windows, weeklyID: weeklyID),
-           !ids.contains(short.id) {
-            ids.append(short.id)
+        let shortID = cadenceWindows[.fiveHour]
+            ?? HeadlineWindow.window(answering: .fiveHour, in: windows, weeklyID: weeklyID)?.id
+        if let shortID, !ids.contains(shortID) {
+            ids.append(shortID)
         }
         let countsDown = ids.contains { id in
             guard let resets = windows.first(where: { $0.id == id })?.resetsAt else { return false }
@@ -480,7 +498,12 @@ struct ProviderSnapshot: Identifiable, Equatable {
     /// the row would highlight nothing at all.
     var switchableCadences: [RingCadence] {
         guard kind == .usage, windows.count > 1 else { return [] }
-        let available = HeadlineWindow.cadences(in: windows, weeklyID: weeklyID)
+        // The provider's own answer where the store kept one, and the shared
+        // rule otherwise — the same order Settings uses, so the switch on the
+        // card and the row in Settings can never offer different sets.
+        let available = offeredCadences.isEmpty
+            ? HeadlineWindow.cadences(in: windows, weeklyID: weeklyID)
+            : offeredCadences
         guard !available.isEmpty else { return [] }
         var options: [RingCadence] = [.automatic] + available
         if ringCadence != .automatic, !available.contains(ringCadence) {

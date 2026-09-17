@@ -1181,7 +1181,7 @@ struct SettingsView: View {
     /// it return on every read, which is what "it asks every time" turns out to
     /// be.
     static var keychainCopy: String {
-        L10n.t("macOS may ask before Codenotch reads Claude Code's, Antigravity's or cursor-agent's saved login. Background refreshes never show that question; it appears only when you click Allow access…, and Deny stops Codenotch reading that login until you ask again.")
+        L10n.t("macOS may ask before Provider Monitor reads Claude Code's, Antigravity's or cursor-agent's saved login. Background refreshes never show that question; it appears only when you click Allow access…, and Deny stops Provider Monitor reading that login until you ask again.")
     }
 
     /// A provider has just been switched on: put it after the ones already
@@ -1529,7 +1529,7 @@ private struct AccountRow: View {
                         // Not "it will stop asking": for Claude it will not.
                         // Claude Code recreates its login when the token
                         // rotates, and a recreated item forgets the grant.
-                        .help(L10n.t("Asks macOS for \(provider.name)'s saved login again. Deny stops Codenotch reading it until you ask again."))
+                        .help(L10n.t("Asks macOS for \(provider.name)'s saved login again. Deny stops Provider Monitor reading it until you ask again."))
                 }
 
                 if isConnected, let destination {

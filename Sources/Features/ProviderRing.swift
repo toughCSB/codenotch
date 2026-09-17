@@ -65,9 +65,13 @@ struct ProviderRing: View {
 
     var body: some View {
         ZStack {
-            // Dimming applies to the usage reading only. Whether Claude is
-            // working right now is known first-hand and stays at full strength
-            // even when the percentage behind it has gone stale.
+            // Dimming applies to the usage reading only: the arcs, the track
+            // and the weekly ring. Not the provider's mark, and not whether
+            // Claude is working right now — both of those are known
+            // first-hand. The mark used to be drawn inside this group, and a
+            // stale reading then painted Anthropic's orange at 45%, which is
+            // no longer the brand's colour: on a dark notch it reads brown,
+            // and the icon looks like it belongs to someone else.
             ZStack {
                 Circle()
                     .strokeBorder(Palette.ringTrack, lineWidth: NotchLayout.trackStroke)
@@ -148,14 +152,14 @@ struct ProviderRing: View {
                         .animation(NotchMotion.reading, value: weeklySweep)
                         .animation(NotchMotion.reading, value: weeklyBand)
                 }
-
-                ProviderGlyphView(glyph: glyph)
-                    .foregroundStyle(Palette.textPrimary)
-                    // A spent limit dims its glyph so the ring reads as "waiting".
-                    // Under reduce-transparency, boost opacity so it stays legible without low alpha.
-                    .opacity(band == .exhausted ? (reduceTransparency ? 0.7 : 0.35) : 1)
             }
             .opacity(isStale ? (reduceTransparency ? 0.75 : 0.45) : 1)
+
+            ProviderGlyphView(glyph: glyph)
+                .foregroundStyle(Palette.textPrimary)
+                // A spent limit dims its glyph so the ring reads as "waiting".
+                // Under reduce-transparency, boost opacity so it stays legible without low alpha.
+                .opacity(band == .exhausted ? (reduceTransparency ? 0.7 : 0.35) : 1)
 
             if let activity, activity.state != .idle {
                 ActivityArc(summary: activity)

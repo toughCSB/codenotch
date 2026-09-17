@@ -255,8 +255,8 @@ final class UsageStore: ObservableObject {
     /// The cadences a settings row may offer: what the provider says it can
     /// answer, and otherwise what the shared rule can name from the windows.
     private static func ringCadences(in windows: [LimitWindow], weeklyID: String?,
-                                     provider: UsageProvider) -> [RingCadence] {
-        if let own = provider.ringCadences(in: windows), !own.isEmpty { return own }
+                                     provider: UsageProvider?) -> [RingCadence] {
+        if let own = provider?.ringCadences(in: windows), !own.isEmpty { return own }
         return HeadlineWindow.cadences(in: windows, weeklyID: weeklyID)
     }
 
@@ -719,6 +719,19 @@ final class UsageStore: ObservableObject {
         // again per view.
         snapshot.ringCadence = cadence
         let provider = providers.first { $0.id == snapshot.providerID }
+        // The switch's own list and the window each choice means, both resolved
+        // here while the provider is still in hand — see
+        // `ProviderSnapshot.offeredCadences` for why the snapshot cannot work
+        // this out from its windows alone.
+        snapshot.offeredCadences = Self.ringCadences(in: snapshot.windows,
+                                                    weeklyID: snapshot.weeklyID,
+                                                    provider: provider)
+        snapshot.cadenceWindows = snapshot.offeredCadences.reduce(into: [:]) { result, cadence in
+            let id = provider?.resolveRingWindow(in: snapshot.windows, cadence: cadence)
+                ?? HeadlineWindow.window(answering: cadence, in: snapshot.windows,
+                                         weeklyID: snapshot.weeklyID)?.id
+            if let id { result[cadence] = id }
+        }
         if let own = provider?.resolveRingWindow(in: snapshot.windows, cadence: cadence) {
             snapshot.headlineID = own
             return snapshot

@@ -107,8 +107,8 @@ enum AntigravityQuotaParser {
             if let remaining = bucket.fraction, (0...1).contains(remaining) {
                 return LimitWindow(
                     id: rawID,
-                    group: groupName?.isEmpty == false ? groupName : nil,
-                    label: self.label(for: bucket, fallback: "Usage"),
+                    group: self.localizedGroup(groupName),
+                    label: self.localizedLabel(self.label(for: bucket, fallback: "Usage")),
                     usedFraction: 1 - remaining,
                     resetsAt: reset,
                     duration: self.duration(for: bucket))
@@ -118,8 +118,8 @@ enum AntigravityQuotaParser {
             else { return nil }
             return LimitWindow(
                 id: rawID,
-                group: groupName?.isEmpty == false ? groupName : nil,
-                label: self.label(for: bucket, fallback: rawID),
+                group: self.localizedGroup(groupName),
+                label: self.localizedLabel(self.label(for: bucket, fallback: rawID)),
                 usedFraction: used / limit,
                 resetsAt: reset,
                 duration: self.duration(for: bucket))
@@ -134,7 +134,7 @@ enum AntigravityQuotaParser {
             let rawID = self.id(for: bucket, group: nil)
             return LimitWindow(
                 id: rawID,
-                label: self.label(for: bucket, fallback: rawID),
+                label: self.localizedLabel(self.label(for: bucket, fallback: rawID)),
                 usedFraction: used / limit,
                 resetsAt: bucket.resetTime.flatMap(AntigravityCredentials.parse),
                 duration: self.duration(for: bucket))
@@ -274,6 +274,37 @@ enum AntigravityQuotaParser {
             value = String(value.dropLast(" Remaining".count))
         }
         return value == "Five Hour Limit" ? "5-hour Limit" : value
+    }
+
+    /// The group's title as the hover card prints it.
+    ///
+    /// The language server groups its buckets by model family and names the
+    /// group in English — "Gemini Models", "Claude and GPT models" — and that
+    /// name is the section title on the card. It has to be asked of `L10n`
+    /// here, at the moment the window is made, because past this point the
+    /// group is data: nothing downstream can tell a translated name from one
+    /// the vendor sent, and re-translating it there would translate a title
+    /// the user had already read in their own language.
+    ///
+    /// The window's *id* deliberately stays English. The cadence rules read it
+    /// — a lane is found by `5h` or `weekly` appearing in the id — and a
+    /// translated id would quietly stop every ring from finding its window.
+    private static func localizedGroup(_ name: String?) -> String? {
+        guard let name, !name.isEmpty else { return nil }
+        switch name {
+        case "Gemini Models": return L10n.t("Gemini Models")
+        case "Claude and GPT models": return L10n.t("Claude and GPT models")
+        default: return name
+        }
+    }
+
+    /// Known window titles, including the wording the language server uses.
+    private static func localizedLabel(_ value: String) -> String {
+        switch value {
+        case "Five Hour Limit", "5-hour Limit": return L10n.t("5-hour Limit")
+        case "Weekly Limit": return L10n.t("Weekly Limit")
+        default: return value
+        }
     }
 
     private static func id(for bucket: Bucket, group: String?) -> String {

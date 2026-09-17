@@ -32,20 +32,38 @@ enum ReleaseNotes {
     static var all: [ReleaseNote] {
         [
             ReleaseNote(
+                version: "1.14.0",
+                headline: L10n.t("Provider Monitor, on Codenotch 1.13.1 — with a Korean hover card and Antigravity's 5-hour limit."),
+                changes: [
+                    ReleaseNote.Change(
+                        title: L10n.t("Everything Codenotch 1.13.1 fixed"),
+                        detail: L10n.t("No crash in Simplified Chinese, a Deny that means no, fewer keychain prompts, and an app that idles at a fraction of the CPU it used.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("A card that opens as fast as the pointer moves"),
+                        detail: L10n.t("The Codex reading no longer re-parses a whole rollout on every poll, which is what made the hover card late.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Antigravity's 5-hour limit, and Korean throughout"),
+                        detail: L10n.t("Antigravity's card offers the 5-hour window beside the weekly one, its lanes read in Korean, and a stale reading no longer dims Claude's own orange.")
+                    ),
+                ]
+            ),
+            ReleaseNote(
                 version: "1.13.1",
                 headline: L10n.t("Fixes a crash on Chinese Macs, and a Deny on the keychain question now means no."),
                 changes: [
                     ReleaseNote.Change(
                         title: L10n.t("No more crash in Simplified Chinese"),
-                        detail: L10n.t("With the app in 简体中文, a provider past 80% crashed Codenotch a few seconds after launch. Every translation is now checked for this.")
+                        detail: L10n.t("With the app in 简体中文, a provider past 80% crashed Provider Monitor a few seconds after launch. Every translation is now checked for this.")
                     ),
                     ReleaseNote.Change(
                         title: L10n.t("Deny means no"),
-                        detail: L10n.t("Answering Deny when macOS asks about a saved login now stops Codenotch reading that account from any source, until you choose Allow access… again.")
+                        detail: L10n.t("Answering Deny when macOS asks about a saved login now stops Provider Monitor reading that account from any source, until you choose Allow access… again.")
                     ),
                     ReleaseNote.Change(
                         title: L10n.t("Fewer file access prompts"),
-                        detail: L10n.t("Renewing Claude's login no longer starts your MCP servers and hooks, and Kimi sessions are matched without looking inside your folders, so macOS no longer asks about Documents, Desktop or network volumes on Codenotch's behalf.")
+                        detail: L10n.t("Renewing Claude's login no longer starts your MCP servers and hooks, and Kimi sessions are matched without looking inside your folders, so macOS no longer asks about Documents, Desktop or network volumes on Provider Monitor's behalf.")
                     ),
                     ReleaseNote.Change(
                         title: L10n.t("Smaller fixes"),
@@ -59,7 +77,7 @@ enum ReleaseNotes {
                 changes: [
                     ReleaseNote.Change(
                         title: L10n.t("Lighter on the battery"),
-                        detail: L10n.t("Codenotch idles at a fraction of the CPU it used, and moving the pointer costs less than half as much. The working spinner is drawn by the system instead of redrawing the notch every frame, and full-screen apps are checked every two seconds rather than on every movement.")
+                        detail: L10n.t("Provider Monitor idles at a fraction of the CPU it used, and moving the pointer costs less than half as much. The working spinner is drawn by the system instead of redrawing the notch every frame, and full-screen apps are checked every two seconds rather than on every movement.")
                     ),
                     ReleaseNote.Change(
                         title: L10n.t("Windows Settings opens again"),
