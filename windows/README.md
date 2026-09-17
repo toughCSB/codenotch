@@ -1,4 +1,4 @@
-# Codenotch for Windows
+# Provider Monitor for Windows
 
 A Windows port of [Codenotch](https://github.com/vinzdg/codenotch) — the usage notch that
 sits on the edge of your screen and answers two questions at a glance:
@@ -11,7 +11,7 @@ documented behaviour and the wire formats. **Windows is a first-class target, no
 afterthought** — this fork runs natively on Windows 11 (Rust + Tauri 2 / WebView2), no macOS
 required.
 
-![Codenotch pill and hover card on Windows](docs/screenshots/windows-hover-card.png)
+![Provider Monitor pill and hover card on Windows](docs/screenshots/windows-hover-card.png)
 
 *The pill on the right edge (Claude, Codex, Antigravity, Grok, OpenCode — five providers, five
 distinguishable colours, each ring wearing a small colour-coded M/W/5h badge for the window it is
@@ -39,19 +39,19 @@ Providers that are not installed simply do not get a cell.
 
 ### Antigravity
 
-- **Official CLI (Preferred)**: When the official Antigravity CLI (`agy.exe`) is installed (`%LOCALAPPDATA%\agy\bin\agy.exe` or on `PATH`) and signed in, Codenotch reads official quotas directly without keeping the full IDE running.
+- **Official CLI (Preferred)**: When the official Antigravity CLI (`agy.exe`) is installed (`%LOCALAPPDATA%\agy\bin\agy.exe` or on `PATH`) and signed in, Provider Monitor reads official quotas directly without keeping the full IDE running.
 - **Execution**: Runs the official CLI in a hidden Windows pseudo-console, with a 70-second timeout and cleanup of its process tree. It does not need PowerShell scripts or a separate service.
 - **Refresh**: Checks at startup and on hover/explicit request when readings are at least five minutes old; failed attempts are also limited to once per five minutes. It keeps previous readings on failure, without switching to legacy APIs. The CLI is not launched periodically while idle.
-- **Fallback**: When the official CLI is not installed, Codenotch preserves the legacy local bridge (`language_server`), Credential Manager, and transcript model turn counting to maintain compatibility with existing installations.
+- **Fallback**: When the official CLI is not installed, Provider Monitor preserves the legacy local bridge (`language_server`), Credential Manager, and transcript model turn counting to maintain compatibility with existing installations.
 - **Official CLI Reference**: Standalone `/usage` printing is described in the [official Antigravity CLI documentation](https://www.antigravity.google/docs/cli/headless). Note: no categorical Terms of Service guarantee is made.
 
-Restart Codenotch after installing or removing `agy`: the source is selected at startup.
+Restart Provider Monitor after installing or removing `agy`: the source is selected at startup.
 The CLI's text report is parsed defensively; an unsupported format or failed sign-in
-shows an error or the last reading marked stale. Codenotch does not automate sign-in.
+shows an error or the last reading marked stale. Provider Monitor does not automate sign-in.
 
 ## Install / build
 
-Download [`Codenotch-Setup.exe`](https://github.com/vinzdg/codenotch/releases/latest/download/Codenotch-Setup.exe)
+Download [`Provider-Monitor-Setup.exe`](https://github.com/toughCSB/codenotch/releases/latest/download/Provider-Monitor-Setup.exe)
 from the latest release. It installs for the current user without administrator rights, puts
 `codenotch-hook.exe` beside the app where **Install hooks** looks for it, and fetches WebView2 if
 Windows does not already have it. The installer is not code-signed, so SmartScreen stops it the
@@ -73,7 +73,7 @@ To build the installer the way the Windows Package workflow does:
 cargo build --release --locked -p codenotch-hook --target-dir target/hook
 cd codenotch
 npx @tauri-apps/cli@2 build --config tauri.bundle.conf.json
-# → ..\target\release\bundle\nsis\Codenotch_<version>_x64-setup.exe
+# → ..\target\release\bundle\nsis\*-setup.exe (CI copies it to Provider-Monitor-Setup.exe)
 ```
 
 Tray menu: **Settings…**, **Refresh usage now**, **Quit**. Everything else is in the settings

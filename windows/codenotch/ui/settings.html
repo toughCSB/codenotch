@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Codenotch Settings</title>
+<title>Provider Monitor Settings</title>
 <style>
   /* Same visual language as notch.html: near-black panels, #1e1e1e rules, Segoe UI, muted greys.
      The only saturated colours are the three usage bands the tray icon itself draws
@@ -278,7 +278,7 @@
     <!-- APPEARANCE / Taskbar icon ------------------------------------------------------- -->
     <section class="pane" id="pane-tray" role="tabpanel" aria-labelledby="tab-tray" tabindex="0" hidden>
       <h1 class="p-title">Taskbar icon</h1>
-      <p class="p-lede">The small icon down by the clock. Codenotch draws your usage straight into it — 32 pixels square. Pick a layout, then click a part of the picture to choose what that part shows.</p>
+      <p class="p-lede">The small icon down by the clock. Provider Monitor draws your usage straight into it — 32 pixels square. Pick a layout, then click a part of the picture to choose what that part shows.</p>
 
       <div class="block first">
         <div class="b-head">Layout</div>
@@ -289,8 +289,8 @@
           <div id="canvas">
             <img id="pv" alt="Tray icon preview">
             <div id="ph">
-              <div class="ph-mark"><img data-logo src="tray.png" alt="Codenotch"></div>
-              <div class="c-note dim">The plain Codenotch logo is used.<br>No numbers are drawn.</div>
+              <div class="ph-mark"><img data-logo src="tray.png" alt="Provider Monitor"></div>
+              <div class="c-note dim">The plain Provider Monitor logo is used.<br>No numbers are drawn.</div>
             </div>
             <div id="regions"></div>
           </div>
@@ -341,14 +341,14 @@
     <!-- GENERAL / Behaviour ---------------------------------------------------------------- -->
     <section class="pane" id="pane-behaviour" role="tabpanel" aria-labelledby="tab-behaviour" tabindex="0" hidden>
       <h1 class="p-title">Behaviour</h1>
-      <p class="p-lede">When Codenotch runs, and what it puts on your screen.</p>
+      <p class="p-lede">When Provider Monitor runs, and what it puts on your screen.</p>
 
       <div class="block first">
         <div class="b-head">Starting up</div>
         <div class="row">
           <div class="r-text">
             <div class="r-name">Start with Windows</div>
-            <div class="r-why">Codenotch opens by itself every time you sign in to this computer, and waits quietly in the background until a coding session starts. Turn it off and you have to open Codenotch yourself.</div>
+            <div class="r-why">Provider Monitor opens by itself every time you sign in to this computer, and waits quietly in the background until a coding session starts. Turn it off and you have to open Provider Monitor yourself.</div>
           </div>
           <div class="r-ctl"><button class="sw" id="sw-autostart" role="switch" aria-checked="false" aria-label="Start with Windows"><span class="knob"></span></button></div>
         </div>
@@ -360,15 +360,15 @@
         <div class="row">
           <div class="r-text">
             <div class="r-name">Show the notch</div>
-            <div class="r-why">The black pill against the right-hand edge of the screen, with one ring per tool. Turn it off and the pill disappears; Codenotch keeps counting your usage either way.</div>
+            <div class="r-why">The black pill against the right-hand edge of the screen, with one ring per tool. Turn it off and the pill disappears; Provider Monitor keeps counting your usage either way.</div>
           </div>
           <div class="r-ctl"><button class="sw" id="sw-notch" role="switch" aria-checked="true" aria-label="Show the notch"><span class="knob"></span></button></div>
         </div>
         <div class="row">
           <div class="r-text">
             <div class="r-name">Show the taskbar icon</div>
-            <div class="r-why">The small icon down by the clock. Right-clicking it opens this window, refreshes the readings, or quits Codenotch.</div>
-            <div class="c-note dim" id="tray-lock" style="margin-top:6px" hidden>Held on: the notch is hidden, so this icon is the only way left to reach Codenotch. Switch the notch back on first if you want to hide it.</div>
+            <div class="r-why">The small icon down by the clock. Right-clicking it opens this window, refreshes the readings, or quits Provider Monitor.</div>
+            <div class="c-note dim" id="tray-lock" style="margin-top:6px" hidden>Held on: the notch is hidden, so this icon is the only way left to reach Provider Monitor. Switch the notch back on first if you want to hide it.</div>
           </div>
           <div class="r-ctl"><button class="sw" id="sw-tray" role="switch" aria-checked="true" aria-label="Show the taskbar icon"><span class="knob"></span></button></div>
         </div>
@@ -390,8 +390,8 @@
         <div class="b-head">Language</div>
         <div class="row">
           <div class="r-text">
-            <div class="r-name">Words used by Codenotch</div>
-            <div class="r-why">Sets the language used by Codenotch. “Follow system” uses the language Windows itself is set to.</div>
+            <div class="r-name">Words used by Provider Monitor</div>
+            <div class="r-why">Sets the language used by Provider Monitor. “Follow system” uses the language Windows itself is set to.</div>
           </div>
           <div class="r-ctl">
             <select id="lang" aria-label="Language">
@@ -411,16 +411,16 @@
     <!-- GENERAL / Claude Code -------------------------------------------------------------- -->
     <section class="pane" id="pane-hooks" role="tabpanel" aria-labelledby="tab-hooks" tabindex="0" hidden>
       <h1 class="p-title">Claude Code</h1>
-      <p class="p-lede">Claude Code can tell Codenotch the moment something happens in a session, instead of Codenotch having to guess from files on disk.</p>
+      <p class="p-lede">Claude Code can tell Provider Monitor the moment something happens in a session, instead of Provider Monitor having to guess from files on disk.</p>
 
       <div class="block first">
         <div class="b-head">Session messages</div>
         <div class="row">
           <div class="r-text">
-            <div class="r-name">Let Claude Code notify Codenotch</div>
-            <div class="r-why">Turning this on adds a few lines to your Claude Code settings file so that Claude Code sends Codenotch a short message when a session starts, when it is working, when it is waiting for your answer, and when it finishes. That is what makes the ring spin and the amber ring pulse.</div>
+            <div class="r-name">Let Claude Code notify Provider Monitor</div>
+            <div class="r-why">Turning this on adds a few lines to your Claude Code settings file so that Claude Code sends Provider Monitor a short message when a session starts, when it is working, when it is waiting for your answer, and when it finishes. That is what makes the ring spin and the amber ring pulse.</div>
           </div>
-          <div class="r-ctl"><button class="sw" id="sw-hooks" role="switch" aria-checked="false" aria-label="Let Claude Code notify Codenotch"><span class="knob"></span></button></div>
+          <div class="r-ctl"><button class="sw" id="sw-hooks" role="switch" aria-checked="false" aria-label="Let Claude Code notify Provider Monitor"><span class="knob"></span></button></div>
         </div>
         <div class="c-note dim" style="margin-top:10px">
           The file being changed is <span style="user-select:text">.claude\settings.json</span> in your user folder. A dated copy of it is saved before anything is written, and turning this switch off takes the lines out again. Any hooks you added yourself are left alone.
@@ -431,14 +431,14 @@
     <!-- GENERAL / About ---------------------------------------------------------------------- -->
     <section class="pane" id="pane-about" role="tabpanel" aria-labelledby="tab-about" tabindex="0" hidden>
       <h1 class="p-title">About</h1>
-      <p class="p-lede">What this copy of Codenotch is, and where it keeps its files.</p>
+      <p class="p-lede">What this copy of Provider Monitor is, and where it keeps its files.</p>
 
       <div class="block first">
         <div class="about-top">
-          <img class="about-mark" data-logo src="tray.png" alt="Codenotch">
+          <img class="about-mark" data-logo src="tray.png" alt="Provider Monitor">
           <div>
-            <div class="about-name">Codenotch</div>
-            <div class="about-ver">Version <span id="about-version">0.5.0</span></div>
+            <div class="about-name">Provider Monitor</div>
+            <div class="about-ver">Version <span id="about-version">0.6.0</span></div>
           </div>
         </div>
         <div class="c-note dim" style="margin-top:10px">Shows how much of your Claude, Codex, Cursor and Antigravity allowance you have used, in the taskbar icon and in a pill at the edge of the screen.</div>
@@ -463,7 +463,7 @@
         <div class="row">
           <div class="r-text">
             <div class="r-name">Update this Windows app</div>
-            <div class="r-why" id="update-status">Separately checks this fork's Windows releases. Only an installer from this check can update Codenotch.</div>
+            <div class="r-why" id="update-status">Separately checks this fork's Windows releases. Only an installer from this check can update Provider Monitor.</div>
           </div>
           <div class="r-ctl"><button class="btn" id="btn-checkupdate">Check this app</button></div>
         </div>
@@ -484,7 +484,7 @@
         <div class="row">
           <div class="r-text">
             <div class="r-name">Data folder</div>
-            <div class="r-why">Everything Codenotch remembers lives in one folder: your settings, its log file, and the "glyphs" folder where you can drop your own icons. Opens in File Explorer.</div>
+            <div class="r-why">Everything Provider Monitor remembers lives in one folder: your settings, its log file, and the "glyphs" folder where you can drop your own icons. Opens in File Explorer.</div>
             <div class="path">%APPDATA%\codenotch</div>
           </div>
           <div class="r-ctl"><button class="btn" id="btn-data">Open folder</button></div>
@@ -549,9 +549,9 @@ const FALLBACK_LABEL = { claude:'Claude', codex:'Codex', cursor:'Cursor', gemini
 const RU_STATIC = {
   'Settings sections':'Разделы настроек', 'Appearance':'Внешний вид', 'Taskbar icon':'Значок в панели задач',
   'Notch':'Панель', 'General':'Общие', 'Behaviour':'Поведение', 'Claude Code':'Claude Code', 'About':'О программе',
-  'The small icon down by the clock. Codenotch draws your usage straight into it — 32 pixels square. Pick a layout, then click a part of the picture to choose what that part shows.':'Небольшой значок рядом с часами. Codenotch показывает в нём использование — 32 пикселя. Выберите макет и нажмите на часть изображения, чтобы настроить её.',
+  'The small icon down by the clock. Provider Monitor draws your usage straight into it — 32 pixels square. Pick a layout, then click a part of the picture to choose what that part shows.':'Небольшой значок рядом с часами. Provider Monitor показывает в нём использование — 32 пикселя. Выберите макет и нажмите на часть изображения, чтобы настроить её.',
   'Layout':'Макет', 'What gets drawn into those 32 pixels.':'Что отображается в этих 32 пикселях.',
-  'The plain Codenotch logo is used.':'Используется обычный логотип Codenotch.', 'No numbers are drawn.':'Числа не отображаются.',
+  'The plain Provider Monitor logo is used.':'Используется обычный логотип Provider Monitor.', 'No numbers are drawn.':'Числа не отображаются.',
   'Actual size':'Фактический размер', 'This is how big it really is in the taskbar.':'Такой размер значок имеет в панели задач.',
   'Windows picks one of these depending on the display. If a number is unreadable here, it will be unreadable in the taskbar.':'Windows выбирает один из вариантов в зависимости от масштаба экрана. Если число не читается здесь, в панели задач оно тоже не будет читаться.',
   'What each part shows':'Что показывает каждая часть', 'Pick the tool; each part draws that tool\'s ring.':'Выберите инструмент: каждая часть показывает его кольцо.',
@@ -559,14 +559,14 @@ const RU_STATIC = {
   'What appears on the pill':'Что отображается на панели', 'Click a name to switch its ring on or off.':'Нажмите на название, чтобы включить или выключить кольцо.',
   'Size':'Размер', 'How big the pill is drawn. The same slider sits at the foot of the pill\'s hover card, so it can be changed from either place.':'Размер панели. Такой же ползунок находится внизу карточки при наведении на панель.',
   'Whether the pill is on screen at all is a separate switch, under General → Behaviour.':'Видимость панели переключается отдельно в разделе «Общие → Поведение».',
-  'When Codenotch runs, and what it puts on your screen.':'Когда запускается Codenotch и что он показывает на экране.',
+  'When Provider Monitor runs, and what it puts on your screen.':'Когда запускается Provider Monitor и что он показывает на экране.',
   'Starting up':'Запуск', 'Start with Windows':'Запускать вместе с Windows',
-  'Codenotch opens by itself every time you sign in to this computer, and waits quietly in the background until a coding session starts. Turn it off and you have to open Codenotch yourself.':'Codenotch запускается при входе в систему и тихо работает в фоне до начала сеанса разработки. Если выключить эту настройку, Codenotch нужно запускать вручную.',
+  'Provider Monitor opens by itself every time you sign in to this computer, and waits quietly in the background until a coding session starts. Turn it off and you have to open Provider Monitor yourself.':'Provider Monitor запускается при входе в систему и тихо работает в фоне до начала сеанса разработки. Если выключить эту настройку, Provider Monitor нужно запускать вручную.',
   'What is on screen':'Что отображается на экране', 'Show the notch':'Показывать панель', 'Show the taskbar icon':'Показывать значок в панели задач',
-  'Language':'Язык', 'Words used by Codenotch':'Язык Codenotch', 'Follow system':'Как в системе', 'English':'English', 'Русский':'Русский',
-  'Claude Code can tell Codenotch the moment something happens in a session, instead of Codenotch having to guess from files on disk.':'Claude Code может сразу сообщать Codenotch о событиях сеанса, вместо того чтобы Codenotch угадывал их по файлам на диске.',
-  'Session messages':'Сообщения сеанса', 'Let Claude Code notify Codenotch':'Разрешить Claude Code уведомлять Codenotch',
-  'What this copy of Codenotch is, and where it keeps its files.':'Что это за копия Codenotch и где хранятся её файлы.', 'Version':'Версия',
+  'Language':'Язык', 'Words used by Provider Monitor':'Язык Provider Monitor', 'Follow system':'Как в системе', 'English':'English', 'Русский':'Русский',
+  'Claude Code can tell Provider Monitor the moment something happens in a session, instead of Provider Monitor having to guess from files on disk.':'Claude Code может сразу сообщать Provider Monitor о событиях сеанса, вместо того чтобы Provider Monitor угадывал их по файлам на диске.',
+  'Session messages':'Сообщения сеанса', 'Let Claude Code notify Provider Monitor':'Разрешить Claude Code уведомлять Provider Monitor',
+  'What this copy of Provider Monitor is, and where it keeps its files.':'Что это за копия Provider Monitor и где хранятся её файлы.', 'Version':'Версия',
   'Files':'Файлы', 'Data folder':'Папка данных', 'Open folder':'Открыть папку', 'If something looks wrong':'Если что-то работает неправильно',
   'Put the notch back':'Вернуть панель', 'Reset position':'Сбросить положение', 'Saved':'Сохранено',
   'Numbers':'Числа', 'two readings':'два показания', 'Bars':'Полосы', '1 to 5 columns':'от 1 до 5 столбцов', 'Plain icon':'Обычный значок', 'just the logo':'только логотип',
@@ -575,28 +575,28 @@ const RU_STATIC = {
   'Gemini Models':'Модели Gemini', 'Claude and GPT models':'Модели Claude и GPT',
   '"%@" is no longer available':'«%@» больше недоступен', '%@ — that slot now shows another provider.':'%@ — теперь слот показывает другого провайдера.',
   'One provider always stays ticked, so the pill is never empty.':'Хотя бы один провайдер всегда выбран, поэтому панель не бывает пустой.',
-  'The taskbar icon shows the plain Codenotch logo.':'Значок в панели задач показывает обычный логотип Codenotch.',
+  'The taskbar icon shows the plain Provider Monitor logo.':'Значок в панели задач показывает обычный логотип Provider Monitor.',
   'Choose Numbers or Bars above to draw your usage into it.':'Выберите выше «Числа» или «Полосы», чтобы показывать в нём использование.',
   'What is on screen':'Что отображается на экране', 'Show the notch':'Показывать панель', 'Show the taskbar icon':'Показывать значок в панели задач',
   'Open the notch for a moment':'Ненадолго открыть панель', 'At least one provider stays on the notch':'На панели должен остаться хотя бы один провайдер',
   'The notch is back in the middle':'Панель возвращена в центр', 'Remove this column':'Удалить этот столбец', 'Add column':'Добавить столбец',
-  'The taskbar icon has been kept on. With the notch hidden it is the only way left to open this window or to quit Codenotch, so Codenotch will not let both of them be switched off at the same time.':'Значок в панели задач оставлен включённым. При скрытой панели это единственный способ открыть окно или завершить работу Codenotch, поэтому оба элемента нельзя выключить одновременно.',
-  'One of these two always stays on. If you hide the notch, the taskbar icon is held on for you, because with both of them gone there would be nothing left to click and no way back to this window.':'Один из этих элементов всегда остаётся включённым. Если скрыть панель, значок в панели задач останется включённым, иначе Codenotch будет неоткуда открыть.',
-  'The black pill against the right-hand edge of the screen, with one ring per tool. Turn it off and the pill disappears; Codenotch keeps counting your usage either way.':'Чёрная панель у правого края экрана с отдельным кольцом для каждого инструмента. При выключении панель исчезает, но Codenotch продолжает считать использование.',
-  'The small icon down by the clock. Right-clicking it opens this window, refreshes the readings, or quits Codenotch.':'Небольшой значок рядом с часами. Щелчок правой кнопкой открывает это окно, обновляет данные или завершает работу Codenotch.',
-  'Held on: the notch is hidden, so this icon is the only way left to reach Codenotch. Switch the notch back on first if you want to hide it.':'Оставлен включённым: панель скрыта, поэтому этот значок — единственный способ открыть Codenotch. Сначала включите панель, если хотите скрыть значок.',
-  'Sets the language used by Codenotch. “Follow system” uses the language Windows itself is set to.':'Задаёт язык Codenotch. Вариант «Как в системе» использует язык Windows.',
-  'The small icon down by the clock. Codenotch draws your usage straight into it — 32 pixels square. Pick a layout, then click a part of the picture to choose what that part shows.':'Небольшой значок рядом с часами. Codenotch показывает в нём использование — 32 пикселя. Выберите макет и нажмите на часть изображения, чтобы настроить её.',
-  'Turning this on adds a few lines to your Claude Code settings file so that Claude Code sends Codenotch a short message when a session starts, when it is working, when it is waiting for your answer, and when it finishes. That is what makes the ring spin and the amber ring pulse.':'При включении в файл настроек Claude Code добавляются строки, чтобы он сообщал Codenotch о начале работы, процессе, ожидании ответа и завершении сеанса. Благодаря этому кольцо вращается, а янтарное кольцо пульсирует.',
+  'The taskbar icon has been kept on. With the notch hidden it is the only way left to open this window or to quit Provider Monitor, so Provider Monitor will not let both of them be switched off at the same time.':'Значок в панели задач оставлен включённым. При скрытой панели это единственный способ открыть окно или завершить работу Provider Monitor, поэтому оба элемента нельзя выключить одновременно.',
+  'One of these two always stays on. If you hide the notch, the taskbar icon is held on for you, because with both of them gone there would be nothing left to click and no way back to this window.':'Один из этих элементов всегда остаётся включённым. Если скрыть панель, значок в панели задач останется включённым, иначе Provider Monitor будет неоткуда открыть.',
+  'The black pill against the right-hand edge of the screen, with one ring per tool. Turn it off and the pill disappears; Provider Monitor keeps counting your usage either way.':'Чёрная панель у правого края экрана с отдельным кольцом для каждого инструмента. При выключении панель исчезает, но Provider Monitor продолжает считать использование.',
+  'The small icon down by the clock. Right-clicking it opens this window, refreshes the readings, or quits Provider Monitor.':'Небольшой значок рядом с часами. Щелчок правой кнопкой открывает это окно, обновляет данные или завершает работу Provider Monitor.',
+  'Held on: the notch is hidden, so this icon is the only way left to reach Provider Monitor. Switch the notch back on first if you want to hide it.':'Оставлен включённым: панель скрыта, поэтому этот значок — единственный способ открыть Provider Monitor. Сначала включите панель, если хотите скрыть значок.',
+  'Sets the language used by Provider Monitor. “Follow system” uses the language Windows itself is set to.':'Задаёт язык Provider Monitor. Вариант «Как в системе» использует язык Windows.',
+  'The small icon down by the clock. Provider Monitor draws your usage straight into it — 32 pixels square. Pick a layout, then click a part of the picture to choose what that part shows.':'Небольшой значок рядом с часами. Provider Monitor показывает в нём использование — 32 пикселя. Выберите макет и нажмите на часть изображения, чтобы настроить её.',
+  'Turning this on adds a few lines to your Claude Code settings file so that Claude Code sends Provider Monitor a short message when a session starts, when it is working, when it is waiting for your answer, and when it finishes. That is what makes the ring spin and the amber ring pulse.':'При включении в файл настроек Claude Code добавляются строки, чтобы он сообщал Provider Monitor о начале работы, процессе, ожидании ответа и завершении сеанса. Благодаря этому кольцо вращается, а янтарное кольцо пульсирует.',
   'The file being changed is':'Изменяемый файл —',
   'in your user folder. A dated copy of it is saved before anything is written, and turning this switch off takes the lines out again. Any hooks you added yourself are left alone.':'в вашей папке пользователя. Перед изменением сохраняется копия с датой, а при выключении настройки добавленные строки удаляются. Ваши собственные хуки не затрагиваются.',
   'Shows how much of your Claude, Codex, Cursor and Antigravity allowance you have used, in the taskbar icon and in a pill at the edge of the screen.':'Показывает использование Claude, Codex, Cursor и Antigravity в значке панели задач и на панели у края экрана.',
-  'Everything Codenotch remembers lives in one folder: your settings, its log file, and the "glyphs" folder where you can drop your own icons. Opens in File Explorer.':'Все данные Codenotch хранятся в одной папке: настройки, журнал и папка «glyphs» для собственных значков. Открывается в Проводнике.',
+  'Everything Provider Monitor remembers lives in one folder: your settings, its log file, and the "glyphs" folder where you can drop your own icons. Opens in File Explorer.':'Все данные Provider Monitor хранятся в одной папке: настройки, журнал и папка «glyphs» для собственных значков. Открывается в Проводнике.',
   'The pill can be dragged up and down the right-hand edge. If it has ended up somewhere you cannot see it — off the bottom of a screen you have unplugged, say — this drops it back into the middle of the edge.':'Панель можно перетаскивать вверх и вниз вдоль правого края. Если она оказалась за пределами экрана, эта кнопка возвращает её в середину края.',
-  'The plain Codenotch logo is used.':'Используется обычный логотип Codenotch.', 'No numbers are drawn.':'Числа не отображаются.',
+  'The plain Provider Monitor logo is used.':'Используется обычный логотип Provider Monitor.', 'No numbers are drawn.':'Числа не отображаются.',
   'This is how big it really is in the taskbar.':'Такой размер значок имеет в панели задач.',
   'Windows picks one of these depending on the display. If a number is unreadable here, it will be unreadable in the taskbar.':'Windows выбирает один из вариантов в зависимости от масштаба экрана. Если число не читается здесь, в панели задач оно тоже не будет читаться.',
-  'Notch size':'Размер панели', 'Codenotch':'Codenotch', 'Tray icon preview':'Предпросмотр значка', 'Codenotch logo':'Логотип Codenotch', 'Tray icon at':'Значок размером', 'pixels':'пикселей',
+  'Notch size':'Размер панели', 'Provider Monitor':'Provider Monitor', 'Tray icon preview':'Предпросмотр значка', 'Provider Monitor logo':'Логотип Provider Monitor', 'Tray icon at':'Значок размером', 'pixels':'пикселей',
   'Down the right-hand edge':'У правого края', 'Down the left-hand edge':'У левого края', 'Top half':'Верхняя половина', 'Bottom half':'Нижняя половина', 'Column':'Столбец', 'Remove column':'Удалить столбец',
   'Monthly Limit':'Месячный лимит', 'Model data':'Данные модели',
   'Updates':'Обновления', 'Checking…':'Проверка…',
@@ -604,7 +604,7 @@ const RU_STATIC = {
   'Informational only. This checks what the original project has shipped and can never install it over this Windows app.':'Только информация: проверяет релизы оригинального проекта и никогда не устанавливает их поверх этого приложения Windows.',
   'Latest original release':'Последний оригинальный релиз', 'Reporting only — no original-app installer is downloaded.':'Только отчёт — установщик оригинального приложения не загружается.',
   'Update this Windows app':'Обновить это приложение Windows', 'Check this app':'Проверить это приложение',
-  'Separately checks this fork\'s Windows releases. Only an installer from this check can update Codenotch.':'Отдельно проверяет Windows-релизы этого форка. Codenotch может обновить только установщик из этой проверки.',
+  'Separately checks this fork\'s Windows releases. Only an installer from this check can update Provider Monitor.':'Отдельно проверяет Windows-релизы этого форка. Provider Monitor может обновить только установщик из этой проверки.',
   'Checking the original project…':'Проверка оригинального проекта…', 'Could not check the original project: ':'Не удалось проверить оригинальный проект: ',
   'Latest upstream release: Codenotch %@.':'Последний релиз оригинала: Codenotch %@.'
 };
@@ -613,9 +613,9 @@ const RU_STATIC = {
 const KO_STATIC = {
   'Settings sections':'설정 항목', 'Appearance':'화면', 'Taskbar icon':'트레이 아이콘',
   'Notch':'노치 바', 'General':'일반', 'Behaviour':'동작', 'Claude Code':'Claude Code', 'About':'정보',
-  'The small icon down by the clock. Codenotch draws your usage straight into it — 32 pixels square. Pick a layout, then click a part of the picture to choose what that part shows.':'시계 옆의 작은 아이콘입니다. Codenotch가 사용량을 32×32픽셀 안에 직접 그립니다. 레이아웃을 고른 뒤 그림의 한 부분을 클릭하면 그 부분이 무엇을 보여줄지 정할 수 있습니다.',
+  'The small icon down by the clock. Provider Monitor draws your usage straight into it — 32 pixels square. Pick a layout, then click a part of the picture to choose what that part shows.':'시계 옆의 작은 아이콘입니다. Provider Monitor가 사용량을 32×32픽셀 안에 직접 그립니다. 레이아웃을 고른 뒤 그림의 한 부분을 클릭하면 그 부분이 무엇을 보여줄지 정할 수 있습니다.',
   'Layout':'레이아웃', 'What gets drawn into those 32 pixels.':'이 32픽셀 안에 무엇을 그릴지 정합니다.',
-  'The plain Codenotch logo is used.':'기본 Codenotch 로고가 표시됩니다.', 'No numbers are drawn.':'숫자는 표시되지 않습니다.',
+  'The plain Provider Monitor logo is used.':'기본 Provider Monitor 로고가 표시됩니다.', 'No numbers are drawn.':'숫자는 표시되지 않습니다.',
   'Actual size':'실제 크기', 'This is how big it really is in the taskbar.':'작업 표시줄에서 실제로 보이는 크기입니다.',
   'Windows picks one of these depending on the display. If a number is unreadable here, it will be unreadable in the taskbar.':'Windows가 화면에 맞춰 이 중 하나를 선택합니다. 여기서 숫자가 안 읽히면 작업 표시줄에서도 안 읽힙니다.',
   'What each part shows':'각 부분이 보여주는 것', 'Pick the tool; each part draws that tool\'s ring.':'도구를 선택하면 그 부분에 해당 도구의 링이 그려집니다.',
@@ -623,14 +623,14 @@ const KO_STATIC = {
   'What appears on the pill':'바에 표시되는 항목', 'Click a name to switch its ring on or off.':'이름을 클릭하면 해당 링을 켜거나 끕니다.',
   'Size':'크기', 'How big the pill is drawn. The same slider sits at the foot of the pill\'s hover card, so it can be changed from either place.':'바가 그려지는 크기입니다. 바에 마우스를 올렸을 때 나오는 카드 아래쪽에도 같은 슬라이더가 있어 양쪽에서 바꿀 수 있습니다.',
   'Whether the pill is on screen at all is a separate switch, under General → Behaviour.':'바를 화면에 표시할지 여부는 별도 설정입니다 (일반 → 동작).',
-  'When Codenotch runs, and what it puts on your screen.':'Codenotch가 언제 실행되고 화면에 무엇을 표시할지 정합니다.',
+  'When Provider Monitor runs, and what it puts on your screen.':'Provider Monitor가 언제 실행되고 화면에 무엇을 표시할지 정합니다.',
   'Starting up':'시작', 'Start with Windows':'Windows 시작 시 함께 실행',
-  'Codenotch opens by itself every time you sign in to this computer, and waits quietly in the background until a coding session starts. Turn it off and you have to open Codenotch yourself.':'이 컴퓨터에 로그인할 때마다 Codenotch가 자동으로 실행되어, 코딩 세션이 시작될 때까지 백그라운드에서 조용히 대기합니다. 끄면 Codenotch를 직접 실행해야 합니다.',
+  'Provider Monitor opens by itself every time you sign in to this computer, and waits quietly in the background until a coding session starts. Turn it off and you have to open Provider Monitor yourself.':'이 컴퓨터에 로그인할 때마다 Provider Monitor가 자동으로 실행되어, 코딩 세션이 시작될 때까지 백그라운드에서 조용히 대기합니다. 끄면 Provider Monitor를 직접 실행해야 합니다.',
   'What is on screen':'화면에 표시되는 것', 'Show the notch':'노치 바 표시', 'Show the taskbar icon':'트레이 아이콘 표시',
-  'Language':'언어', 'Words used by Codenotch':'Codenotch가 사용하는 언어', 'Follow system':'시스템 따르기', 'English':'English',
-  'Claude Code can tell Codenotch the moment something happens in a session, instead of Codenotch having to guess from files on disk.':'Claude Code가 세션에서 일어나는 일을 그 즉시 Codenotch에 알려줄 수 있습니다. Codenotch가 디스크의 파일만 보고 추측하지 않아도 됩니다.',
-  'Session messages':'세션 메시지', 'Let Claude Code notify Codenotch':'Claude Code가 Codenotch에 알리도록 허용',
-  'What this copy of Codenotch is, and where it keeps its files.':'이 Codenotch가 어떤 프로그램이고 파일을 어디에 보관하는지 보여줍니다.', 'Version':'버전',
+  'Language':'언어', 'Words used by Provider Monitor':'Provider Monitor가 사용하는 언어', 'Follow system':'시스템 따르기', 'English':'English',
+  'Claude Code can tell Provider Monitor the moment something happens in a session, instead of Provider Monitor having to guess from files on disk.':'Claude Code가 세션에서 일어나는 일을 그 즉시 Provider Monitor에 알려줄 수 있습니다. Provider Monitor가 디스크의 파일만 보고 추측하지 않아도 됩니다.',
+  'Session messages':'세션 메시지', 'Let Claude Code notify Provider Monitor':'Claude Code가 Provider Monitor에 알리도록 허용',
+  'What this copy of Provider Monitor is, and where it keeps its files.':'이 Provider Monitor가 어떤 프로그램이고 파일을 어디에 보관하는지 보여줍니다.', 'Version':'버전',
   'Files':'파일', 'Data folder':'데이터 폴더', 'Open folder':'폴더 열기', 'If something looks wrong':'뭔가 이상해 보일 때',
   'Put the notch back':'노치 바 위치 되돌리기', 'Reset position':'위치 초기화', 'Saved':'저장됨',
   'Numbers':'숫자', 'two readings':'두 항목', 'Bars':'막대', '1 to 5 columns':'1~5개 열', 'Plain icon':'기본 아이콘', 'just the logo':'로고만 표시',
@@ -639,23 +639,23 @@ const KO_STATIC = {
   'Gemini Models':'Gemini 모델', 'Claude and GPT models':'Claude 및 GPT 모델',
   '"%@" is no longer available':'"%@"을(를) 더 이상 사용할 수 없습니다', '%@ — that slot now shows another provider.':'%@ — 이 항목은 이제 다른 provider를 표시합니다.',
   'One provider always stays ticked, so the pill is never empty.':'항상 최소 하나의 provider는 선택된 상태로 유지되어, 바가 비어 있지 않습니다.',
-  'The taskbar icon shows the plain Codenotch logo.':'트레이 아이콘에 기본 Codenotch 로고가 표시됩니다.',
+  'The taskbar icon shows the plain Provider Monitor logo.':'트레이 아이콘에 기본 Provider Monitor 로고가 표시됩니다.',
   'Choose Numbers or Bars above to draw your usage into it.':'위에서 숫자 또는 막대를 선택하면 여기에 사용량이 표시됩니다.',
   'Open the notch for a moment':'노치 바를 잠깐 열기', 'At least one provider stays on the notch':'노치 바에는 최소 하나의 provider가 남아 있어야 합니다',
   'The notch is back in the middle':'노치 바가 중앙으로 돌아왔습니다', 'Remove this column':'이 열 삭제', 'Add column':'열 추가',
-  'The taskbar icon has been kept on. With the notch hidden it is the only way left to open this window or to quit Codenotch, so Codenotch will not let both of them be switched off at the same time.':'트레이 아이콘은 계속 켜진 상태로 유지됩니다. 노치 바를 숨기면 이 창을 열거나 Codenotch를 종료할 방법이 트레이 아이콘뿐이라, 둘을 동시에 끌 수는 없습니다.',
+  'The taskbar icon has been kept on. With the notch hidden it is the only way left to open this window or to quit Provider Monitor, so Provider Monitor will not let both of them be switched off at the same time.':'트레이 아이콘은 계속 켜진 상태로 유지됩니다. 노치 바를 숨기면 이 창을 열거나 Provider Monitor를 종료할 방법이 트레이 아이콘뿐이라, 둘을 동시에 끌 수는 없습니다.',
   'One of these two always stays on. If you hide the notch, the taskbar icon is held on for you, because with both of them gone there would be nothing left to click and no way back to this window.':'이 둘 중 하나는 항상 켜져 있습니다. 노치 바를 숨기면 트레이 아이콘이 자동으로 켜져 유지됩니다 — 둘 다 사라지면 클릭할 것도, 이 창으로 돌아올 방법도 없어지기 때문입니다.',
-  'The black pill against the right-hand edge of the screen, with one ring per tool. Turn it off and the pill disappears; Codenotch keeps counting your usage either way.':'화면 오른쪽 끝의 검은색 바로, 도구마다 링이 하나씩 표시됩니다. 꺼도 Codenotch는 계속 사용량을 계산합니다.',
-  'The small icon down by the clock. Right-clicking it opens this window, refreshes the readings, or quits Codenotch.':'시계 옆의 작은 아이콘입니다. 마우스 오른쪽 버튼을 클릭하면 이 창을 열거나, 사용량을 새로고침하거나, Codenotch를 종료할 수 있습니다.',
-  'Held on: the notch is hidden, so this icon is the only way left to reach Codenotch. Switch the notch back on first if you want to hide it.':'항상 켜짐: 노치 바가 숨겨져 있어 Codenotch에 접근할 유일한 방법이 이 아이콘입니다. 이 아이콘을 숨기려면 먼저 노치 바를 다시 켜세요.',
-  'Sets the language used by Codenotch. “Follow system” uses the language Windows itself is set to.':'Codenotch가 사용하는 언어를 정합니다. "시스템 따르기"는 Windows에 설정된 언어를 그대로 사용합니다.',
-  'Turning this on adds a few lines to your Claude Code settings file so that Claude Code sends Codenotch a short message when a session starts, when it is working, when it is waiting for your answer, and when it finishes. That is what makes the ring spin and the amber ring pulse.':'이 설정을 켜면 Claude Code 설정 파일에 몇 줄이 추가되어, 세션이 시작·진행·응답 대기·종료될 때마다 Claude Code가 Codenotch에 짧은 메시지를 보냅니다. 이것이 링이 회전하거나 호박색으로 깜빡이게 만드는 원리입니다.',
+  'The black pill against the right-hand edge of the screen, with one ring per tool. Turn it off and the pill disappears; Provider Monitor keeps counting your usage either way.':'화면 오른쪽 끝의 검은색 바로, 도구마다 링이 하나씩 표시됩니다. 꺼도 Provider Monitor는 계속 사용량을 계산합니다.',
+  'The small icon down by the clock. Right-clicking it opens this window, refreshes the readings, or quits Provider Monitor.':'시계 옆의 작은 아이콘입니다. 마우스 오른쪽 버튼을 클릭하면 이 창을 열거나, 사용량을 새로고침하거나, Provider Monitor를 종료할 수 있습니다.',
+  'Held on: the notch is hidden, so this icon is the only way left to reach Provider Monitor. Switch the notch back on first if you want to hide it.':'항상 켜짐: 노치 바가 숨겨져 있어 Provider Monitor에 접근할 유일한 방법이 이 아이콘입니다. 이 아이콘을 숨기려면 먼저 노치 바를 다시 켜세요.',
+  'Sets the language used by Provider Monitor. “Follow system” uses the language Windows itself is set to.':'Provider Monitor가 사용하는 언어를 정합니다. "시스템 따르기"는 Windows에 설정된 언어를 그대로 사용합니다.',
+  'Turning this on adds a few lines to your Claude Code settings file so that Claude Code sends Provider Monitor a short message when a session starts, when it is working, when it is waiting for your answer, and when it finishes. That is what makes the ring spin and the amber ring pulse.':'이 설정을 켜면 Claude Code 설정 파일에 몇 줄이 추가되어, 세션이 시작·진행·응답 대기·종료될 때마다 Claude Code가 Provider Monitor에 짧은 메시지를 보냅니다. 이것이 링이 회전하거나 호박색으로 깜빡이게 만드는 원리입니다.',
   'The file being changed is':'변경되는 파일은',
   'in your user folder. A dated copy of it is saved before anything is written, and turning this switch off takes the lines out again. Any hooks you added yourself are left alone.':'사용자 폴더 안에 있습니다. 변경 전에 날짜가 적힌 복사본이 저장되며, 이 설정을 끄면 추가된 줄이 다시 제거됩니다. 직접 추가한 후크는 그대로 유지됩니다.',
   'Shows how much of your Claude, Codex, Cursor and Antigravity allowance you have used, in the taskbar icon and in a pill at the edge of the screen.':'Claude, Codex, Cursor, Antigravity의 사용량을 트레이 아이콘과 화면 끝의 바에 표시합니다.',
-  'Everything Codenotch remembers lives in one folder: your settings, its log file, and the "glyphs" folder where you can drop your own icons. Opens in File Explorer.':'Codenotch가 기억하는 모든 것은 한 폴더에 있습니다: 설정, 로그 파일, 직접 아이콘을 넣을 수 있는 "glyphs" 폴더. 탐색기로 열립니다.',
+  'Everything Provider Monitor remembers lives in one folder: your settings, its log file, and the "glyphs" folder where you can drop your own icons. Opens in File Explorer.':'Provider Monitor가 기억하는 모든 것은 한 폴더에 있습니다: 설정, 로그 파일, 직접 아이콘을 넣을 수 있는 "glyphs" 폴더. 탐색기로 열립니다.',
   'The pill can be dragged up and down the right-hand edge. If it has ended up somewhere you cannot see it — off the bottom of a screen you have unplugged, say — this drops it back into the middle of the edge.':'바는 화면 오른쪽 끝을 따라 위아래로 끌 수 있습니다. 연결을 끊은 모니터 아래쪽처럼 보이지 않는 곳으로 가버렸다면, 이 버튼으로 가운데로 되돌릴 수 있습니다.',
-  'Notch size':'노치 바 크기', 'Codenotch':'Codenotch', 'Tray icon preview':'트레이 아이콘 미리보기', 'Codenotch logo':'Codenotch 로고', 'Tray icon at':'아이콘 크기', 'pixels':'픽셀',
+  'Notch size':'노치 바 크기', 'Provider Monitor':'Provider Monitor', 'Tray icon preview':'트레이 아이콘 미리보기', 'Provider Monitor logo':'Provider Monitor 로고', 'Tray icon at':'아이콘 크기', 'pixels':'픽셀',
   'Down the right-hand edge':'오른쪽 끝을 따라', 'Down the left-hand edge':'왼쪽 끝을 따라', 'Top half':'위쪽 절반', 'Bottom half':'아래쪽 절반', 'Column':'열', 'Remove column':'열 삭제',
   'Model data':'모델 데이터',
   'Move up':'위로 이동', 'Move down':'아래로 이동',
@@ -666,7 +666,7 @@ const KO_STATIC = {
   'Informational only. This checks what the original project has shipped and can never install it over this Windows app.':'정보 확인 전용입니다. 원본 프로젝트의 릴리스를 확인하지만 이 Windows 앱 위에 설치하지 않습니다.',
   'Latest original release':'원본 최신 릴리스', 'Reporting only — no original-app installer is downloaded.':'정보만 표시하며 원본 앱 설치 파일은 다운로드하지 않습니다.',
   'Update this Windows app':'이 Windows 앱 업데이트', 'Check this app':'이 앱 확인',
-  'Separately checks this fork\'s Windows releases. Only an installer from this check can update Codenotch.':'이 포크의 Windows 릴리스를 별도로 확인합니다. 이 확인에서 찾은 설치 파일만 Codenotch를 업데이트할 수 있습니다.',
+  'Separately checks this fork\'s Windows releases. Only an installer from this check can update Provider Monitor.':'이 포크의 Windows 릴리스를 별도로 확인합니다. 이 확인에서 찾은 설치 파일만 Provider Monitor를 업데이트할 수 있습니다.',
   'Checking the original project…':'원본 프로젝트 확인 중…', 'Could not check the original project: ':'원본 프로젝트를 확인할 수 없습니다: ',
   'Latest upstream release: Codenotch %@.':'원본 최신 릴리스: Codenotch %@.',
   'Checking for an update…':'업데이트 확인 중…',
@@ -674,7 +674,7 @@ const KO_STATIC = {
   'You have the latest version (':'최신 버전을 사용 중입니다 (',
   'A newer version is available.':'새 버전이 있습니다.',
   'Version %@ is available':'%@ 버전을 사용할 수 있습니다',
-  'You have %@. Downloading starts the installer, which closes Codenotch to replace it.':'현재 %@ 버전입니다. 다운로드하면 설치 프로그램이 실행되며, 교체를 위해 Codenotch가 종료됩니다.',
+  'You have %@. Downloading starts the installer, which closes Provider Monitor to replace it.':'현재 %@ 버전입니다. 다운로드하면 설치 프로그램이 실행되며, 교체를 위해 Provider Monitor가 종료됩니다.',
   'Downloading…':'다운로드 중…', 'Download & install':'다운로드 후 설치', 'View release':'릴리스 보기'
 };
 // The rest of these pages still fall back to English for languages whose full static pass has not
@@ -1053,7 +1053,7 @@ function renderChips(){
 function renderPicker(){
   const host = document.getElementById('picker');
   if(cfg.mode === 'off'){
-    host.innerHTML = '<div class="c-note dim">' + esc(ui('The taskbar icon shows the plain Codenotch logo.', 'The taskbar icon shows the plain Codenotch logo.')) + ' '
+    host.innerHTML = '<div class="c-note dim">' + esc(ui('The taskbar icon shows the plain Provider Monitor logo.', 'The taskbar icon shows the plain Provider Monitor logo.')) + ' '
       + esc(ui('Choose Numbers or Bars above to draw your usage into it.', 'Choose Numbers or Bars above to draw your usage into it.')) + '</div>';
     return;
   }
@@ -1373,9 +1373,9 @@ function saveFlags(wantNotch, wantTray){
         fix.hidden = !corrected;
         if(corrected){
           fix.textContent = ui('The taskbar icon has been kept on. With the notch hidden it is the '
-            + 'only way left to open this window or to quit Codenotch, so Codenotch will not let '
+            + 'only way left to open this window or to quit Provider Monitor, so Provider Monitor will not let '
             + 'both of them be switched off at the same time.',
-            'The taskbar icon has been kept on. With the notch hidden it is the only way left to open this window or to quit Codenotch, so Codenotch will not let both of them be switched off at the same time.');
+            'The taskbar icon has been kept on. With the notch hidden it is the only way left to open this window or to quit Provider Monitor, so Provider Monitor will not let both of them be switched off at the same time.');
         }
       }
       toast(ui('Saved', 'Saved'));
@@ -1497,8 +1497,8 @@ function renderUpdate(info){
   }
   if(!info || !info.checked){
     status.textContent = ui(
-      'Separately checks this fork\'s Windows releases. Only an installer from this check can update Codenotch.',
-      'Separately checks this fork\'s Windows releases. Only an installer from this check can update Codenotch.'
+      'Separately checks this fork\'s Windows releases. Only an installer from this check can update Provider Monitor.',
+      'Separately checks this fork\'s Windows releases. Only an installer from this check can update Provider Monitor.'
     );
     row.hidden = true;
     return;
@@ -1516,7 +1516,7 @@ function renderUpdate(info){
   status.textContent = ui('A newer version is available.', 'A newer version is available.');
   row.hidden = false;
   name.textContent = ui('Version %@ is available', 'Version %@ is available').replace('%@', info.latest);
-  why.textContent = ui('You have %@. Downloading starts the installer, which closes Codenotch to replace it.', 'You have %@. Downloading starts the installer, which closes Codenotch to replace it.').replace('%@', info.current);
+  why.textContent = ui('You have %@. Downloading starts the installer, which closes Provider Monitor to replace it.', 'You have %@. Downloading starts the installer, which closes Provider Monitor to replace it.').replace('%@', info.current);
   document.getElementById('btn-installupdate').disabled = !info.asset_url;
 }
 let lastUpdateInfo = null;

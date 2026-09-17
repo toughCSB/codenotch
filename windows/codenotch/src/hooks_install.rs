@@ -118,5 +118,5 @@ pub fn uninstall() -> Result<String, String> {
         }
     }
     backup_and_write(&path, &root)?;
-    Ok(format!("removed {removed} Codenotch hook(s)"))
+    Ok(format!("removed {removed} Provider Monitor hook(s)"))
 }

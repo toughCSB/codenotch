@@ -1198,9 +1198,9 @@ fn paint_tray(app: &AppHandle, mode: &str, slots: &[config::TraySlot], values: &
         })
         .collect();
     let tip = if parts.is_empty() {
-        concat!("Codenotch v", env!("CARGO_PKG_VERSION")).to_string()
+        concat!("Provider Monitor v", env!("CARGO_PKG_VERSION")).to_string()
     } else {
-        format!("Codenotch — {}", parts.join(" · "))
+        format!("Provider Monitor — {}", parts.join(" · "))
     };
     let _ = tray.set_tooltip(Some(&tip));
 }
@@ -1311,7 +1311,7 @@ fn main() {
                 let r = match args.get(2).map(|s| s.as_str()) {
                     Some("on") => autostart::enable(),
                     Some("off") => autostart::disable(),
-                    _ => Err("usage: codenotch.exe autostart on|off".into()),
+                    _ => Err("usage: \"Provider Monitor.exe\" autostart on|off".into()),
                 };
                 report(r);
                 return;
@@ -1335,7 +1335,7 @@ fn main() {
             // Launching a freshly built exe while the old one is still running lands here: the new
             // instance is turned away and what stays on screen is the old process. Say so loudly.
             applog(&format!("single instance: another launch was refused; the running instance is build={BUILD} — quit it from the tray first if you just rebuilt"));
-            let _ = app.emit("notice", format!("Codenotch is already running ({BUILD}) — quit it from the tray before starting a new build"));
+            let _ = app.emit("notice", format!("Provider Monitor is already running ({BUILD}) — quit it from the tray before starting a new build"));
         }))
         .manage(AppState {
             store: Mutex::new(Default::default()),
@@ -1473,7 +1473,7 @@ fn main() {
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("Codenotch failed to start");
+        .expect("Provider Monitor failed to start");
 }
 
 #[cfg(test)]

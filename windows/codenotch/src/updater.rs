@@ -221,7 +221,7 @@ pub fn download_and_launch(app: &AppHandle) -> Result<(), String> {
     if bytes.is_empty() {
         return Err("downloaded file is empty".into());
     }
-    let name = if info.asset_name.is_empty() { "CodenotchSetup.exe" } else { &info.asset_name };
+    let name = if info.asset_name.is_empty() { "Provider-Monitor-Setup.exe" } else { &info.asset_name };
     let path = std::env::temp_dir().join(name);
     std::fs::write(&path, &bytes).map_err(|e| format!("could not save installer: {e}"))?;
     std::process::Command::new(&path)

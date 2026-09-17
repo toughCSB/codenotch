@@ -1,6 +1,6 @@
-# Codenotch for Windows — toughCSB의 포크
+# Provider Monitor for Windows — toughCSB의 포크
 
-![Codenotch pill and hover card on Windows](windows/docs/screenshots/windows-hover-card.png)
+![Provider Monitor pill and hover card on Windows](windows/docs/screenshots/windows-hover-card.png)
 
 [vinzdg/codenotch](https://github.com/vinzdg/codenotch)의 포크입니다 — 화면 가장자리에 붙어서
 각 코딩 어시스턴트의 사용량이 얼마나 남았는지, 지금도 작동 중인지 한눈에 보여주는 작은 검은색
@@ -31,8 +31,8 @@
 
 ## 윈도우에 설치하기
 
-**[Releases](../../releases/tag/windows-v0.5.0)** 페이지에서 설치 파일을 받아 실행하세요:
-[`Codenotch-Setup.exe`](../../releases/download/windows-v0.5.0/Codenotch-Setup.exe).
+**[Releases](../../releases/tag/windows-v0.6.0)** 페이지에서 설치 파일을 받아 실행하세요:
+[`Provider-Monitor-Setup.exe`](../../releases/download/windows-v0.6.0/Provider-Monitor-Setup.exe).
 Windows 11 필요(WebView2 런타임은 기본 포함). 설치하면 시작 메뉴에 바로가기와 제거 프로그램이
 등록됩니다 — 관리자 권한 불필요.
 
@@ -79,8 +79,8 @@ Full bilingual (English/한국어) writeup, provider details and build instructi
 
 ### Install on Windows
 
-Download and run the installer from **[Releases](../../releases/tag/windows-v0.5.0)**:
-[`Codenotch-Setup.exe`](../../releases/download/windows-v0.5.0/Codenotch-Setup.exe).
+Download and run the installer from **[Releases](../../releases/tag/windows-v0.6.0)**:
+[`Provider-Monitor-Setup.exe`](../../releases/download/windows-v0.6.0/Provider-Monitor-Setup.exe).
 Requires Windows 11 (WebView2 runtime ships by default). The installer adds a Start Menu shortcut
 and an uninstaller — no admin rights needed.
 
