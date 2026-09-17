@@ -604,6 +604,10 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
+                if preferences.weeklyRing != .off {
+                    Toggle(L10n.t("Dashed weekly ring"), isOn: $preferences.weeklyRingDashed)
+                }
+
                 Toggle(L10n.t("Claude daily pace ring"), isOn: $preferences.claudeDailyPaceRing)
                 Text(L10n.t("Claude's main ring shows today's share of the weekly limit — a seventh a day, counted from the weekly reset — instead of the session. The session moves to the thin ring and the card; alerts follow the daily ring."))
                     .font(.caption)
@@ -767,6 +771,33 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            }
+
+            Section(L10n.t("Usage Limits")) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(L10n.t("Watch limit"))
+                        Spacer()
+                        Text("\(Int(preferences.watchLimit * 100))%")
+                    }
+                    Slider(value: $preferences.watchLimit, in: 0.01...0.99)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(L10n.t("Critical limit"))
+                        Spacer()
+                        Text("\(Int(preferences.criticalLimit * 100))%")
+                    }
+                    Slider(value: $preferences.criticalLimit, in: 0.01...1.00)
+                }
+                Button(L10n.t("Reset to defaults")) {
+                    // Critical first: `watchLimit` clamps itself below critical,
+                    // so resetting watch against a low stored critical would pin
+                    // it there and the reset would quietly do nothing.
+                    preferences.criticalLimit = 0.70
+                    preferences.watchLimit = 0.50
+                }
+                .padding(.top, 4)
             }
 
             // Apart from the notch's own group: these are about the app, not

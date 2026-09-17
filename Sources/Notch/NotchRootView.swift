@@ -132,6 +132,9 @@ struct NotchRootView: View {
         .tint(model.accentColor.color)
         .environment(\.providerMonitorAccentColor, model.accentColor.color)
         .environment(\.notchSurfaceStyle, model.surfaceStyle)
+        .environment(\.weeklyRingDashed, model.weeklyRingDashed)
+        .environment(\.usageWatchLimit, model.watchLimit)
+        .environment(\.usageCriticalLimit, model.criticalLimit)
     }
 
     /// Opening and closing are not mirror images. Appearing, the arc waits its
