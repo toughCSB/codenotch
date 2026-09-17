@@ -8,7 +8,7 @@ Same design language as the macOS original (inverse-rounded pill, colour-graded 
 hover card with per-window bars), rebuilt for Windows in Rust + Tauri 2 / WebView2.
 No code is copied from the Swift app; the providers are reimplemented from their
 documented behaviour and the wire formats. **Windows is a first-class target, not an
-afterthought** — this fork runs natively on Windows 11 (Rust + Tauri 2 / WebView2), no macOS
+afterthought** — this project runs natively on Windows 11 (Rust + Tauri 2 / WebView2), no macOS
 required.
 
 ![Provider Monitor pill and hover card on Windows](docs/screenshots/windows-hover-card.png)
@@ -106,7 +106,7 @@ inventing a colour for it.
 A pull request that touches this tree is built and tested; the check is skipped
 inside forks until the pull request is opened here.
 
-## What's different in this fork
+## What this project adds
 
 This project ([toughCSB/provider-monitor](https://github.com/toughCSB/provider-monitor)) adds on top of the
 `windows/` tree above:
@@ -137,7 +137,7 @@ This project ([toughCSB/provider-monitor](https://github.com/toughCSB/provider-m
 - **Settings follow the Windows language**: the settings window used to fall back to English for
   every language but Russian even when the tray menu was already in Korean; it now uses the same
   per-language dictionary and picks it up from the same place the tray does.
-- **Checks GitHub for updates**: Settings → About can check this fork's releases for a newer
+- **Checks GitHub for updates**: Settings → About can check this project's releases for a newer
   Windows build and download the installer with one more click — nothing installs on its own.
 - **The pill re-snaps to the right edge on its own**: undocking a monitor, or any other change to
   the display layout, used to leave the pill wherever it had last been placed; it now notices
@@ -155,7 +155,7 @@ None of this touches the credential/security discipline of the upstream code: ev
 only *reads* an existing sign-in, never writes or refreshes a token, and a 401/403/429 is handled
 the same conservative way (back off, mark stale, never invent a number).
 
-## 이 포크에서 달라진 점
+## 이 프로젝트가 더한 것
 
 이 프로젝트([toughCSB/provider-monitor](https://github.com/toughCSB/provider-monitor))는 위 `windows/` 트리에 다음을
 추가했습니다:
