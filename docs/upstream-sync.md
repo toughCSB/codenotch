@@ -25,6 +25,7 @@
 | `Sources/Settings/RingCadence.swift` 같은 포크 전용 파일 | 우리 것 유지 | upstream에 없다 |
 | `Sources/Localizable.xcstrings` | 키 **합집합**. 같은 키는 `ko`가 있는 우리 것 유지 | 번역을 잃지 않는다 |
 | `.github/workflows/**` | upstream 채택 | CI 정의는 원본을 따른다 |
+| `site/**` | 우리 쪽은 비워 둔다(삭제를 유지한다) | upstream이 서명·공증한 dmg와 appcast를 넣는 자리라 포크에서는 쓸 일이 없다. 이 포크는 GitHub Pages를 쓰지 않는다 |
 | `windows/**` | **우리 것 유지** — `git checkout HEAD -- windows/` | 위 참조 |
 | `project.yml` | downstream 버전·번들 ID·Sparkle 정책은 우리 것, upstream 설정 변경은 채택 | |
 
@@ -79,6 +80,10 @@ gh run watch --repo toughCSB/codenotch
   않고, 뒤의 것은 upstream `windows.yml`이 부르는 스크립트라 남겨 두었다.
 - 카탈로그는 키 합집합 668개에서 시작해 Xcode 추출로 819개가 됐다. 자세한 수치는 커밋 메시지에 있다.
 
+`site/Codenotch.dmg`와 `site/appcast.xml`은 upstream이 자기 릴리스마다 갱신해 넣는
+배포 산출물이다(합쳐서 10MB). 이 포크는 Pages를 켜지 않았고 공증도 할 수 없어 쓸 일이
+없으므로 삭제했다. 다음 병합에서 modify/delete 충돌로 다시 나타나면 삭제를 유지하면 된다.
+
 ## 릴리스
 
 macOS:
@@ -96,4 +101,3 @@ Gatekeeper에서 **우클릭 → 열기**를 한 번 해야 하고, 업데이트
 Windows: `windows-package.yml`이 `workflow_dispatch`로 실행되면 NSIS 설치 프로그램을 만들어
 설치·`doctor`·제거까지 스스로 확인한다. 릴리스에 첨부하려면 artifact를 받아
 `gh release upload <태그> Codenotch-Setup.exe`로 올린다.
-
