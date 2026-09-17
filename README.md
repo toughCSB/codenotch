@@ -1,482 +1,142 @@
-# Provider Monitor for Windows — toughCSB의 포크
-
-![Provider Monitor pill and hover card on Windows](windows/docs/screenshots/windows-hover-card.png)
-
-[vinzdg/codenotch](https://github.com/vinzdg/codenotch)의 포크입니다 — 화면 가장자리에 붙어서
-각 코딩 어시스턴트의 사용량이 얼마나 남았는지, 지금도 작동 중인지 한눈에 보여주는 작은 검은색
-노치입니다. 이 포크의 [`windows/`](windows/) 포트(Rust + Tauri 2 / WebView2)는 원본 위에 다음을
-추가했습니다:
-
-- **provider 2개 추가** — Claude, Codex, Cursor, Antigravity에 더해 Grok과 OpenCode (Go).
-- **사용량이 아니라 잔여량 표시** — 24% 사용했다면 링, 퍼센트, hover 카드 막대 어디서나
-  **76%**로 표시됩니다.
-- **기본값이 주간(Weekly)** — 모든 링이 기본적으로 *주간* 윈도우를 읽습니다 (세션/5시간처럼
-  빠르게 움직이는 값은 hover 카드에 그대로 남아 있습니다).
-- **hover 카드에 큰 리셋 카운트다운** — `3d 14Hr`, `5Hr 22Min` — 시계 시각을 보고 직접 빼기
-  계산할 필요가 없습니다.
-- **provider별 색 구분** — Claude와 Antigravity는 실제 공식 컬러 마크를 쓰고, 흑백 로고뿐인
-  나머지 네 개(Codex, Cursor, Grok, OpenCode)는 구분용 강조색을 입혔습니다.
-- **다른 provider는 안 건드리고 링 하나의 기준만 전환** — hover 카드의 "표시 기준" 줄에서 그
-  provider만 주간/월간/5시간으로 바꿀 수 있고, 각 링 모서리의 M/W/5h 배지가 지금 기준을
-  보여줍니다.
-- **GitHub에서 업데이트 확인** — 설정 → 정보에서 새 Windows 빌드를 확인하고, 클릭 한 번으로
-  설치 프로그램을 받아 실행합니다.
-- **바 아이콘 순서 변경** — 설정 → Notch에 ▲▼ 버튼이 있어 아이콘이 그려지는 순서를 직접 정할
-  수 있습니다.
-- **항상 위에 표시 켜고 끄기** — 노치를 우클릭하거나 설정에서, 다른 창 뒤로 숨을지 항상 맨
-  위에 있을지 정할 수 있습니다.
-
-전체 이중언어(영어/한국어) 설명, provider 상세, 빌드 방법:
-**[`windows/README.md`](windows/README.md)**.
-
-## 윈도우에 설치하기
-
-**[Releases](../../releases/tag/windows-v0.6.0)** 페이지에서 설치 파일을 받아 실행하세요:
-[`Provider-Monitor-Setup.exe`](../../releases/download/windows-v0.6.0/Provider-Monitor-Setup.exe).
-Windows 11 필요(WebView2 런타임은 기본 포함). 설치하면 시작 메뉴에 바로가기와 제거 프로그램이
-등록됩니다 — 관리자 권한 불필요.
-
-또는 직접 소스에서 빌드:
-
-```powershell
-git clone https://github.com/toughCSB/codenotch.git
-cd codenotch/windows/codenotch
-cargo build --release
-.\target\release\codenotch.exe          # 화면 오른쪽 가장자리에 pill이 나타남
-.\target\release\codenotch.exe doctor   # 자체 진단: 크리덴셜, 데이터소스, 아이콘, 훅
-```
-
-<details>
-<summary>🇺🇸 Read this in English (click to expand)</summary>
-
-Fork of [vinzdg/codenotch](https://github.com/vinzdg/codenotch) — a small black notch pinned to
-the edge of your screen showing how much of each coding assistant's usage allowance is left, and
-whether it's still working right now. This fork's [`windows/`](windows/) port (Rust + Tauri 2 /
-WebView2) adds on top of upstream:
-
-- **Two more providers** — Grok and OpenCode (Go), alongside Claude, Codex, Cursor and Antigravity.
-- **Shows remaining, not used** — a plan at 24% used shows **76%**, everywhere: the ring, the
-  percentage, the hover card's bars.
-- **Weekly by default** — every ring reads its *weekly* window, not the fast-moving session/5h one
-  (still on the hover card in full).
-- **A big reset countdown** on the hover card — `3d 14Hr`, `5Hr 22Min` — instead of a clock time
-  you have to do the subtraction on yourself.
-- **Per-provider colours** — Claude and Antigravity's real official colour marks, plus a
-  distinguishing tint for the four brands that only publish monochrome logos (Codex, Cursor, Grok,
-  OpenCode) so all five-plus cells stay tellable apart at a glance.
-- **Switch one ring's window without touching the rest** — the hover card's "Ring shows" row
-  flips that one provider between weekly / monthly / 5-hour; a small colour-coded M/W/5h badge on
-  each ring's corner always shows which one it is currently reading.
-- **Checks GitHub for updates** — Settings → About can check this fork's releases for a newer
-  Windows build and download the installer with one more click; nothing installs on its own.
-- **Reorder the pill's icons** — Settings → Notch has ▲▼ buttons on each provider so the order
-  they draw in is a choice, not fixed.
-- **Always-on-top switch** — right-click the notch, or use Settings, to let it sink behind other
-  windows instead of always staying on top.
-
-Full bilingual (English/한국어) writeup, provider details and build instructions:
-**[`windows/README.md`](windows/README.md)**.
-
-### Install on Windows
-
-Download and run the installer from **[Releases](../../releases/tag/windows-v0.6.0)**:
-[`Provider-Monitor-Setup.exe`](../../releases/download/windows-v0.6.0/Provider-Monitor-Setup.exe).
-Requires Windows 11 (WebView2 runtime ships by default). The installer adds a Start Menu shortcut
-and an uninstaller — no admin rights needed.
-
-Or build it yourself:
-
-```powershell
-git clone https://github.com/toughCSB/codenotch.git
-cd codenotch/windows/codenotch
-cargo build --release
-.\target\release\codenotch.exe          # pill appears on the right edge of the primary monitor
-.\target\release\codenotch.exe doctor   # self-diagnosis: credentials, data sources, icons, hooks
-```
-
-</details>
-
----
-
-## Original project (macOS) / 원본 프로젝트 (macOS)
-
-*Everything below this line is the upstream [vinzdg/codenotch](https://github.com/vinzdg/codenotch)
-project's own README, unchanged — it documents the macOS app this fork's Windows port is based on.*
-*아래는 원본 [vinzdg/codenotch](https://github.com/vinzdg/codenotch) 프로젝트의 README를 그대로
-둔 것입니다 — 이 Windows 포크가 기반으로 하는 macOS 앱에 대한 설명입니다.*
+# Provider Monitor
 
 <div align="center">
 
-![Codenotch](docs/design/codenotch-banner.png)
+![Provider Monitor](docs/screenshots/provider-monitor-banner.png)
 
-[![CI](https://github.com/vinzdg/codenotch/actions/workflows/ci.yml/badge.svg)](https://github.com/vinzdg/codenotch/actions/workflows/ci.yml)
-![Platform](https://img.shields.io/badge/platform-macOS%2026%2B-black)
-![Swift](https://img.shields.io/badge/swift-5-orange)
+[![macOS CI](https://github.com/toughCSB/provider-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/toughCSB/provider-monitor/actions/workflows/ci.yml)
+[![Windows](https://github.com/toughCSB/provider-monitor/actions/workflows/windows.yml/badge.svg)](https://github.com/toughCSB/provider-monitor/actions/workflows/windows.yml)
+![Platform](https://img.shields.io/badge/platform-macOS%2015%2B%20%C2%B7%20Windows%2011-black)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**A macOS app that pins a small black notch to a screen edge, showing how much
-of each coding assistant's usage limit you have burned — and whether it is
-still working, done, or waiting on you.**
+**코딩 어시스턴트의 한도가 얼마나 남았는지, 그리고 지금도 일하고 있는지를 화면 가장자리의 노치 하나로 보여줍니다.**
 
-![Collapsed notch with hover tooltip](docs/design/frame-124-hover-tooltip.png)
+**macOS와 Windows가 같은 버전 번호, 같은 릴리스로 함께 나갑니다.**
 
 </div>
 
-Hover a ring for its limit windows and when they reset. Claude's ring shows the
-same **current session** window Claude Code's own `/usage` leads with, so the
-two never disagree.
+## 스크린샷
 
-## Download
+| macOS | Windows |
+| :---: | :---: |
+| ![macOS 노치와 호버 카드](docs/screenshots/macos-hover-card.png) | ![Windows 노치와 호버 카드](windows/docs/screenshots/windows-hover-card.png) |
+| 화면 오른쪽 가장자리의 노치와 OpenCode 호버 카드. 링 왼쪽 위의 작은 배지가 지금 읽고 있는 주기입니다 — **W** 주간, **M** 월간, **5h** 5시간. | 같은 화면을 Windows로 옮긴 포트와 Claude 호버 카드. |
 
-[![Download for macOS](docs/design/download-macos.svg)](../../releases/download/v1.14.0/ProviderMonitor-1.14.0-unsigned.dmg)
+둘 다 실제로 실행 중인 화면을 캡처한 것입니다. macOS 쪽은 이 맥에 Cursor가 설치돼 있지 않아 링이 다섯 개입니다.
 
-That button is the disk image itself, not the page it sits on. This fork's
-builds are named after their version and are **not** Developer ID signed or
-notarized — there is no Apple certificate on the machine that builds them — so
-macOS asks once at first launch: right-click the app in Finder, then Open.
-`Codenotch.dmg` belongs to the original project's releases; this fork's macOS
-builds are `ProviderMonitor-<version>-unsigned.dmg`. The
-[release page](../../releases/tag/v1.14.0) has the notes.
+## 무엇을 보여주나
 
-To try unreleased `main` without an Xcode install, the [preview
-build](../../releases/tag/preview) is rebuilt from every commit, and the
-Package workflow keeps a per-commit disk image on each of its
-[runs](../../actions/workflows/package.yml). Neither is notarized — they are
-ad-hoc signed, because the Developer ID certificate exists on one machine — so
-macOS quarantines the download. Clear the flag once, after dragging the app to
-Applications:
+- **잔여량이 기준입니다.** 링 아래 숫자는 **남은** 퍼센트입니다. 24% 쓴 플랜은 **76%** 로 보입니다. 색 밴드(초록·노랑·빨강)는 그대로 실제 사용량을 따릅니다. 설정 → 모양 → **링 숫자**에서 사용량 기준으로 되돌릴 수 있습니다.
+- **리셋까지 남은 시간을 호버 카드 맨 위에 크게.** `2일 3시간`, `58분` 처럼 남은 시간으로 보여줍니다. 시계 시각을 보고 직접 빼지 않아도 됩니다.
+- **링마다 주기 전환.** 호버 카드의 **표시 기준** 줄에서 그 provider의 링만 주간 / 월간 / 5시간 / 기본 중 하나로 바꿉니다. 다른 링은 움직이지 않습니다. 기본값은 주간 한도이고, 주간 창이 없는 provider(Cursor)는 그 provider의 기본 창을 씁니다.
+- **provider별 원래 색.** Claude는 코랄, Codex는 초록, Grok은 보라 — 공식 풀컬러 마크가 있는 브랜드는 그 색을 쓰고, 흑백 로고만 공개한 브랜드는 구분용 색을 씁니다. 그래프 색 규칙은 원본 앱 그대로입니다.
+- **한국어.** 앱 UI와 호버 카드, 설정 창이 한국어입니다. 원본 앱이 지원하던 다른 언어도 그대로 남아 있습니다.
+- **Antigravity 5시간 한도.** Gemini와 Claude/GPT 두 갈래의 5시간 · 주간 한도를 각각 읽습니다.
 
-```sh
-xattr -dr com.apple.quarantine /Applications/Codenotch.app
-```
+## 노치 다루기
 
-If macOS says the app is *damaged*, that is the quarantine flag rather than a bad download — run the command above.
+- **항상 위에** — 우클릭 메뉴에서 켜면 다른 앱이 전체 화면이어도 노치가 맨 위에 남습니다.
+- **어디에 띄울지** — 모니터가 여러 대면 **주 디스플레이만** 또는 **모든 디스플레이** 중에 고르고, 디스플레이를 직접 골라 고정할 수도 있습니다.
+- **옮기기** — ⌥를 누른 채 끌면 그 변을 따라 이동하고, 변마다 위치를 기억합니다. 설정의 **가운데로** 버튼이 현재 변의 중앙으로 되돌립니다.
+- **크기** — 작게 / 보통 / 크게 프리셋과 슬라이더가 있습니다. 슬라이더는 노치 전체(링·글자·툴팁)를 같은 비율로 키우고 줄입니다.
+- **아이콘 순서** — 설정에서 provider 순서를 바꾸면 노치가 그 순서대로 그립니다.
+- **알림** — 한도가 80%와 100%를 넘을 때 각각 한 번 시스템 알림이 옵니다. provider별로 끌 수 있습니다.
 
-Universal binary. macOS 15 or later. To build and install a copy from source
-instead, see [Building](#building).
+## 업데이트 확인은 두 개입니다
 
-## Connect your phone
+설정 → 정보에 서로 다른 두 가지가 있습니다. 헷갈리기 쉬워서 일부러 나눠 두었습니다.
 
-The Codenotch phone app (iOS and Android) can show the same usage
-percentages, reset times and session states as the notch on your Mac.
-It reads only what the notch already displays — never tokens, credentials
-or raw API responses.
+| | 무엇을 보나 | 무엇을 하나 |
+| --- | --- | --- |
+| **원본 앱** | 원본 Codenotch가 새 버전을 냈는지 | 알려주기만 합니다. 설치 경로가 없습니다 |
+| **Provider Monitor** | 지금 쓰고 있는 이 빌드 | macOS: 실행 중인 빌드를 /Applications에 설치. Windows: 이 릴리스의 설치 프로그램을 내려받아 실행 |
 
-To pair, open **Settings › Phone › Connect a Phone…** (or the menu item)
-on your Mac. A QR code appears with a five-minute countdown; scan it with
-the Codenotch phone app, or copy the link and paste it into the app. The
-Mac and phone must be on the same Wi-Fi network — the server answers only
-local-network addresses and rejects anything routed over the internet.
+원본 피드에는 **일부러** 설치 경로를 두지 않았습니다. 그 피드로 업데이트를 허용하면 원본이 새 버전을 낼 때마다 이 포크가 조용히 원본 앱으로 되돌아가고, 이름과 아이콘, 우리가 얹은 것들이 배경에서 사라집니다.
 
-Each code is single-use and expires after five minutes. Reopening the
-window always mints a fresh one.
+## 릴리스
 
-To remove a paired phone, open **Settings › Phone**, find the device in
-the list and click **Remove**. Its credentials are deleted immediately and
-any subsequent request from that phone is rejected.
+한 릴리스에 두 플랫폼이 함께 실립니다. 같은 `v1.15.0` 태그에 macOS dmg와 Windows 설치 프로그램이 같이 붙습니다.
 
-See [docs/phone-link-protocol.md](docs/phone-link-protocol.md) for the
-wire-level details.
+- **macOS** — [ProviderMonitor-1.15.0-unsigned.dmg](../../releases/download/v1.15.0/ProviderMonitor-1.15.0-unsigned.dmg) · 유니버설(Apple Silicon + Intel), macOS 15 이상
+- **Windows** — [Provider-Monitor-Setup.exe](../../releases/latest/download/Provider-Monitor-Setup.exe) · Windows 11 (WebView2 런타임 기본 포함)
 
-## What it reads
+`main`의 최신 커밋을 바로 써보려면 [preview 릴리스](../../releases/tag/preview)에 push마다 새 dmg가 올라옵니다.
 
-| Provider | Source | How |
-|---|---|---|
-| **Claude Code** | official | Claude Desktop's own cached usage response, where Desktop is running and signed into the same account. Then Claude Code's own `/usage`, asked of the installed `claude`. Then the OAuth token in the login keychain, against the endpoint that command uses. |
-| **Cursor** | official | The editor's signed-in session in its local SQLite state, or the `cursor-agent` login in the keychain — no separate sign-in. |
-| **Codex** | official | Using the local Codex sign-in. Shows the 5-hour and weekly limits when available, plus extra limit windows when the account has them. |
-| **DeepSeek Platform** | derived from official Platform responses | Explicit sign-in in Codenotch's own WKWebView, then the Platform account summary and API-key/model usage endpoints. Shows funded/spent balance, 30-day tokens/cost, requests and API-key count. |
-| **Antigravity** | official where licensed, otherwise a request count | Antigravity's local language server first, then Google's quota endpoint; a plain count when neither will answer for the account. |
-| **GLM** | official | Z.ai's Coding Plan monitor endpoint, with a key borrowed from whichever coding tool already holds one — Claude Code's `settings.json`, ZCode, or OpenCode. |
-| **MiniMax** | official where a Coding Plan key is used, derived from official Platform responses for the in-app sign-in | A Coding Plan key pasted in Settings, or explicit sign-in in Codenotch's own WKWebView. |
-| **Ollama (Local)** | local runtime | Automatically detected local models, RAM/VRAM, unload time and context. Optional response capture adds thinking and generation speed. |
-| **LM Studio** | local runtime | Loaded models from LM Studio's own listing, what each one is doing (prompt, generating, queue) from its SDK socket, and speed, context use and tokens per day from its server log. No relay needed. |
-| **Grok** | official | The Grok CLI session in `~/.grok/auth.json`, against the same credits billing endpoint `/usage` uses. |
-| **OpenCode** | official | The Go plan's official usage endpoint, with the `opencode-go` key OpenCode itself stores on sign-in. |
-| **Command Code** | official | The GOAT plan's `/alpha` billing endpoints, with the key the Command Code app writes to `~/.commandcode/auth.json`. |
-| **GitHub Copilot** | official | GitHub's Copilot quota endpoint, authenticated with the GitHub CLI session already on the Mac (`gh auth login`). |
-| **Kimi** | official | The Kimi Code CLI session in `~/.kimi-code/credentials/kimi-code.json`, against the same `/usages` endpoint the CLI's `/usage` asks. Shows the 5-hour rate window and the weekly quota. |
-| **Kiro** | official | The kiro-cli session already on this Mac, against the same `/usage` that command prints. Shows monthly credits. |
+## 설치
 
-Most providers borrow a credential or session from a tool already on your Mac.
-DeepSeek is the explicit browser-login exception: it never reads a browser's
-cookies or credentials, and only makes requests after you choose **Sign in to
-DeepSeek** from Codenotch. MiniMax is the same kind of exception — a key you
-paste in Settings, or an explicit WKWebView sign-in. It never opens a browser's
-cookie store.
+### macOS
 
-Ollama Cloud accepts an API key in Settings. Switching a provider off stops its
-usage polling and forgets its readings; borrowed accounts stay signed in to
-the tools that own them.
-
-**Local Ollama is detected automatically.** Configure its address or stop monitoring in **Settings → Ollama**.
-Each loaded model gets a notch cell; reorder or hide it in **Settings → Accounts**.
-Hover for RAM/VRAM, unload time, context limit and quantization.
-
-For generation speed (**tok/s**) and live **Thinking**, enable **Measure speed and thinking**
-in Settings → Ollama, keep Codenotch open and connect through its local relay:
+1. 위 dmg를 받아 열고, `Provider Monitor.app`을 **Applications** 폴더로 끌어다 놓습니다.
+2. 이 빌드는 **ad-hoc 서명**이라 공증이 없습니다. 첫 실행은 Finder에서 앱을 **우클릭 → 열기**로 한 번 열어 줍니다.
+3. macOS가 *손상되었습니다* 라고 하면 다운로드가 깨진 것이 아니라 격리 플래그 때문입니다. 한 번만 지워 주면 됩니다:
 
 ```sh
-OLLAMA_HOST=http://127.0.0.1:11435 ollama run gemma4:e4b --think
+xattr -dr com.apple.quarantine "/Applications/Provider Monitor.app"
 ```
 
-Speed updates after completed native Ollama responses; thinking requires streamed
-reasoning. Direct requests to Ollama's default port (`11434`) only provide model
-detection. Monitoring never initiates inference or saves prompts, reasoning or replies.
-See [Ollama details](docs/plans/2026-09-07-local-llm-provider-plan.md).
+### Windows
 
-**Local LM Studio is detected automatically** on the port LM Studio's own settings name
-(1234 unless you moved it). Configure the address or stop monitoring in **Settings → LM Studio**.
-Each loaded language model gets a notch cell; embedding models are left out. The cell shows the
-last response's **tok/s** and its ring fills with how much of the loaded **context** the last
-request used. A white arc turns while the model reads a prompt or generates, and becomes a ring
-of dots when requests are queued behind it. Hover for context used, tokens and requests today,
-reasoning share, speculative-decoding acceptance, model size, quantization and context limit.
+1. `Provider-Monitor-Setup.exe`를 실행합니다. 현재 사용자용으로 설치되고 관리자 권한이 필요 없습니다. 시작 메뉴 바로가기와 제거 프로그램이 함께 생깁니다.
+2. 서명이 없어 SmartScreen이 처음 한 번 막습니다. **추가 정보** → **실행**을 고르면 됩니다.
+3. 제거는 설치 폴더의 `uninstall.exe`로 하거나 Windows 설정 → 앱에서 합니다.
 
-Nothing has to be pointed at Codenotch: what a model is doing comes from LM Studio's SDK socket
-on the same port (the one `lms ps` uses), and speed and tokens come from `~/.lmstudio/server-logs`,
-which LM Studio writes for every request from any client. Only counts and timings are read from
-those files, never a prompt or a reply. Responses through the OpenAI-compatible endpoint carry no
-clock, so their speed is timed from the generating phase and marked `~`. If LM Studio's server is
-set to require an API token, paste one in Settings → LM Studio (or export `LM_API_TOKEN`); without
-one, requests are sent with no Authorization header at all.
-See [LM Studio details](docs/plans/2026-09-10-lm-studio-provider-plan.md).
+## 빌드
 
-Settings lists the connected providers in the order the notch draws them, and
-you can drag one by its handle to move it. The order is remembered across
-launches. A provider you switch back on joins the end of that list rather than
-reclaiming an older position, so nothing you cannot currently see jumps ahead
-of something you placed deliberately.
-
-It also answers **"is it still working?"** — a thin arc spins inside a
-provider's ring while a session is busy, and becomes a pulsing amber ring when
-one is blocked waiting on you. Hover for every live session by name, where it
-is running, and what it wants.
-
-Two Claude Code logins are two rings. Anyone who keeps a work account apart with
-`CLAUDE_CONFIG_DIR=~/.claude-work claude` gets a **Claude (work)** ring beside the
-personal one, with its own limits, its own sessions and its own row in Settings.
-Any `~/.claude-<slug>` directory Claude Code has run against is found at launch;
-the default `~/.claude` always comes first, the rest in alphabetical order, so the
-rings never swap places.
-
-Codex accounts work the same way: `~/.codex` stays the **Codex** ring, and each
-used `~/.codex-<slug>` directory adds a **Codex (slug)** ring with its own limits,
-activity and Settings row. Profiles are discovered at launch, default first,
-then alphabetically. To connect a second account, sign in through Codex CLI
-using a separate home directory:
+### macOS
 
 ```sh
-mkdir -p "$HOME/.codex-work"
-CODEX_HOME="$HOME/.codex-work" codex -c 'cli_auth_credentials_store="file"' login
+brew install xcodegen   # 최초 한 번
+make run                # 생성 + Debug 빌드 + 실행
+make test               # 유닛 테스트
+make dmg-ci             # 서명 없이 배포용 dmg 만들기
 ```
 
-Choose the second account during sign-in, then restart Codenotch. Run that
-account's CLI sessions with `CODEX_HOME="$HOME/.codex-work" codex` as well.
-Repeat with another name, such as `.codex-personal`, for more accounts.
-Settings shows each account's email and profile directory; each ring can be
-reordered or switched off independently. Switching one off forgets only its
-Codenotch readings and leaves the Codex login intact.
+Debug 빌드와 `make test`는 서명 인증서가 없어도 됩니다. `make release`(Developer ID 서명 + 공증 + Sparkle 피드)는 인증서와 `notarytool` 프로필이 있어야 하고 유지보수자만 실행합니다.
 
-Codenotch reads each profile's `auth.json`; keychain-only or API-key-only
-logins cannot provide these ChatGPT account limits. It never copies, refreshes
-or writes Codex credentials. If a login expires, use that profile's Codex CLI
-to renew it. Directories outside the `~/.codex-<slug>` convention are not
-discovered automatically, and adding a profile requires restarting Codenotch,
-just as it does for Claude.
+### Windows
 
-## When a session ends
-
-The notch opens itself for five seconds when an agent stops working, or stops
-to ask you something, and sounds the system alert. Clicking it while it is open
-brings that session's application to the front.
-
-The app, not the tab. A session publishes its pid and nothing else — no window,
-no tab, no tty — so the app is found by walking up the process tree from the
-agent to whatever launched it. Choosing the *tab* inside that app needs the
-terminal's own scripting interface, and there is no general one: Terminal.app
-and iTerm2 can match a tab by tty, Warp and Ghostty publish no scripting
-dictionary at all. So the app is raised for everybody and the tooltip names the
-session, which leaves the last hop one keystroke rather than working for two
-terminals and silently doing nothing in a third.
-
-Both halves switch off separately in Settings, because they fail differently:
-the peek is no use behind a full-screen window, and the sound is no use in a
-meeting. Each of the two events — finished, and waiting on you — picks its own
-sound there, with a preview button beside it.
-
-The sound is played as a file on the ordinary output rather than handed to
-`NSSound` as a system alert. A system alert goes through the interface
-sound-effects channel, which System Settings → Sound can switch off — and on a
-Mac where it is off, `NSSound.play()` reports success and nothing is heard.
-
-Only *leaving* busy counts. A question being answered is not a piece of work
-ending, and a session whose file disappears mid-turn — which is what quitting
-Claude Code looks like — is not announced at all, since there is no window left
-to jump to. Nothing is announced from the first reading either: every session
-already running at launch arrives with no history, and treating that as a
-transition would ring once per open window on every start.
-
-## Alerts
-
-A provider's headline limit crossing **80%** — and reaching **100%** —
-becomes a system notification: once per crossing, never repeated while it
-stays crossed, and again only after the window has genuinely rolled over.
-Each provider can be muted from its own row in Settings, and macOS permission
-is asked on the first real alert rather than at launch.
-
-## Placement
-
-The notch lives on any of the four screen edges. Right and left keep a
-vertical column; top and bottom lay the readings out side by side. It pins
-itself to the physical screen edge, so showing or hiding the Dock does not
-move it. Hold Option and drag to move along the selected edge; each edge
-remembers its position. On a Mac with a hardware notch, the top
-placement takes its exact shape, so the two read as one rather than as a bar
-parked underneath it.
-
-Along that edge it sits wherever you put it: hold ⌥ and drag the notch to
-slide it, and each edge remembers where you left it, so moving the notch to the
-top and back does not lose the place you chose on the right. **Recentre** in
-Settings → Appearance puts the current edge back in the middle.
-
-**Size** in the same place draws the whole notch — rings, text, tooltip and all
-— smaller or larger. Medium is the size it was designed at.
-
-At rest it is a small pill on the screen edge that unfolds when the pointer
-reaches it — configurable in Settings to always show, or to hide entirely.
-Settings live in an orb below the notch: an arc at rest, a gear on hover.
-
-Clicking the notch while it is open keeps it open, so it stays put while you
-read it; clicking it again lets it fold away as usual. That click has to land
-on the body itself, since a ring takes its own click to refetch that provider
-and the orb takes one to open Settings. Right-clicking offers the same thing as
-a menu item, **Keep open**, ticked while the notch is being held open, which is
-the surer way to release one that was kept open by accident. The item is
-greyed out when Settings says Always show, because that choice is Settings' to
-change.
-
-In Settings → Appearance → Reset time, choose **Time remaining** for countdowns
-like "Resets in 3 Days 3h". **Reset date** keeps the reset date and time, with
-minutes shown when less than an hour remains.
-
-Appearance also carries the ring's accent colour. The device accent is the
-default; fixed presets are available for pink, red, orange, yellow, green,
-teal, blue, indigo, purple and off-white.
-
-The app itself can show a Dock icon, a menu bar icon, or neither.
-
-## Updates
-
-Codenotch updates itself. [Sparkle](https://sparkle-project.org) checks daily
-and installs in the background without prompting; Settings says so and can
-switch it off. Every update is EdDSA-signed, so nothing installs that wasn't
-built and signed by the maintainer.
-
-## Building
-
-```sh
-brew install xcodegen   # once
-make run                # generate, build, launch a Debug build
-make test               # unit tests
+```powershell
+cd windows
+cargo test --locked
+cargo build --release --locked -p codenotch-hook --target-dir target/hook
+cd codenotch
+npx @tauri-apps/cli@2 build --config tauri.bundle.conf.json
 ```
 
-No signing identity is required for either. `make release` — which archives,
-notarizes, and produces a signed auto-update feed — needs a Developer ID
-certificate and an App Store Connect notary profile, and is only ever run by
-the maintainer to cut an official release. See
-[CONTRIBUTING.md](CONTRIBUTING.md). CI runs the same unit tests unsigned via
-`make test-ci`.
+트레이 메뉴, 데이터 폴더(%APPDATA%\codenotch), 아이콘 교체, provider별로 읽는 곳까지 자세한 내용은 [`windows/README.md`](windows/README.md)에 있습니다.
 
-A Debug build is ad-hoc signed, which means it has no stable code identity, so
-macOS cannot match it to a saved keychain "Always Allow" — the prompt to read a
-tool's token returns on every launch. To make the grant stick during local
-development, sign the built app with a stable self-signed identity:
+## 지원 프로바이더
 
-```sh
-Scripts/sign-local.sh   # signs /Applications/Codenotch.app (pass a path to override)
-```
+macOS는 원본 앱의 provider를 전부 그대로 지원하고, Windows 포트는 그중 여섯을 구현했습니다.
 
-It creates a reusable `Codenotch Local Signing` certificate in your login
-keychain (no Apple Developer account needed) and re-signs the app. Grant the
-keychain prompt once more after signing; it will not ask again.
+| 프로바이더 | macOS | Windows | 읽는 곳 |
+| --- | :---: | :---: | --- |
+| **Claude Code** | ✅ | ✅ | Claude Code 로그인, Claude Desktop의 사용량 캐시, 자체 `/usage` |
+| **Codex** | ✅ | ✅ | `~/.codex/auth.json` (읽기만) |
+| **Cursor** | ✅ | ✅ | 에디터의 `state.vscdb` 세션 |
+| **Antigravity** | ✅ | ✅ | 공식 `agy` CLI, 없으면 로컬 language server |
+| **Grok** | ✅ | ✅ | `~/.grok/auth.json` |
+| **OpenCode (Go)** | ✅ | ✅ | `~/.local/share/opencode/auth.json` |
+| **Devin** | ✅ | — | 로컬에 로그인된 세션 |
+| **Gemini API** | ✅ | — | 직접 넣은 API 키 |
+| **GLM** | ✅ | — | Z.ai Coding Plan, 이미 있는 키를 빌려 씀 |
+| **MiniMax** | ✅ | — | 설정에 넣은 키 또는 앱 안에서 로그인 |
+| **DeepSeek** | ✅ | — | 앱 안에서 직접 로그인 (브라우저 쿠키는 읽지 않음) |
+| **Command Code** | ✅ | — | `~/.commandcode/auth.json` |
+| **GitHub Copilot** | ✅ | — | 이미 로그인돼 있는 `gh` 세션 |
+| **Kimi** | ✅ | — | `~/.kimi-code/credentials/kimi-code.json` |
+| **Kiro** | ✅ | — | kiro-cli 세션 |
+| **Ollama / LM Studio** | ✅ | — | 같은 맥에서 돌고 있는 로컬 런타임 |
 
-Run with `CODENOTCH_DEMO=1` to see fixed sample data instead of live readings.
+대부분의 provider는 이미 그 맥에 로그인돼 있는 도구의 세션을 **읽기만** 합니다. 토큰을 복사하거나 갱신하지 않습니다. DeepSeek과 MiniMax만 예외로 앱 안에서 직접 로그인하며, 브라우저의 쿠키 저장소는 열지 않습니다. 쓰지 않는 provider는 설정에서 끄면 폴링을 멈추고 읽은 값을 지웁니다.
 
-## Architecture
+## 원본 Codenotch와의 관계
 
-Every provider implements `UsageProvider` (`Sources/Providers/`) and declares
-its own `Fidelity` — `.official`, `.derived`, or `.manual` — so the UI never
-presents a guess as if a vendor had published it. `UsageStore`
-(`Sources/Model/`) polls them on a timer, keeps the last good reading across
-launches, and degrades every failure to a visible status rather than a
-made-up percentage.
+이 저장소는 [vinzdg/codenotch](https://github.com/vinzdg/codenotch)의 포크입니다. macOS 앱은 원본 코드베이스를 그대로 이어받았고, 이 포크가 얹은 것은 위에 적은 표시 방식과 주기 전환, 한국어, 노치 설정입니다. `windows/`의 Rust + Tauri 포트는 Swift 코드를 옮긴 것이 아니라 같은 화면과 규칙을 다시 구현한 별개의 코드입니다.
 
-The notch itself works in one-dimensional **stack space** (`along`/`across`)
-regardless of which screen edge it's on; `NotchPlacement` is the only place
-that maps that back onto real screen coordinates. `NotchLayout` holds every
-measurement, quoted from `docs/design/frame-124-hover-tooltip.png` so the
-layout can be checked against the design frame directly.
+원본이 새 버전을 내면 merge로 가져옵니다(`git fetch upstream && git merge upstream/main`). 어떤 파일에서 어느 쪽을 택할지는 [`docs/upstream-sync.md`](docs/upstream-sync.md)에 정리해 두었습니다. macOS 쪽은 원본이 정본이고 우리가 일부러 다르게 만든 것만 유지하며, `windows/`는 합치지 않고 필요한 수정만 골라 옮깁니다.
 
-- Design spec: [`docs/specs/2026-08-28-usage-notch-design.md`](docs/specs/2026-08-28-usage-notch-design.md)
-- Implementation history: [`TASKS.md`](TASKS.md)
-
-## The honest caveat
-
-No vendor publishes a clean "your session limit is N% used" API for any of
-these tools. Each adapter reads whatever the owning app itself reads from —
-an internal endpoint, a local database, a language server's own RPC — and
-those can change without notice. Every adapter's response shape is pinned by
-tests, and every failure degrades to a visible status (`stale`, `needsAuth`,
-`error`) rather than an invented number.
-
-**Claude Desktop's cache:** Claude Desktop is a Chromium app, so the usage
-response its own panel draws is written to an HTTP cache file under
-`~/Library/Application Support/Claude`. Reading it is how the ring stays right
-for people who work in Desktop rather than in the terminal — the two Claude
-Code paths below both go dark when `claude "/usage"` stops printing the windows
-and the keychain token has not been re-minted since Claude Code last ran, which
-is an ordinary state for a Desktop user. It is strictly read-only, and narrow:
-only entries whose cached URL is *this account's* `/api/organizations/<id>/usage`
-are opened at all, matched on the organization Claude Code records for the
-profile, so one account's numbers can never land on another's ring. No token, no
-cookie, no credential and no request to Anthropic are involved. A snapshot older
-than 30 minutes is not shown as live — it drops through to the paths below, and
-the last good reading ages and dims as any other would. Chromium's cache format
-is private and may change; if it does, the source goes quiet and the existing
-ones take over. Bodies are `content-encoding: zstd` and macOS ships no decoder,
-so a decode-only build of Zstandard is vendored under
-[`Sources/Vendor/zstd`](Sources/Vendor/zstd) (BSD-3-Clause).
-
-**Keychain:** Claude's readings do not use it where Claude Code is installed.
-Claude Code files a *new* keychain item on every token rotation, and the new
-item's access list does not carry this app, so an "Always Allow" granted
-against the old one stops working about an hour later — asking `claude` itself
-avoids the question entirely. Where the keychain is still the source (no
-Claude Code on the machine, or Antigravity), the app is signed with a stable
-Developer ID identity so a grant survives rebuilds, and the secret is read
-only when the owning app has actually changed it — checked via the item's
-modification date, which isn't behind the same access prompt as the
-credential — so a valid grant does not mean a prompt on every poll.
-
-**Rate limits:** Claude's endpoint returns 429 if polled too hard, with an
-unhelpful `Retry-After: 0`. The back-off treats that as a floor-raiser only —
-60s, doubling per consecutive 429, capped at 15 minutes — and the deadline is
-persisted, so relaunching during a penalty waits instead of spending an
-attempt on it. Polling drops to every 5 minutes when nothing is running, and
-right-clicking the notch offers **Refresh now**.
-
-**Logs:** the app has no window, so anything worth diagnosing goes to the
-unified log.
-
-```sh
-/usr/bin/log stream --predicate 'subsystem == "com.vinz.codenotch"' --level debug
-```
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
+## 라이선스
 
 [MIT](LICENSE) © 2026 Vinz
+

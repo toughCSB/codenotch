@@ -51,7 +51,7 @@ shows an error or the last reading marked stale. Provider Monitor does not autom
 
 ## Install / build
 
-Download [`Provider-Monitor-Setup.exe`](https://github.com/toughCSB/codenotch/releases/latest/download/Provider-Monitor-Setup.exe)
+Download [`Provider-Monitor-Setup.exe`](https://github.com/toughCSB/provider-monitor/releases/latest/download/Provider-Monitor-Setup.exe)
 from the latest release. It installs for the current user without administrator rights, puts
 `codenotch-hook.exe` beside the app where **Install hooks** looks for it, and fetches WebView2 if
 Windows does not already have it. The installer is not code-signed, so SmartScreen stops it the
@@ -108,7 +108,7 @@ inside forks until the pull request is opened here.
 
 ## What's different in this fork
 
-This fork ([toughCSB/codenotch](https://github.com/toughCSB/codenotch)) adds on top of the
+This project ([toughCSB/provider-monitor](https://github.com/toughCSB/provider-monitor)) adds on top of the
 `windows/` tree above:
 
 - **Two more providers**: Grok (`~/.grok/auth.json` → the weekly Grok Build allowance) and
@@ -157,7 +157,7 @@ the same conservative way (back off, mark stale, never invent a number).
 
 ## 이 포크에서 달라진 점
 
-이 포크([toughCSB/codenotch](https://github.com/toughCSB/codenotch))는 위 `windows/` 트리에 다음을
+이 프로젝트([toughCSB/provider-monitor](https://github.com/toughCSB/provider-monitor))는 위 `windows/` 트리에 다음을
 추가했습니다:
 
 - **Provider 2개 추가**: Grok(`~/.grok/auth.json` → 주간 Grok Build 사용량)과 OpenCode Go
