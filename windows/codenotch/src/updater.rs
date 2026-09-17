@@ -1,14 +1,14 @@
 //! Two deliberately separate GitHub Release checks.
 //!
 //! The original `vinzdg/codenotch` check is informational only: its result contains no asset URL
-//! and therefore has no path to the installer. This fork's releases are a second check and the only
+//! and therefore has no path to the installer. This project's releases are a second check and the only
 //! source `download_and_launch` accepts. No signing keys, no `latest.json` manifest, no auto-apply:
-//! this fork's releases are still a
-//! human building `cargo tauri build` and dragging the installer onto a GitHub release by hand
-//! (see windows/README.md), so a full `tauri-plugin-updater` pipeline would be new infrastructure
-//! this app does not otherwise need. Instead: ask GitHub's public releases API whether a newer
-//! `windows-vX.Y.Z` tag exists, and if the user clicks the button, download that release's
-//! installer and launch it — the installer (and the user, who sees its window) does the rest.
+//! a release is a human running the Windows Package workflow, which attaches the installer to the
+//! very same `vX.Y.Z` release the Mac disk image is published on (see windows/README.md), so a full
+//! `tauri-plugin-updater` pipeline would be new infrastructure this app does not otherwise need.
+//! Instead: ask GitHub's public releases API whether a newer `vX.Y.Z` release exists, and if the
+//! user clicks the button, download that release's installer and launch it — the installer (and the
+//! user, who sees its window) does the rest.
 
 use serde::Serialize;
 use std::io::Read;
@@ -16,10 +16,13 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
-const FORK_REPO: &str = "toughCSB/codenotch";
+const FORK_REPO: &str = "toughCSB/provider-monitor";
 const UPSTREAM_REPO: &str = "vinzdg/codenotch";
-/// This fork tags its Windows releases separately from the Mac app's plain `vX.Y.Z` ones.
-const TAG_PREFIX: &str = "windows-v";
+/// One release serves both platforms now: the Mac disk image and the Windows installer are assets of
+/// the same `vX.Y.Z` release, under one version number. The retired `windows-vX.Y.Z` series and the
+/// rolling `preview` tag both fail this prefix, which is exactly what is wanted — neither is a
+/// stable release to install from.
+const TAG_PREFIX: &str = "v";
 
 #[derive(Clone, Serialize, Default)]
 pub struct UpdateInfo {
@@ -94,19 +97,18 @@ fn newer(a: &str, b: &str) -> bool {
     false
 }
 
-/// This fork's releases page mixes Windows (`windows-vX.Y.Z`) and Mac (`vX.Y.Z`) tags in one list,
-/// sorted by creation time — a burst of Mac releases can push the last Windows one off a single
-/// page. Walked a few pages deep rather than one, so a real Windows release is not missed just
-/// because it is not the newest release in the whole repo.
+/// The releases page also carries the rolling `preview` tag, which is rebuilt on every push to
+/// `main` and is deliberately skipped by `TAG_PREFIX`. Walked a few pages deep rather than one, so a
+/// real release is not missed just because a burst of previews pushed it off a single page.
 const MAX_PAGES: u32 = 4;
 const PER_PAGE: u32 = 30;
 
 fn fetch_latest() -> Result<(String, String, Option<GhAsset>), String> {
-    let mut last_err = "no Windows release found".to_string();
+    let mut last_err = "no release with a Windows installer found".to_string();
     for page in 1..=MAX_PAGES {
         let url = format!("https://api.github.com/repos/{FORK_REPO}/releases?per_page={PER_PAGE}&page={page}");
         let resp = ureq::get(&url)
-            .set("User-Agent", concat!("codenotch/", env!("CARGO_PKG_VERSION"), " (Windows)"))
+            .set("User-Agent", concat!("provider-monitor/", env!("CARGO_PKG_VERSION"), " (Windows)"))
             .set("Accept", "application/vnd.github+json")
             .timeout(Duration::from_secs(15))
             .call()
@@ -122,7 +124,7 @@ fn fetch_latest() -> Result<(String, String, Option<GhAsset>), String> {
                 .find(|a| a.name.to_lowercase().ends_with("-setup.exe") || a.name.to_lowercase().ends_with(".exe"));
             return Ok((rel.tag_name, rel.html_url, asset));
         }
-        last_err = format!("no Windows release found in the {} most recent releases", page * PER_PAGE);
+        last_err = format!("no Windows installer found in the {} most recent releases", page * PER_PAGE);
     }
     Err(last_err)
 }
@@ -130,7 +132,7 @@ fn fetch_latest() -> Result<(String, String, Option<GhAsset>), String> {
 fn fetch_upstream_latest() -> Result<(String, String), String> {
     let url = format!("https://api.github.com/repos/{UPSTREAM_REPO}/releases/latest");
     let rel: GhRelease = ureq::get(&url)
-        .set("User-Agent", concat!("codenotch/", env!("CARGO_PKG_VERSION"), " (Windows)"))
+        .set("User-Agent", concat!("provider-monitor/", env!("CARGO_PKG_VERSION"), " (Windows)"))
         .set("Accept", "application/vnd.github+json")
         .timeout(Duration::from_secs(15))
         .call()
@@ -212,7 +214,7 @@ pub fn download_and_launch(app: &AppHandle) -> Result<(), String> {
         return Err("no installable update for this Windows app was checked".into());
     }
     let resp = ureq::get(&info.asset_url)
-        .set("User-Agent", concat!("codenotch/", env!("CARGO_PKG_VERSION"), " (Windows)"))
+        .set("User-Agent", concat!("provider-monitor/", env!("CARGO_PKG_VERSION"), " (Windows)"))
         .timeout(Duration::from_secs(120))
         .call()
         .map_err(|e| format!("download failed: {e}"))?;
@@ -258,8 +260,8 @@ mod tests {
         assert!(newer("1.2.10", "1.2.9"));
     }
 
-    /// Real production data (windows-v0.3.0, api.github.com/repos/toughCSB/codenotch/releases):
-    /// a same-version release must not be reported as an update.
+    /// Real production data (api.github.com/repos/toughCSB/provider-monitor/releases): a
+    /// same-version release must not be reported as an update.
     #[test]
     fn the_current_shipped_release_is_not_flagged_as_an_update() {
         assert!(!newer("0.3.0", env!("CARGO_PKG_VERSION")));

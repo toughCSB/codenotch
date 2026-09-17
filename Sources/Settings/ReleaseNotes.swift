@@ -32,6 +32,24 @@ enum ReleaseNotes {
     static var all: [ReleaseNote] {
         [
             ReleaseNote(
+                version: "1.15.0",
+                headline: L10n.t("Provider Monitor for the Mac and for Windows, one version and one release."),
+                changes: [
+                    ReleaseNote.Change(
+                        title: L10n.t("Windows is Provider Monitor too"),
+                        detail: L10n.t("The Windows app and its installer are named Provider Monitor now — Provider Monitor.exe and Provider-Monitor-Setup.exe.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("One release, two platforms"),
+                        detail: L10n.t("A release now carries both the Mac disk image and the Windows installer, under one version number.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("The repository is named after the app"),
+                        detail: L10n.t("The project moved to provider-monitor. Links to the old name still work — GitHub forwards them.")
+                    ),
+                ]
+            ),
+            ReleaseNote(
                 version: "1.14.0",
                 headline: L10n.t("Provider Monitor, on Codenotch 1.13.1 — with a Korean hover card and Antigravity's 5-hour limit."),
                 changes: [

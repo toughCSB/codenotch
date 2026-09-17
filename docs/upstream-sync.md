@@ -65,8 +65,8 @@ make test          # 0 failures
 Windows는 맥에서 컴파일할 수 없으므로 CI로 넘긴다:
 
 ```bash
-gh workflow run windows-package.yml --repo toughCSB/codenotch --ref <브랜치>
-gh run watch --repo toughCSB/codenotch
+gh workflow run windows-package.yml --repo toughCSB/provider-monitor --ref <브랜치>
+gh run watch --repo toughCSB/provider-monitor
 ```
 
 ## 이번 병합(1.13.1)에서 실제로 내린 판단
@@ -86,7 +86,11 @@ gh run watch --repo toughCSB/codenotch
 
 ## 릴리스
 
-macOS:
+맥과 윈도우는 **하나의 릴리스**로 나간다. 같은 `vX.Y.Z` 태그 하나에 맥 dmg와 윈도우 설치
+프로그램이 함께 실리고, 버전도 `project.yml`과 `windows/codenotch/Cargo.toml`,
+`windows/codenotch/tauri.conf.json` 세 곳이 같아야 한다. `windows-vX.Y.Z` 시리즈는 폐지했다 —
+두 플랫폼의 버전이 서로 어긋나고, 설정 화면의 업데이트 확인이 어느 쪽을 봐야 하는지 알 수 없게
+만들었다. 남아 있던 `windows-v0.4.x`/`0.5.0`/`0.6.0` 릴리스는 지웠다.
 
 ```bash
 make release      # Developer ID로 서명하고 notarytool로 공증. 자격증명 필요
@@ -98,6 +102,14 @@ make publish      # 이미 있는 태그의 릴리스에 dmg 첨부
 둘 다 있어야 한다. 없으면 `make dmg-ci`로 만든 dmg를 쓴다 — 서명도 공증도 없으므로 받는 사람이
 Gatekeeper에서 **우클릭 → 열기**를 한 번 해야 하고, 업데이트마다 키체인 허용을 다시 묻는다.
 
-Windows: `windows-package.yml`이 `workflow_dispatch`로 실행되면 NSIS 설치 프로그램을 만들어
-설치·`doctor`·제거까지 스스로 확인한다. 릴리스에 첨부하려면 artifact를 받아
-`gh release upload <태그> Codenotch-Setup.exe`로 올린다.
+Windows: `windows-package.yml`이 `release: published`에서 깨어나 NSIS 설치 프로그램을 만들고,
+설치·`doctor`·제거까지 스스로 확인한 뒤 같은 `v*` 릴리스에 `Provider-Monitor-Setup.exe`를
+첨부한다. 그러니 맥에서 릴리스를 먼저 만들면 윈도우 파일은 알아서 붙는다:
+
+```bash
+gh release create v1.15.0 build/ci/ProviderMonitor-1.15.0-unsigned.dmg \
+  --title "Provider Monitor 1.15.0" --notes-file notes.md
+gh release view v1.15.0 --json assets -q '.assets[].name'   # dmg + Setup.exe 둘 다 확인
+```
+
+`workflow_dispatch`로 단독 실행하면 컴파일·설치·`doctor`·제거만 확인하고 첨부하지 않는다.

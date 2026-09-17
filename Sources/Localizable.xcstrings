@@ -3446,6 +3446,16 @@
         }
       }
     },
+    "A release now carries both the Mac disk image and the Windows installer, under one version number.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이제 릴리스 하나에 Mac dmg와 Windows 설치 프로그램이 같은 버전 번호로 함께 실립니다."
+          }
+        }
+      }
+    },
     "A ring says when it crosses 80% and 100%": {
       "extractionState": "manual",
       "localizations": {
@@ -18181,6 +18191,16 @@
         }
       }
     },
+    "One release, two platforms": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하나의 릴리스, 두 플랫폼"
+          }
+        }
+      }
+    },
     "One ring per provider, showing the headline limit. The weekly allowance stays in the hover card.": {
       "extractionState": "manual",
       "localizations": {
@@ -20115,6 +20135,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法将 Provider Monitor 写入 /Applications。"
+          }
+        }
+      }
+    },
+    "Provider Monitor for the Mac and for Windows, one version and one release.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac을 위한, Windows를 위한 Provider Monitor — 하나의 버전, 하나의 릴리스입니다."
           }
         }
       }
@@ -27782,6 +27812,26 @@
         }
       }
     },
+    "The project moved to provider-monitor. Links to the old name still work — GitHub forwards them.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "저장소가 provider-monitor로 옮겼습니다. 예전 이름의 링크도 GitHub이 넘겨주므로 그대로 동작합니다."
+          }
+        }
+      }
+    },
+    "The repository is named after the app": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "저장소 이름도 앱 이름을 따릅니다"
+          }
+        }
+      }
+    },
     "The ring still follows the main Codex window. Spark and code review stay in the hover card.": {
       "extractionState": "manual",
       "localizations": {
@@ -27969,6 +28019,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "周额度有了自己的圆环"
+          }
+        }
+      }
+    },
+    "The Windows app and its installer are named Provider Monitor now — Provider Monitor.exe and Provider-Monitor-Setup.exe.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Windows 앱과 설치 프로그램의 이름을 Provider Monitor로 통일했습니다 — Provider Monitor.exe와 Provider-Monitor-Setup.exe."
           }
         }
       }
@@ -30815,6 +30875,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Windows"
+          }
+        }
+      }
+    },
+    "Windows is Provider Monitor too": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Windows판도 이제 Provider Monitor입니다"
           }
         }
       }
