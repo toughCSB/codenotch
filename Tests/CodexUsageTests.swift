@@ -516,6 +516,64 @@ final class CodexActivityTests: XCTestCase {
         XCTAssertNil(CodexRolloutActivity.state(from: url))
     }
 
+    /// A conversation that has run for hours pushes a megabyte of output between
+    /// the turn's start and the end of the file. The event is still the answer.
+    func testALongConversationStillAnswers() throws {
+        let noise = #"{"type":"response_item","payload":{"type":"message","role":"assistant","text":"token accounting output for the turn"}}"#
+        var records = [#"{"type":"event_msg","payload":{"type":"task_started"}}"#]
+        records.append(contentsOf: Array(repeating: noise, count: 6_000))
+        XCTAssertEqual(CodexRolloutActivity.state(from: try rollout(records)), .busy)
+    }
+
+    /// The monitor asks every couple of seconds while a turn runs, and a rollout
+    /// only ever grows. A second read has to pick up what was appended — and has
+    /// to answer as reading the file whole would, which is what makes keeping a
+    /// cursor safe rather than a different reading.
+    func testASecondReadPicksUpWhatWasAppended() throws {
+        let url = try rollout([
+            #"{"type":"event_msg","payload":{"type":"task_started"}}"#
+        ])
+        XCTAssertEqual(CodexRolloutActivity.state(from: url), .busy)
+
+        let handle = try FileHandle(forWritingTo: url)
+        try handle.seekToEnd()
+        try handle.write(contentsOf: Data("\n".utf8) + Data(#"{"type":"event_msg","payload":{"type":"task_complete"}}"#.utf8))
+        try handle.close()
+
+        XCTAssertEqual(CodexRolloutActivity.state(from: url), .success)
+    }
+
+    /// A rollout rewritten where it stood is not the file that was read, however
+    /// its length compares. The cursor must not answer from the old reading.
+    func testARewrittenRolloutIsReadAgain() throws {
+        let url = try rollout([
+            #"{"type":"event_msg","payload":{"type":"task_started"}}"#,
+            #"{"type":"event_msg","payload":{"type":"task_complete"}}"#
+        ])
+        XCTAssertEqual(CodexRolloutActivity.state(from: url), .success)
+
+        try Data(#"{"type":"event_msg","payload":{"type":"task_started"}}"#.utf8).write(to: url)
+        XCTAssertEqual(CodexRolloutActivity.state(from: url), .busy)
+    }
+
+    /// Only a real event counts. A message that talks *about* `task_complete`
+    /// is not one, and the byte-level pre-filter must not mistake it for one.
+    func testARecordThatOnlyMentionsTheWordIsNotAnEvent() throws {
+        let url = try rollout([
+            #"{"type":"event_msg","payload":{"type":"task_started"}}"#,
+            #"{"type":"response_item","payload":{"type":"message","text":"the \"task_complete\" event ends a turn"}}"#
+        ])
+        XCTAssertEqual(CodexRolloutActivity.state(from: url), .busy)
+    }
+
+    func testARealEventAfterAMentionWins() throws {
+        let url = try rollout([
+            #"{"type":"response_item","payload":{"type":"message","text":"the \"task_complete\" event ends a turn"}}"#,
+            #"{"type":"event_msg","payload":{"type":"task_complete"}}"#
+        ])
+        XCTAssertEqual(CodexRolloutActivity.state(from: url), .success)
+    }
+
     func testARolloutWrittenJustNowIsBusy() throws {
         let s = try XCTUnwrap(CodexActivityMonitor.session(
             id: "codex.x", name: "Codex",

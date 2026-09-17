@@ -12,33 +12,164 @@ struct CodexRolloutActivity {
         case success
     }
 
-    static func state(from url: URL) -> State? {
-        guard let data = try? Data(contentsOf: url),
-              let text = String(data: data, encoding: .utf8) else { return nil }
+    /// What one record can say about the turn.
+    private enum Event: Equatable {
+        case started
+        case completed
+        case aborted
+    }
 
+    /// The bytes a record has to contain before it is worth parsing.
+    ///
+    /// A rollout is almost entirely records that cannot change the answer —
+    /// messages, tool output, token counts — and JSON-parsing every one of them
+    /// every couple of seconds is what made this expensive. On a 38 MB
+    /// conversation it held the main thread at most of a core, and the notch
+    /// answered the pointer late because of it. The byte test below costs a
+    /// fraction of the parse, so only the few records that pass it are decoded.
+    private static let needles: [(bytes: [UInt8], type: String, event: Event)] = [
+        (Array(#""task_started""#.utf8), "task_started", .started),
+        (Array(#""task_complete""#.utf8), "task_complete", .completed),
+        (Array(#""turn_aborted""#.utf8), "turn_aborted", .aborted),
+    ]
+
+    /// How far a reading has got through one rollout, and what it left behind.
+    struct Cursor: Equatable {
+        var offset: UInt64
+        var modified: Date?
         var state: State?
-        for line in text.split(whereSeparator: \.isNewline) {
-            guard let lineData = line.data(using: .utf8),
-                  let object = try? JSONSerialization.jsonObject(with: lineData),
-                  let record = object as? [String: Any],
-                  record["type"] as? String == "event_msg",
-                  let payload = record["payload"] as? [String: Any],
-                  let type = payload["type"] as? String else { continue }
+    }
 
-            switch type {
-            case "task_started":
-                state = .busy
-            case "task_complete":
-                state = .success
-            case "turn_aborted":
-                // An aborted turn is not a successful completion. Returning
-                // nil lets the activity monitor drop it without announcing.
-                state = nil
-            default:
-                continue
+    /// The state the rollout's newest lifecycle event leaves behind.
+    ///
+    /// `nil` is what a rollout with no lifecycle event at all reports, and also
+    /// what an aborted turn reports: an abort completed nothing, and nil lets
+    /// the activity monitor drop it without announcing.
+    ///
+    /// A rollout is appended to for the life of a conversation, and this is
+    /// asked for every couple of seconds while one is running. Reading the file
+    /// from the top each time was the whole cost of that: every record decoded
+    /// again, on the main thread, at most of a core on a 38 MB conversation —
+    /// which is why the notch answered the pointer late. Only what has been
+    /// appended since the last read can change the answer, so a repeat read
+    /// looks at that and nothing else. The answer itself is unchanged: a cursor
+    /// records where a reading got to, it does not read differently.
+    static func state(from url: URL) -> State? {
+        cursors.state(of: url)
+    }
+
+    /// Every lifecycle event in `data`, applied in order, so the newest wins.
+    ///
+    /// `item_completed` and every other record is ignored: commands and other
+    /// child items emit those too, and a turn is complete only after Codex
+    /// writes `task_complete`.
+    private static func state(of data: Data, carrying carried: State?) -> State? {
+        var state = carried
+        for line in data.split(separator: 0x0A) {
+            guard let event = event(in: line) else { continue }
+            switch event {
+            case .started:   state = .busy
+            case .completed: state = .success
+            // An aborted turn is not a successful completion.
+            case .aborted:   state = nil
             }
         }
         return state
+    }
+
+    /// Where each rollout that has been read got to.
+    ///
+    /// Guarded by a lock rather than confined to an actor because `state(from:)`
+    /// answers whoever asks; the app asks from the main thread. Bounded, because
+    /// a rollout file never goes away on its own and one entry per conversation
+    /// would accumulate for as long as the app runs — and dropping an entry only
+    /// costs the next reading of that rollout its head start.
+    private static let cursors = CursorStore()
+
+    private final class CursorStore {
+        private let lock = NSLock()
+        private var cursors: [String: Cursor] = [:]
+        private let limit = 16
+
+        func state(of url: URL) -> State? {
+            let path = url.path
+            let attributes = try? FileManager.default.attributesOfItem(atPath: path)
+            let size = (attributes?[.size] as? NSNumber)?.uint64Value ?? 0
+            let modified = attributes?[.modificationDate] as? Date
+
+            lock.lock()
+            defer { lock.unlock() }
+
+            var carried = cursors[path]
+            // A file that shrank, or one rewritten where it stood, is not the
+            // file that was read: start again rather than trust the offset.
+            if let cursor = carried, cursor.offset > size || (cursor.modified != modified && cursor.offset == size) {
+                carried = nil
+            }
+            if let cursor = carried, cursor.offset == size {
+                return cursor.state
+            }
+
+            guard let read = read(url, from: carried?.offset ?? 0) else {
+                return carried?.state
+            }
+            let state = CodexRolloutActivity.state(of: read.bytes, carrying: carried?.state)
+            if cursors.count >= limit, cursors[path] == nil, let oldest = cursors.keys.first {
+                cursors.removeValue(forKey: oldest)
+            }
+            cursors[path] = Cursor(offset: read.offset, modified: modified, state: state)
+            return state
+        }
+
+        /// Everything from `offset` on, and the size that was read to.
+        private func read(_ url: URL, from offset: UInt64) -> (bytes: Data, offset: UInt64)? {
+            guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+            defer { try? handle.close() }
+            guard let size = try? handle.seekToEnd(),
+                  (try? handle.seek(toOffset: min(offset, size))) != nil,
+                  let data = try? handle.readToEnd() else { return nil }
+            return (data, size)
+        }
+    }
+
+    /// The lifecycle event a record reports, or `nil` for a record that reports
+    /// none — which is most of them.
+    private static func event(in line: Data) -> Event? {
+        // A record that does not even contain the words is not worth a parse.
+        guard let needle = needles.first(where: { mentions(line, $0.bytes) }) else { return nil }
+        guard let object = try? JSONSerialization.jsonObject(with: line),
+              let record = object as? [String: Any],
+              record["type"] as? String == "event_msg",
+              let payload = record["payload"] as? [String: Any],
+              payload["type"] as? String == needle.type
+        else { return nil }
+        return needle.event
+    }
+
+    /// A byte-window search, so a record can be rejected without being parsed.
+    private static func mentions(_ line: Data, _ needle: [UInt8]) -> Bool {
+        let count = line.count
+        guard !needle.isEmpty, count >= needle.count else { return false }
+        return line.withUnsafeBytes { raw -> Bool in
+            guard let base = raw.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
+                return false
+            }
+            let last = count - needle.count
+            var offset = 0
+            while offset <= last {
+                if base[offset] == needle[0] {
+                    var i = 1
+                    var matched = true
+                    while i < needle.count {
+                        if base[offset + i] != needle[i] { matched = false; break }
+                        i += 1
+                    }
+                    if matched { return true }
+                }
+                offset += 1
+            }
+            return false
+        }
     }
 }
 
