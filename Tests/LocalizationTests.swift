@@ -9,6 +9,7 @@ final class LocalizationTests: XCTestCase {
     private let french = Locale(identifier: "fr")
     private let german = Locale(identifier: "de")
     private let japanese = Locale(identifier: "ja")
+    private let korean = Locale(identifier: "ko")
     private let russian = Locale(identifier: "ru")
     private let ukrainian = Locale(identifier: "uk")
     private let brazilianPortuguese = Locale(identifier: "pt-BR")
@@ -548,13 +549,45 @@ final class LocalizationTests: XCTestCase {
         )
     }
 
+    // MARK: - Korean
+
+    func testCoreCopyInKorean() {
+        XCTAssertEqual(
+            ElapsedCopy.text(since: now.addingTimeInterval(-5), now: now, locale: korean),
+            "방금 전"
+        )
+        XCTAssertEqual(
+            ResetCopy.text(for: resetNow.addingTimeInterval(51 * 60), now: resetNow, locale: korean),
+            "51분 후 재설정"
+        )
+        XCTAssertEqual(
+            percentWindow(0.12).summary(locale: korean),
+            "12% 사용 · 88% 남음"
+        )
+        XCTAssertEqual(L10n.t("Always show", locale: korean), "항상 표시")
+        XCTAssertEqual(L10n.t("Settings…", locale: korean), "설정…")
+        XCTAssertEqual(
+            L10n.t("Sign in to \("Perplexity")", locale: korean),
+            "Perplexity에 로그인"
+        )
+    }
+
+    /// The two-placeholder reading is where a translation can quietly swap what
+    /// belongs to which `%lld` — and it is the line every ring's card leads with.
+    func testKoreanThresholdAlertKeepsArgumentOrder() {
+        XCTAssertEqual(
+            L10n.t("\(80)% of its \("weekly") limit used.", locale: korean),
+            "80% 사용 · weekly 한도"
+        )
+    }
+
     /// Every language the picker offers must resolve to a locale the catalog
     /// is filed under — a region-qualified or unshipped identifier silently
     /// serves another language instead.
     func testEveryOfferedLanguageResolves() {
         XCTAssertEqual(
             AppLanguage.allCases.map(\.rawValue),
-            ["system", "en", "fr", "de", "ja", "pt-BR", "ru", "zh-Hans", "uk"]
+            ["system", "en", "fr", "de", "ja", "ko", "pt-BR", "ru", "zh-Hans", "uk"]
         )
         XCTAssertNil(AppLanguage.system.locale)
         for language in AppLanguage.allCases where language != .system {

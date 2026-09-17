@@ -82,8 +82,11 @@ final class PanelOffsetTests: XCTestCase {
         visibleFrameValue: CGRect(x: 0, y: 0, width: 1800, height: 1132)
     )
 
+    /// Whichever way a drag runs, what the clamp keeps on screen is the pill's
+    /// own extent — nothing hangs past its ends any more, so that is the whole
+    /// of the promise.
     @MainActor
-    func testDraggingToTheTrailingEndKeepsTheSettingsHandleOnScreen() {
+    func testDraggingToEitherEndKeepsTheNotchItselfOnScreen() {
         let secondary = FakeScreen(
             frameValue: CGRect(x: -1800, y: -200, width: 1800, height: 1169),
             visibleFrameValue: CGRect(x: -1800, y: -200, width: 1800, height: 1132)
@@ -92,18 +95,22 @@ final class PanelOffsetTests: XCTestCase {
             for edge in NotchEdge.allCases {
                 let model = NotchViewModel()
                 model.edge = edge
-                let frame = NotchGeometry.panelFrame(
-                    for: display, panelSize: model.panelSize, edge: edge,
-                    alongOffset: 10_000, slack: model.slack,
-                    trailingExtent: model.trailingExtent
-                )
-                let handleEnd = model.slack + model.orbAlong + NotchLayout.orbHotZone / 2
-                if edge.isVertical {
-                    XCTAssertGreaterThanOrEqual(frame.maxY - handleEnd,
-                                                display.frameValue.minY - 0.5)
-                } else {
-                    XCTAssertLessThanOrEqual(frame.minX + handleEnd,
-                                             display.frameValue.maxX + 0.5)
+                for offset in [10_000.0, -10_000.0] {
+                    let frame = NotchGeometry.panelFrame(
+                        for: display, panelSize: model.panelSize, edge: edge,
+                        alongOffset: offset, slack: model.slack
+                    )
+                    if edge.isVertical {
+                        XCTAssertGreaterThanOrEqual(frame.maxY - model.slack,
+                                                    display.frameValue.minY - 0.5, "\(edge)")
+                        XCTAssertLessThanOrEqual(frame.minY + model.slack,
+                                                 display.frameValue.maxY + 0.5, "\(edge)")
+                    } else {
+                        XCTAssertGreaterThanOrEqual(frame.minX + model.slack,
+                                                    display.frameValue.minX - 0.5, "\(edge)")
+                        XCTAssertLessThanOrEqual(frame.maxX - model.slack,
+                                                 display.frameValue.maxX + 0.5, "\(edge)")
+                    }
                 }
             }
         }

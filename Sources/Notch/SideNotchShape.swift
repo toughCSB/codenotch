@@ -36,9 +36,19 @@ struct SideNotchShape: Shape {
         // rect turned on its side. The bezel is at `maxX`.
         let depth = edge.isVertical ? rect.width : rect.height
         let length = edge.isVertical ? rect.height : rect.width
+        // The flare is what makes the shape read as *growing out of* an edge,
+        // and it is sized against the top edge's depth. A side edge is a
+        // fraction of that depth while being many times longer, so the same
+        // sweep spends most of the bar's width curving away at each end and the
+        // join reads as a hook. There the small bezel fillet is all the end
+        // needs: the shape meets the screen's edge as a rounded bar rather than
+        // tapering into it.
+        let flare = joining == nil && !edge.isVertical
+            ? curlRadius
+            : NotchLayout.bezelFillet
         let canonical = canonicalPath(
             in: CGRect(x: 0, y: 0, width: depth, height: length),
-            flare: joining == nil ? curlRadius : NotchLayout.bezelFillet,
+            flare: flare,
             // Half the hardware's height is the most the resting shape can
             // carry; holding it there keeps every frame of the expansion the
             // same shape, only bigger.

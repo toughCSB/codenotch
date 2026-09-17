@@ -62,21 +62,34 @@ enum DailyPace {
     /// the weekly window stays in the card. Anything but a Claude snapshot
     /// with a weekly reading is returned untouched, and so is a snapshot that
     /// already carries the window: the store re-publishes what it archived.
-    static func apply(to snapshot: ProviderSnapshot, now: Date) -> ProviderSnapshot {
+    ///
+    /// `chosen` is the user's own answer about which window that ring means.
+    /// Where there is one it outranks the pace, because "the weekly one" is a
+    /// more specific request about the same ring than a toggle that decides the
+    /// ring for you — and a ring that ignored the window just asked for would be
+    /// the app arguing with its own settings. The daily reading is still added to
+    /// the card either way, so switching the pace on alongside a chosen window
+    /// is not a setting that silently does nothing.
+    static func apply(to snapshot: ProviderSnapshot, now: Date,
+                      chosen: RingCadence = .automatic) -> ProviderSnapshot {
         guard ClaudeProfile.isClaude(providerID: snapshot.providerID),
               !snapshot.windows.contains(where: { $0.id == windowID }),
               let weekly = snapshot.windows.first(where: { $0.id == "weekly_all" }),
               let daily = window(weekly: weekly, now: now) else { return snapshot }
         var paced = snapshot
         paced.windows.insert(daily, at: 0)
+        guard chosen == .automatic else { return paced }
         paced.headlineID = windowID
         paced.weeklyID = snapshot.windows.contains { $0.id == "session" } ? "session" : nil
         return paced
     }
 
     static func apply(to snapshots: [ProviderSnapshot], enabled: Bool,
+                      chosen: [String: RingCadence] = [:],
                       now: Date = Date()) -> [ProviderSnapshot] {
         guard enabled else { return snapshots }
-        return snapshots.map { apply(to: $0, now: now) }
+        return snapshots.map {
+            apply(to: $0, now: now, chosen: chosen[$0.providerID] ?? .automatic)
+        }
     }
 }

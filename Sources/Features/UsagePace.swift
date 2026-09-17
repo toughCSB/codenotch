@@ -13,6 +13,12 @@ struct UsagePace {
             ? "<0.1"
             : String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), rounded)
                 .replacingOccurrences(of: ".0", with: "")
+        // One `%` written here, two in the catalog key. A source string with a
+        // placeholder in it is looked up with its literal percents doubled, so a
+        // key spelled `%@% deficit` is never found and the English source is
+        // served in every language — which is what these two did until the keys
+        // were respelled `%@%% deficit`. See
+        // `CatalogCoverageTests.testNoEntryMixesAPlaceholderWithABarePercent`.
         return isDeficit
             ? L10n.t("\(value)% deficit")
             : L10n.t("\(value)% reserved")

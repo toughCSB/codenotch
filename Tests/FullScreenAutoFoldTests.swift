@@ -132,7 +132,6 @@ final class FullScreenAutoFoldTests: XCTestCase {
         controller.show()
         defer { controller.stop() }
 
-        controller.model.isAlwaysOn = true
         controller.model.isExpanded = true
         controller.foldsForFullScreen = false
         controller.isFullScreenActive = { true }
@@ -214,20 +213,21 @@ final class FullScreenAutoFoldTests: XCTestCase {
         for _ in 0..<50 { controller.cursorMoved() }
         XCTAssertEqual(asked, 0, "An on-hover notch must not ask WindowServer on pointer movement")
 
-        // Always show: the answer decides whether it folds, so it is asked.
-        // A fresh controller, because the on-hover pass above left its fold
-        // scheduled, and a scheduled fold is not asked about twice.
+        // Always show: there is no question left to ask. The setting outranks
+        // the fold, so a frontmost full-screen app cannot change what happens
+        // — and asking WindowServer anyway would be paying for an answer that
+        // is discarded.
         let alwaysOn = NotchWindowController()
         alwaysOn.show()
         defer { alwaysOn.stop() }
         var alwaysOnAsked = 0
-        alwaysOn.isFullScreenActive = { alwaysOnAsked += 1; return false }
+        alwaysOn.isFullScreenActive = { alwaysOnAsked += 1; return true }
         alwaysOn.model.isAlwaysOn = true
         alwaysOn.model.isExpanded = true
         try skipIfPointerOnNotch(alwaysOn)
         alwaysOn.cursorMoved()
-        XCTAssertEqual(alwaysOnAsked, 1, "Always show must still consult full-screen state")
-        XCTAssertTrue(alwaysOn.model.isExpanded)
+        XCTAssertEqual(alwaysOnAsked, 0, "Always show must not ask a question it overrules")
+        XCTAssertTrue(alwaysOn.model.isExpanded, "and the notch stays open")
     }
 
     func testSwitchingAutoFoldOffCancelsAPendingFold() throws {
@@ -250,7 +250,11 @@ final class FullScreenAutoFoldTests: XCTestCase {
         XCTAssertTrue(controller.model.isExpanded, "A fold in flight must not land after the setting is switched off")
     }
 
-    func testAlwaysOnRestoresExpandedWhenLeavingFullScreen() {
+    /// The setting's own promise, taken literally: "Always show" means the
+    /// readings stay on screen, and a frontmost full-screen app is exactly the
+    /// case it exists for. Folding the notch away there made the switch read
+    /// as one that did not take.
+    func testAlwaysShowHoldsTheNotchOpenUnderAFullScreenApp() {
         let controller = NotchWindowController()
         controller.show()
         defer { controller.stop() }
@@ -261,11 +265,12 @@ final class FullScreenAutoFoldTests: XCTestCase {
         // Simulate entering full-screen
         controller.isFullScreenActive = { true }
         controller.handleActiveSpaceOrAppChange()
-        XCTAssertFalse(controller.model.isExpanded)
+        XCTAssertTrue(controller.model.isExpanded,
+                      "Always show must survive a frontmost full-screen app")
 
         // Simulate returning to desktop
         controller.isFullScreenActive = { false }
         controller.handleActiveSpaceOrAppChange()
-        XCTAssertTrue(controller.model.isExpanded, "Always-on notch should unfold again when leaving full screen")
+        XCTAssertTrue(controller.model.isExpanded)
     }
 }

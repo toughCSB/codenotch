@@ -110,6 +110,33 @@ final class DailyPaceTests: XCTestCase {
         XCTAssertEqual(DailyPace.apply(to: snapshots, enabled: true, now: at(day: 1)).first?.headlineID,
                        DailyPace.windowID)
     }
+
+    /// "Show me Claude's weekly limit" is a more specific answer about the same
+    /// ring than the pace toggle, which decides the ring for you. The pace is
+    /// still added to the card, so switching both on is not a setting that
+    /// silently does nothing.
+    func testAChosenWindowOutranksThePaceRing() throws {
+        let snapshots = [claude(windows: [session, weekly()])]
+        let paced = DailyPace.apply(to: snapshots, enabled: true,
+                                    chosen: ["claude": .weekly], now: at(day: 1))
+
+        let snapshot = try XCTUnwrap(paced.first)
+        XCTAssertEqual(snapshot.headlineID, "session", "the provider's own window, not the pace")
+        XCTAssertTrue(snapshot.windows.contains { $0.id == DailyPace.windowID },
+                      "the daily reading is still there to be read")
+    }
+
+    /// The choice is per provider, so aiming one Claude profile's ring must not
+    /// stop the other profile being paced.
+    func testTheChoiceIsAskedOfTheProviderItWasMadeFor() {
+        let snapshots = [claude(windows: [session, weekly()]),
+                         claude(id: "claude-work", windows: [session, weekly()])]
+        let paced = DailyPace.apply(to: snapshots, enabled: true,
+                                    chosen: ["claude": .weekly], now: at(day: 1))
+
+        XCTAssertEqual(paced[0].headlineID, "session")
+        XCTAssertEqual(paced[1].headlineID, DailyPace.windowID)
+    }
 }
 
 @MainActor

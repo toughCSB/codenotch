@@ -117,25 +117,6 @@ final class NotchRenderTests: XCTestCase {
         XCTAssertGreaterThan(colour(.outside), off, "outside painted no arc")
     }
 
-    /// Hiding the move handle takes its arc off the notch, and leaves nothing
-    /// behind that can still be hovered or pressed — an invisible control that
-    /// starts a move is worse than a visible one.
-    func testAHiddenMoveHandleIsNeitherDrawnNorPressable() throws {
-        let shown = model(edge: .right)
-        let point = try XCTUnwrap(shown.moveHandlePoints.first)
-        XCTAssertTrue(shown.isOnMoveHandle(along: point.x, across: point.y))
-
-        let hidden = model(edge: .right)
-        hidden.showsMoveHandle = false
-        XCTAssertTrue(hidden.moveHandlePoints.isEmpty)
-        XCTAssertFalse(hidden.isOnMoveHandle(along: point.x, across: point.y),
-                       "a hidden handle still took the press")
-
-        let withHandle = inkedFraction(try XCTUnwrap(render(shown)))
-        let withoutHandle = inkedFraction(try XCTUnwrap(render(hidden)))
-        XCTAssertLessThan(withoutHandle, withHandle, "the handle's arc was still drawn")
-    }
-
     /// A week nobody has spent yet still has to be visible.
     ///
     /// At 0% the arc has no length, so without a track behind it the ring is
@@ -226,15 +207,12 @@ final class NotchRenderTests: XCTestCase {
         }
     }
 
-    /// The orb has to stay attached to the notch at every size.
+    /// Nothing is painted outside the notch itself, at any size.
     ///
-    /// `position` hands back a view the size of the whole panel, so a scale
-    /// applied *after* it scales that layer about the panel's centre and slides
-    /// the orb away by a share of the panel — the arc left floating off the
-    /// corner it is drawn to hug. Arithmetic cannot see that: the numbers going
-    /// in were right and the modifier order was not, so this looks at the
-    /// pixels instead.
-    func testNothingIsPaintedBeyondTheNotchAndItsOrbAtAnySize() {
+    /// A modifier applied in the wrong order — a scale after position, say —
+    /// moves what is drawn away from where the arithmetic says it is, and no
+    /// assertion about the numbers can see it. This looks at the pixels.
+    func testNothingIsPaintedBeyondTheNotchAtAnySize() {
         for size in NotchSize.allCases {
             let m = model(edge: .right)
             m.sizeScale = size.scale
@@ -244,12 +222,9 @@ final class NotchRenderTests: XCTestCase {
             }
             let place = NotchPlacement(edge: .right, panelSize: m.panelSize)
             let scale = size.scale
-            // What the notch and the orb legitimately reach, derived rather
-            // than guessed, plus a point for the stroke's own width.
-            let reach = m.orbArcRadius * scale + NotchLayout.orbStroke
-            let deepest = max(m.notchDepth * scale, m.orbInset * scale + reach)
-            let furthest = m.slack + max(m.shapeLength, m.orbAlong) * scale + reach
-            let nearest = m.slack - reach
+            // What the notch legitimately reaches, derived rather than guessed.
+            let deepest = m.notchDepth * scale
+            let furthest = m.slack + m.shapeLength * scale
 
             var maxAcross = 0.0, maxAlong = -Double.infinity, minAlong = Double.infinity
             for x in stride(from: 0, to: rep.pixelsWide, by: 2) {
@@ -265,10 +240,10 @@ final class NotchRenderTests: XCTestCase {
 
             XCTAssertLessThanOrEqual(maxAcross, deepest + 1,
                                      "\(size.rawValue): something is painted \(maxAcross)pt in "
-                                     + "from the bezel, past the \(deepest)pt the notch and orb reach")
+                                     + "from the bezel, past the \(deepest)pt the notch reaches")
             XCTAssertLessThanOrEqual(maxAlong, furthest + 1,
                                      "\(size.rawValue): something is painted past the far end")
-            XCTAssertGreaterThanOrEqual(minAlong, nearest - 1,
+            XCTAssertGreaterThanOrEqual(minAlong, m.slack - 1,
                                         "\(size.rawValue): something is painted before the near end")
         }
     }
@@ -692,7 +667,7 @@ final class EdgeArrivalTests: XCTestCase {
 /// undo it.
 ///
 /// It was held in `isPinned` — the same flag a click on the notch toggles. So
-/// clicking anywhere on the bar that was not a ring or the settings orb turned
+/// clicking anywhere on the bar that was not a ring turned
 /// the flag off, the notch started folding on the way out, and Settings went on
 /// saying "Always show". Reported as: it sometimes reverts to show-on-hover.
 @MainActor

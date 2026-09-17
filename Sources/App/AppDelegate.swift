@@ -117,11 +117,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let miniMaxWeb = WebSessionProvider(site: Sites.minimax(region: preferences.minimaxRegion))
             self.miniMaxWeb = miniMaxWeb
             let webProviders: [WebSessionProvider] = [deepSeek]
-            fleet.signInItems = [deepSeek, miniMaxWeb].map { provider in
-                let name = provider.displayName
-                return (title: L10n.t("Sign in to \(name)…"),
-                        action: { [weak provider] in provider?.presentSignIn() })
-            }
+            // No "Sign in to …" items in the ring's right-click menu. DeepSeek
+            // and MiniMax both sign in from their own row in Settings, which is
+            // where the account they open belongs, and the menu is three
+            // readings tall — a login button in it is a stranger at the table.
+            // The mechanism stays: `signInItems` is still what the controller
+            // builds those rows from, and `miniMaxWeb` is still the session the
+            // settings sheet drives.
+            fleet.signInItems = []
 
             // Cursor reads the editor's session, or cursor-agent's if the
             // editor is missing — never a browser one: signing into
@@ -265,7 +268,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     let snap = await MainActor.run {
                         PhoneLinkSnapshotBuilder.build(
                             snapshots: DailyPace.apply(to: store.snapshots,
-                                                       enabled: preferences.claudeDailyPaceRing),
+                                                       enabled: preferences.claudeDailyPaceRing,
+                                                       chosen: preferences.providerRingCadence),
                             sessions: Array(fleet.sessions.values.flatMap { $0 }),
                             disconnected: store.disconnected,
                             order: preferences.providerOrder,
@@ -287,7 +291,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     let snap = await MainActor.run {
                         PhoneLinkSnapshotBuilder.build(
                             snapshots: DailyPace.apply(to: store.snapshots,
-                                                       enabled: preferences.claudeDailyPaceRing),
+                                                       enabled: preferences.claudeDailyPaceRing,
+                                                       chosen: preferences.providerRingCadence),
                             sessions: Array(fleet.sessions.values.flatMap { $0 }),
                             disconnected: store.disconnected,
                             order: preferences.providerOrder,
@@ -338,9 +343,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
             // The gear toggles; everything else that opens settings opens it.
             fleet.onOpenSettings = { [weak settings] in settings?.toggle() }
+            // Both switches are records `Preferences` keeps; the fleet only
+            // mirrors them, and the ring's half of the basis is the store's.
+            fleet.onToggleAlwaysOnTop = { [weak preferences] in
+                preferences?.notchAlwaysOnTop.toggle()
+            }
+            // The same preference the Settings "Show" row writes, so the two
+            // can never disagree about whether the notch is meant to stay.
+            fleet.onToggleAlwaysShow = { [weak preferences] in
+                guard let preferences else { return }
+                preferences.notchVisibility =
+                    preferences.notchVisibility == .alwaysShow ? .onHover : .alwaysShow
+            }
+            fleet.onTogglePercentBasis = { [weak preferences] in
+                guard let preferences else { return }
+                preferences.percentBasis = preferences.percentBasis == .remaining ? .used : .remaining
+            }
             // A session row answers where it runs by taking you there.
             fleet.onFocusSession = { pid in
                 Task { _ = await SessionFocus.focus(pid: pid) }
+            }
+            // And a cadence chosen in a hover card is the same preference the
+            // Settings row writes: one path in, so the two can never disagree.
+            fleet.onSetRingCadence = { [weak preferences] provider, cadence in
+                preferences?.setRingCadence(cadence, for: provider)
             }
             self.settings = settings
 
@@ -424,17 +450,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
                 .store(in: &cancellables)
 
-            // Three inputs, one answer: which control is in charge, and the
-            // value each of them holds. Any of them changing has to re-ask
-            // `notchScale` rather than trust the value it was handed, since
-            // the preset and the slider each keep their own.
+            // The size, from either control: the slider the user drags or the
+            // preset they click, which writes the slider. Both have to re-ask
+            // `notchScale` rather than trust the value they were handed.
             //
             // `dropFirst` on each, because `@Published` publishes the value it
             // is given at init — without it every launch would open the notch
-            // three times over before anyone had touched anything.
+            // twice over before anyone had touched anything.
             Publishers.MergeMany(
                 preferences.$notchSize.dropFirst().map { _ in () }.eraseToAnyPublisher(),
-                preferences.$usesCustomNotchScale.dropFirst().map { _ in () }.eraseToAnyPublisher(),
                 preferences.$customNotchScale.dropFirst().map { _ in () }.eraseToAnyPublisher()
             )
             // `DispatchQueue.main`, not `RunLoop.main`, and this is the one
@@ -480,13 +504,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 prefs.notchVisibility = (prefs.notchVisibility == .alwaysShow) ? .onHover : .alwaysShow
             }
 
-            // Writing the preference is the whole of it: `notchEdge` is
-            // `@Published` and the fleet already follows it, so the notch
-            // relocates by the same path the Settings picker uses.
-            fleet.onMoveToEdge = { [weak preferences] edge in
-                preferences?.notchEdge = edge
-            }
-
             preferences.$resetTimeFormat
                 .receive(on: RunLoop.main)
                 .sink { [weak fleet] in fleet?.apply(resetTimeFormat: $0) }
@@ -515,14 +532,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 .sink { [weak fleet] in fleet?.apply(weeklyRing: $0) }
                 .store(in: &cancellables)
 
-            preferences.$showsMoveHandle
-                .receive(on: RunLoop.main)
-                .sink { [weak fleet] in fleet?.apply(showsMoveHandle: $0) }
-                .store(in: &cancellables)
-                
             preferences.$notchSurfaceStyle
                 .receive(on: RunLoop.main)
                 .sink { [weak fleet] in fleet?.apply(surfaceStyle: $0) }
+                .store(in: &cancellables)
+
+            preferences.$notchAlwaysOnTop
+                .removeDuplicates()
+                .receive(on: RunLoop.main)
+                .sink { [weak fleet] in fleet?.apply(alwaysOnTop: $0) }
+                .store(in: &cancellables)
+
+            // Two readers, one choice: the fleet for the menu's tick, the store
+            // for the number itself. Subscribing emits the current value, so
+            // this is also what carries a stored choice into a fresh launch.
+            preferences.$percentBasis
+                .removeDuplicates()
+                .receive(on: RunLoop.main)
+                .sink { [weak store, weak fleet] basis in
+                    store?.percentBasis = basis
+                    fleet?.apply(percentBasis: basis)
+                }
                 .store(in: &cancellables)
 
             Publishers.CombineLatest(preferences.$connectedProviders, preferences.$disabledModels)
@@ -531,6 +561,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     guard let store, let preferences else { return }
                     store.disconnected = preferences.disconnectedIDs(among: store.knownIDs)
                 }
+                .store(in: &cancellables)
+
+            // Which window each ring means. The store re-picks the windows it
+            // already has — no refetch — so the choice lands on the notch the
+            // moment it is made, and on every provider at once rather than only
+            // the row that was changed.
+            preferences.$providerRingCadence
+                .receive(on: RunLoop.main)
+                .sink { [weak store] cadence in store?.ringCadence = cadence }
                 .store(in: &cancellables)
 
             preferences.$ollamaEndpoint
@@ -602,19 +641,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // of a preference as much as of the account, and the store keeps
             // what the vendor said. Paired with the preference so flipping the
             // toggle redraws at once, without a fetch.
-            store.$notchSnapshots
-                .combineLatest(preferences.$claudeDailyPaceRing)
+            // The ring choice is one of the inputs, not read at delivery: a
+            // choice that leaves every ring where it was — asking for a monthly
+            // window on a provider that has none — changes no snapshot, so
+            // nothing downstream would be re-run and the pace would keep the
+            // answer it was given before the choice was made.
+            Publishers.CombineLatest3(store.$notchSnapshots,
+                                      preferences.$claudeDailyPaceRing,
+                                      preferences.$providerRingCadence)
                 .receive(on: RunLoop.main)
-                .sink { [weak fleet] snapshots, paced in
-                    fleet?.setSnapshots(DailyPace.apply(to: snapshots, enabled: paced))
+                .sink { [weak fleet] snapshots, paced, chosen in
+                    fleet?.setSnapshots(DailyPace.apply(to: snapshots, enabled: paced,
+                                                        chosen: chosen))
                 }
                 .store(in: &cancellables)
 
-            store.$snapshots
-                .combineLatest(preferences.$claudeDailyPaceRing)
+            Publishers.CombineLatest3(store.$snapshots,
+                                      preferences.$claudeDailyPaceRing,
+                                      preferences.$providerRingCadence)
                 .receive(on: RunLoop.main)
-                .sink { [weak statusItem] snapshots, paced in
-                    let snapshots = DailyPace.apply(to: snapshots, enabled: paced)
+                .sink { [weak statusItem] snapshots, paced, chosen in
+                    let snapshots = DailyPace.apply(to: snapshots, enabled: paced, chosen: chosen)
                     statusItem?.snapshots = snapshots
                     notifier.observe(snapshots)
                     resetWatcher.observe(snapshots)
@@ -767,7 +814,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         fleet.apply(watchLimit: preferences.watchLimit, criticalLimit: preferences.criticalLimit)
         fleet.apply(weeklyRing: preferences.weeklyRing)
         fleet.apply(weeklyRingDashed: preferences.weeklyRingDashed)
-        fleet.apply(showsMoveHandle: preferences.showsMoveHandle)
         fleet.apply(foldsForFullScreen: preferences.foldsForFullScreen)
         fleet.apply(surfaceStyle: preferences.notchSurfaceStyle)
         fleet.apply(deepSeekPricingEnabled: preferences.deepSeekPricingEnabled)

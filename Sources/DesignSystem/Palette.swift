@@ -49,6 +49,21 @@ enum Palette {
 
     static let textPrimary   = Color(dark: .white, light: .black)
     static let textSecondary = Color(dark: NSColor(hex: 0x808080), light: NSColor(hex: 0x6B6B6B))
+
+    /// The wash behind a card's reset summary — a lift off the black card in
+    /// the solid style, and a whisper of the same lift on glass.
+    static let summaryFill = Color(dark: .white.withAlphaComponent(0.085),
+                                   light: .black.withAlphaComponent(0.06))
+
+    /// One colour pair per cadence, so a ring's W, M and 5h badge is told apart
+    /// at a glance rather than by reading the letter. Taken from the Windows
+    /// port's own table so a provider looks the same on both.
+    static let cadenceWeeklyEdge     = Color(hex: 0x4EA1FF)
+    static let cadenceWeeklyInk      = Color(hex: 0x8EC4FF)
+    static let cadenceMonthlyEdge    = Color(hex: 0xB47CFF)
+    static let cadenceMonthlyInk     = Color(hex: 0xD3B3FF)
+    static let cadenceFiveHourEdge   = Color(hex: 0xFF9F45)
+    static let cadenceFiveHourInk    = Color(hex: 0xFFC389)
 }
 
 extension Color {
@@ -117,4 +132,3 @@ extension EnvironmentValues {
         set { self[ProviderMonitorHeadlessGlassKey.self] = newValue }
     }
 }
-

@@ -504,6 +504,29 @@ private struct ProviderTooltip: View {
     let now: Date
     let resetTimeFormat: ResetTimeFormat
     let showUsagePace: Bool
+    /// A tap on one of the card's cadence buttons. Which provider's ring it
+    /// belongs to is the card's own business — the snapshot is right here.
+    var onSetCadence: ((String, RingCadence) -> Void)? = nil
+
+    /// The windows the summary leads with, resolved to what it draws.
+    ///
+    /// Asked of the snapshot, which is also what the layout budget is solved
+    /// from, so the block that is drawn and the room reserved for it are the
+    /// same two windows by construction.
+    private var summaryItems: [ResetSummaryItem] {
+        snapshot.resetSummaryIDs.compactMap { id in
+            guard let window = snapshot.windows.first(where: { $0.id == id }) else { return nil }
+            return ResetSummaryItem(id: window.id, label: window.label, resetsAt: window.resetsAt)
+        }
+    }
+
+    /// What separates the rest of the card from whatever is above it: the
+    /// header alone, or the summary and the switch when they are drawn.
+    private var firstRowSpacing: CGFloat {
+        summaryItems.isEmpty && snapshot.switchableCadences.isEmpty
+            ? NotchLayout.headerToBlock
+            : NotchLayout.blockSpacing
+    }
 
     /// Only worth saying when the numbers are not current. A remembered reading
     /// has to be dated, or it quietly passes itself off as live.
@@ -545,7 +568,22 @@ private struct ProviderTooltip: View {
 
             if let block = snapshot.block {
                 BlockedRow(text: block.summary(now: now))
-                    .padding(.top, NotchLayout.headerToBlock)
+                    .padding(.top, firstRowSpacing)
+            }
+
+            // The reset countdowns lead, directly under the header: how long is
+            // left is what the card is opened for. The switch for which window
+            // they count comes with them, since it changes their subject.
+            if !summaryItems.isEmpty {
+                ResetSummary(items: summaryItems, now: now)
+                    .padding(.top, firstRowSpacing)
+            }
+
+            if !snapshot.switchableCadences.isEmpty {
+                CadenceRow(options: snapshot.switchableCadences,
+                           chosen: snapshot.ringCadence,
+                           onChoose: { cadence in onSetCadence?(snapshot.providerID, cadence) })
+                    .padding(.top, NotchLayout.blockSpacing)
             }
 
             if let message = snapshot.statusMessage {
@@ -553,7 +591,7 @@ private struct ProviderTooltip: View {
                     .font(Typography.cardBody)
                     .foregroundStyle(Palette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, NotchLayout.headerToBlock)
+                    .padding(.top, firstRowSpacing)
             } else if let localModel = snapshot.localModel {
                 RuntimeModelDetails(model: localModel, performance: snapshot.localPerformance,
                                     showsPerformance: snapshot.showsLocalPerformance,
@@ -581,11 +619,11 @@ private struct ProviderTooltip: View {
                                         .stroke(Color.white.opacity(0.25), lineWidth: Design.px(1.5))
                                 )
                             }
-                            .padding(.top, groupIndex == 0 ? NotchLayout.headerToBlock : Design.px(28))
+                            .padding(.top, groupIndex == 0 ? firstRowSpacing : Design.px(28))
                         } else {
                             ForEach(Array(group.windows.enumerated()), id: \.element.id) { windowIndex, window in
                                 LimitWindowRow(window: window, fidelity: snapshot.fidelity, now: now, resetTimeFormat: resetTimeFormat, showsUsagePace: showUsagePace)
-                                    .padding(.top, (groupIndex == 0 && windowIndex == 0) ? NotchLayout.headerToBlock : NotchLayout.blockSpacing)
+                                    .padding(.top, (groupIndex == 0 && windowIndex == 0) ? firstRowSpacing : NotchLayout.blockSpacing)
                             }
                         }
                     }
@@ -1011,6 +1049,10 @@ struct TooltipCard: View {
     /// A tap on a session row jumps to that session's terminal — nil leaves
     /// the rows as plain text.
     var onFocusSession: ((pid_t) -> Void)? = nil
+    /// A tap on a cadence button: which provider's ring to re-point, and the
+    /// choice. Persisting it is `Preferences`' job, as it is for the Settings
+    /// row that offers the same three words.
+    var onSetCadence: ((String, RingCadence) -> Void)? = nil
     @AppStorage(Preferences.showUsagePaceKey) private var showUsagePace = false
 
     /// The phase a local model is in, and the queue behind it, for the header.
@@ -1039,7 +1081,9 @@ struct TooltipCard: View {
             showsLocalPerformance: snapshot.showsLocalPerformance,
                 localLedgerRows: snapshot.localLedgerRowCount,
             compactRowCount: snapshot.compactRowCount,
-            showsDeepSeekPricing: deepSeekPricingEnabled
+            showsDeepSeekPricing: deepSeekPricingEnabled,
+            resetSummaryCount: snapshot.resetSummaryIDs.count,
+            cadenceOptionCount: snapshot.switchableCadences.count
         )
     }
 
@@ -1052,7 +1096,7 @@ struct TooltipCard: View {
             ZStack(alignment: .topLeading) {
                 VStack(alignment: .leading, spacing: 0) {
                     ProviderTooltip(activityNote: localActivityNote, snapshot: snapshot, now: now, resetTimeFormat: resetTimeFormat,
-                                    showUsagePace: showUsagePace)
+                                    showUsagePace: showUsagePace, onSetCadence: onSetCadence)
                     if let resetCredits = snapshot.resetCredits {
                         CodexResetCreditsSection(credits: resetCredits, now: now)
                     }
@@ -1079,5 +1123,123 @@ struct TooltipCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
+    }
+}
+
+// MARK: - Reset summary
+
+/// One line of the summary: the window's own name and how long it has left.
+struct ResetSummaryItem: Identifiable {
+    let id: String
+    let label: String
+    let resetsAt: Date?
+}
+
+/// How long is left, called out above everything else the card says.
+///
+/// Two windows at most — the one the ring reads and the short one beside it,
+/// when they are not the same window — because the summary exists to answer one
+/// question at a glance, and a third column of large type stops being a glance.
+///
+/// A countdown rather than the clock time the rows below report: at this size
+/// "3d 14h" is read in the time "Resets Thu 12:00 AM" takes to find.
+private struct ResetSummary: View {
+    let items: [ResetSummaryItem]
+    let now: Date
+
+    var body: some View {
+        HStack(alignment: .top, spacing: NotchLayout.summaryColumnGap) {
+            ForEach(items) { item in
+                VStack(alignment: .leading, spacing: NotchLayout.summaryLabelGap) {
+                    Text(item.label)
+                        .font(Typography.cardBody)
+                        .foregroundStyle(Palette.textSecondary)
+                        .lineLimit(1)
+                    countdown(item.resetsAt)
+                }
+                // Equal columns rather than content-sized ones: the pair are
+                // read as a block, and a long label on one side must not push
+                // the other's figure off centre.
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(NotchLayout.summaryPadding)
+        .background(
+            RoundedRectangle(cornerRadius: NotchLayout.summaryCorner, style: .continuous)
+                .fill(Palette.summaryFill)
+        )
+    }
+
+    /// A window that published no reset time still gets its column — the
+    /// summary is a pair of subjects, and hiding one would silently re-point
+    /// the block at whichever window did publish a time.
+    @ViewBuilder
+    private func countdown(_ resetsAt: Date?) -> some View {
+        if let resetsAt {
+            Text(ResetCountdown.text(for: resetsAt, now: now))
+                .font(Typography.hero.monospacedDigit())
+                .foregroundStyle(Palette.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        } else {
+            Text("—")
+                .font(Typography.hero)
+                .foregroundStyle(Palette.textSecondary)
+        }
+    }
+}
+
+// MARK: - Cadence switch
+
+/// Which of a provider's windows its ring means, changeable from the card.
+///
+/// Per provider, like the Settings row it mirrors: the buttons act on the card
+/// that is open and never on every ring at once. A tap is the card's own
+/// gesture rather than a Button, because the panel's click routing already
+/// hands the card its presses — see `NotchWindowController.handleClick`.
+private struct CadenceRow: View {
+    let options: [RingCadence]
+    let chosen: RingCadence
+    let onChoose: (RingCadence) -> Void
+    @Environment(\.providerMonitorAccentColor) private var accentColor
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: NotchLayout.cadenceLabelGap) {
+            Text(L10n.t("Ring shows"))
+                .font(Typography.cardBody)
+                .foregroundStyle(Palette.textSecondary)
+
+            HStack(spacing: NotchLayout.cadenceButtonGap) {
+                ForEach(options) { option in
+                    button(option)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private func button(_ option: RingCadence) -> some View {
+        let isChosen = option == chosen
+        return Text(option.shortTitle)
+            .font(Typography.cardBody)
+            .fontWeight(isChosen ? .semibold : .regular)
+            .foregroundStyle(isChosen ? Palette.textPrimary : Palette.textSecondary)
+            .lineLimit(1)
+            .padding(.horizontal, NotchLayout.cadenceButtonPad)
+            .frame(height: NotchLayout.cadenceButtonHeight)
+            .background(
+                RoundedRectangle(cornerRadius: NotchLayout.cadenceButtonCorner, style: .continuous)
+                    .fill(isChosen ? Palette.summaryFill : .clear)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: NotchLayout.cadenceButtonCorner, style: .continuous)
+                    .strokeBorder(isChosen ? accentColor : Palette.ringTrack,
+                                  lineWidth: isChosen ? Design.px(3) : Design.px(1.5))
+            )
+            .contentShape(RoundedRectangle(cornerRadius: NotchLayout.cadenceButtonCorner,
+                                           style: .continuous))
+            // The chosen one is a statement, not a target: re-picking it would
+            // re-write the preference it already holds.
+            .onTapGesture { if !isChosen { onChoose(option) } }
     }
 }

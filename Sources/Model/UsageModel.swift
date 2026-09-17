@@ -60,6 +60,34 @@ enum ProviderStatus: Equatable {
 /// a percent and still add up: 0.3% used is 99.7% left. A tenth of nothing
 /// says so rather than pretending to be zero.
 enum Percent {
+    /// Which half of a used-fraction the ring's own number reports.
+    ///
+    /// The ring draws *usage* whatever this says — the arc fills as the limit
+    /// is spent, and an arc that meant the opposite would need the space above
+    /// it read as the limit. Only the figure under it changes hands, because
+    /// that figure is the thing people quote to each other, and "how much is
+    /// left" is the question a quota is usually asked.
+    enum Basis: String, CaseIterable, Identifiable {
+        case remaining
+        case used
+
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .remaining: return L10n.t("Percent left")
+            case .used:      return L10n.t("Percent used")
+            }
+        }
+
+        var explanation: String {
+            switch self {
+            case .remaining: return L10n.t("The number under each ring counts down as the limit is spent.")
+            case .used:      return L10n.t("The number under each ring counts up as the limit is spent.")
+            }
+        }
+    }
+
     /// The two halves of a used-fraction, as display text.
     static func halves(for fraction: Double) -> (used: String, left: String) {
         let value = fraction * 100
@@ -222,6 +250,12 @@ struct ProviderSnapshot: Identifiable, Equatable {
     /// first", and a window dropping out of the response silently promotes
     /// another one — the ring keeps its shape and quietly changes its subject.
     var headlineID: String?
+    /// What the provider itself declared, before the user's cadence choice had
+    /// its say. Written once, when the provider hands the snapshot over, and
+    /// never by the store — which is what lets going back to Automatic restore
+    /// the provider's own choice instead of freezing whichever window the
+    /// override happened to land on.
+    var declaredHeadlineID: String?
     /// Which window the weekly ring draws, when it is switched on. Declared
     /// rather than derived — see `weeklyWindow`.
     var weeklyID: String?
@@ -233,6 +267,21 @@ struct ProviderSnapshot: Identifiable, Equatable {
     var localModel: LocalRuntimeReading.Model?
     var localPerformance: LocalModelPerformance?
     var showsLocalPerformance = false
+    /// Which half of a used-fraction the number under the ring reports.
+    ///
+    /// Stamped onto the reading by the store from the user's own choice rather
+    /// than read out of `Preferences` at each use: the snapshot is what the
+    /// ring, the status item and the hover card all pass around, and three of
+    /// them consulting three answers is how a display choice turns into a
+    /// contradiction on screen.
+    var percentBasis: Percent.Basis = .used
+    /// Which of this provider's windows the ring means, as the user last chose
+    /// it — `automatic` when the provider's own declaration stands.
+    ///
+    /// Stamped by the store from `Preferences` for the same reason
+    /// `percentBasis` is: the ring, the menu and the hover card all read the
+    /// snapshot, and a choice that lives in three places is three answers.
+    var ringCadence: RingCadence = .automatic
     /// How full the loaded context was on the last request, from the runtime's
     /// own log. The local ring's arc: a window filling up is the one fraction
     /// a local model has, where a cloud ring has a quota.
@@ -326,7 +375,13 @@ struct ProviderSnapshot: Identifiable, Equatable {
             return showsLocalPerformance ? (localPerformance?.headlineText ?? "— tok/s")
                 : (localModel?.memoryText ?? "—")
         }
-        if let usedFraction { return Percent.text(for: usedFraction) + "%" }
+        // `halves` rather than `text`: the two halves of one reading have to
+        // agree, and they only do when both are derived from the same rounding.
+        // "<0.1% left" beside "99.9% used" is the failure this avoids.
+        if let usedFraction {
+            let halves = Percent.halves(for: usedFraction)
+            return (percentBasis == .remaining ? halves.left : halves.used) + "%"
+        }
         if let remaining = headline?.remaining { return LimitWindow.compact(remaining) }
         if let usedText = headline?.usedText { return usedText }
         if let used = headline?.used { return LimitWindow.compact(used) }
@@ -354,6 +409,77 @@ struct ProviderSnapshot: Identifiable, Equatable {
     /// requests today, reasoning share, draft acceptance. Counted here so the
     /// card's budget and its contents cannot disagree.
     var localLedgerRowCount: Int { localLedger == nil ? 0 : 5 }
+
+    /// The windows the hover card's reset summary leads with, in the order it
+    /// draws them: the window the ring itself reads, and then the short one
+    /// beside it when the two are not the same window.
+    ///
+    /// The same pair the Windows port's card leads with. Answered from the
+    /// reading rather than from the provider, so nothing is fetched twice and
+    /// the ring and the summary cannot name different windows.
+    ///
+    /// A window that published no reset time still gets its column. Requiring
+    /// one is what left a ring reading a week with a one-figure summary while
+    /// the session beside it — the window Claude reports whether or not it has
+    /// started — had nowhere to appear at all. The block has always drawn a dash
+    /// for the gap, so the column was missing from this list and not from the
+    /// design.
+    ///
+    /// Empty when neither window has anything to count down to, which is what
+    /// keeps a provider that never publishes a reset from growing a block of
+    /// dashes.
+    var resetSummaryIDs: [String] {
+        guard kind == .usage, !windows.isEmpty else { return [] }
+        var ids: [String] = []
+        if let lead = windows.first(where: { $0.id == headlineID }) ?? windows.first(where: { $0.resetsAt != nil }) {
+            ids.append(lead.id)
+        }
+        if let short = HeadlineWindow.window(answering: .fiveHour, in: windows, weeklyID: weeklyID),
+           !ids.contains(short.id) {
+            ids.append(short.id)
+        }
+        let countsDown = ids.contains { id in
+            guard let resets = windows.first(where: { $0.id == id })?.resetsAt else { return false }
+            return resets > .distantPast
+        }
+        return countsDown ? ids : []
+    }
+
+    /// Which limit the ring is reading, in shorthand: M, W or 5h.
+    ///
+    /// Read off the window itself rather than off the choice, so a ring left on
+    /// Automatic still says which limit its number is. A weekly reading and a
+    /// session reading look identical otherwise, and telling them apart without
+    /// a hover is the whole reason these letters are on the ring.
+    var ringBadge: RingCadence? {
+        guard kind == .usage, localModel == nil, hasReading else { return nil }
+        if ringCadence != .automatic { return ringCadence }
+        guard let window = windows.first(where: { $0.id == headlineID }) else { return nil }
+        let durations = RingCadence.allCases.filter { $0 != .automatic }
+        if let length = window.duration {
+            return durations.first { $0.covers(length) }
+        }
+        return durations.first { $0.names(window.id, window.label) }
+    }
+
+    /// The cadences the hover card may switch this provider's ring between,
+    /// `automatic` first. Empty when there is nothing to choose — one window,
+    /// or a reading whose windows answer no cadence at all — which is what
+    /// keeps the switch off a card where it would do nothing.
+    ///
+    /// The same rule the Settings row follows, including the last clause: a
+    /// choice that has since stopped being answerable still has to appear, or
+    /// the row would highlight nothing at all.
+    var switchableCadences: [RingCadence] {
+        guard kind == .usage, windows.count > 1 else { return [] }
+        let available = HeadlineWindow.cadences(in: windows, weeklyID: weeklyID)
+        guard !available.isEmpty else { return [] }
+        var options: [RingCadence] = [.automatic] + available
+        if ringCadence != .automatic, !available.contains(ringCadence) {
+            options.append(ringCadence)
+        }
+        return options
+    }
 
     /// Signing in means something different per provider, so the prompt has to
     /// say which door to knock on.

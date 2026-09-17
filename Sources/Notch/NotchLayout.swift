@@ -78,61 +78,6 @@ enum NotchLayout {
     /// the bezel is never touched — `NotchLayoutTests` pins both.
     static let weeklyOutsideRadius = Design.px(65)
 
-    // The settings orb: it lives *below* the notch, not inside it. At rest only
-    // an arc of its edge is drawn, tucked into the corner the bottom flare
-    // makes; on hover the same circle fills in and takes a gear. One circle,
-    // two states — which is why the arc has to be a segment of it rather than a
-    // decorative stroke that happens to sit nearby.
-    // Measured off the reference frames, which are 2px per point — the notch
-    // body is the familiar 70pt in both, and that fixes the scale.
-    //
-    // The important find: the resting arc is **concentric with the notch's own
-    // bottom flare**, one radius inside it. That is what makes it follow the
-    // contour of the edge instead of merely sitting near it, and it is why the
-    // orb is centred on the flare's centre rather than on the body's axis.
-    //
-    //   flare : centre (edge - curlRadius, shapeBottom)   radius 38.5pt
-    //   arc   : same centre                                radius 28.5pt
-    //   disc  : same centre                                diameter 46.5pt
-    static let orbDiameter = Design.px(124)
-    static let orbStroke   = Design.px(18)
-    /// Distance from the flare's curve in to the resting arc.
-    static let orbGap      = Design.px(27)
-    /// Radius of the resting arc: the flare's radius, less the gap.
-    static var orbArcRadius: CGFloat { curlRadius - orbGap }
-    /// The resting arc's circle when it traces a *convex* corner: outside the
-    /// corner by the same gap it keeps inside a flare. Takes the corner the
-    /// shape actually draws, which is not always `cornerRadius` — a bar drawn
-    /// as the hardware notch caps it at the hardware's own rounding.
-    static func orbConvexArcRadius(corner: CGFloat) -> CGFloat { corner + orbGap }
-
-    /// How far off a convex corner the orb hangs, on each axis.
-    ///
-    /// A flush bar has no flare, so no pocket for the orb to nestle into: its
-    /// far corner is convex, and an orb centred on that corner sits *inside*
-    /// the black. It hangs off it instead — clear of the corner by the same
-    /// `orbGap` the flared version uses, plus its own radius so the disc never
-    /// overlaps the bar. Taken diagonally, so it reads as belonging to the
-    /// corner rather than to one edge or the other.
-    static func orbCornerOffset(corner: CGFloat) -> CGFloat {
-        (corner + orbGap + orbDiameter / 2) / 2.0.squareRoot()
-    }
-    static let orbGlyph    = Design.px(56)
-    /// What the arc scales to as it hides.
-    ///
-    /// The arc is concentric with the bottom flare, `orbGap` inside it, so
-    /// growing its radius carries it outward along the normal and *into* the
-    /// notch's black. Landing exactly on the flare is not enough — sitting on
-    /// the boundary it is still half visible. It goes a full stroke past, so
-    /// the line is genuinely buried and stops being drawable rather than
-    /// merely becoming faint.
-    ///
-    /// Shrinking it instead pulled it toward its own centre, away from the
-    /// notch, which is what read as flying off.
-    static var orbMergeScale: CGFloat { (curlRadius + orbStroke) / orbArcRadius }
-    /// Generous, like the pill's — it is a small target on a screen edge.
-    static let orbHotZone  = Design.px(152)
-
     // The hover tooltip
     static let cardWidth     = Design.px(600)
     static let cardCorner    = Design.px(49.5)
@@ -198,6 +143,48 @@ enum NotchLayout {
         ofSize: Design.fontSize(capPixels: 18), weight: .regular
     )
     static let cardBodyLineHeight: CGFloat = lineHeight(cardBodyFont)
+
+    // MARK: The card's reset summary
+
+    /// The window the ring reads, and the short window beside it when it is a
+    /// different one, called out above the per-window rows. The layout and the
+    /// card both ask the reading for the same two ids — see
+    /// `ProviderSnapshot.resetSummaryIDs` — so the budget and the contents
+    /// cannot disagree about how tall the block is.
+    static let summaryPadding   = Design.px(24)
+    static let summaryCorner    = Design.px(28)
+    static let summaryLabelGap  = Design.px(8)
+    static let summaryColumnGap = Design.px(24)
+    /// The countdown's own line box. Measured from the face it is drawn in, so
+    /// a change to `Typography.hero` cannot leave the budget behind — the same
+    /// pairing `cardTitleLineHeight` keeps with `Typography.cardTitle`.
+    static let heroLineHeight: CGFloat = lineHeight(
+        NSFont.systemFont(ofSize: Design.fontSize(capPixels: 34), weight: .bold)
+    )
+    static var summaryBlockHeight: CGFloat {
+        2 * summaryPadding + cardBodyLineHeight + summaryLabelGap + heroLineHeight
+    }
+
+    // MARK: The card's cadence switch
+
+    static let cadenceLabelGap     = Design.px(14)
+    static let cadenceButtonHeight = Design.px(50)
+    static let cadenceButtonPad    = Design.px(26)
+    static let cadenceButtonGap    = Design.px(12)
+    static let cadenceButtonCorner = Design.px(16)
+    static var cadenceRowHeight: CGFloat {
+        cardBodyLineHeight + cadenceLabelGap + cadenceButtonHeight
+    }
+
+    // MARK: The ring's cadence badge
+
+    /// M, W or 5h at the ring's top-leading corner, sized so it reads as a
+    /// qualification of the percent below it rather than as a second reading.
+    static let badgeHeight = Design.px(30)
+    static let badgePad    = Design.px(11)
+    static let badgeGap    = Design.px(3)
+    /// How far the badge sits up and along from the ring's own corner.
+    static let badgeOffset = Design.px(16)
 
     /// How wide a line of body text is inside the card.
     static var cardTextWidth: CGFloat { cardWidth - 2 * cardPadding }
@@ -293,15 +280,6 @@ enum NotchLayout {
             + end
     }
 
-    /// Centre of the settings orb: the same point the notch's bottom flare
-    /// curves around, which is what makes the arc parallel that curve.
-    static func orbCenterAlong(cellCount: Int, edge: NotchEdge = .right) -> CGFloat {
-        shapeLength(cellCount: cellCount, edge: edge)
-    }
-
-    /// Distance in from the screen edge, matching the flare's centre.
-    static var orbInsetFromEdge: CGFloat { curlRadius }
-
     /// Full shape length, flares included.
     ///
     /// `flare` is what the ends actually take, not what they might: a flush bar
@@ -343,10 +321,22 @@ enum NotchLayout {
                            localModelName: String? = nil, showsLocalPerformance: Bool = false,
                            localLedgerRows: Int = 0,
                            compactRowCount: Int = 0,
-                           showsDeepSeekPricing: Bool = true) -> CGFloat {
+                           showsDeepSeekPricing: Bool = true,
+                           resetSummaryCount: Int = 0,
+                           cadenceOptionCount: Int = 0) -> CGFloat {
         let header = max(glyphSize, cardTitleLineHeight)
             + (hasPlan ? cardBodyLineHeight : 0)
         var height = 2 * cardPadding + header
+
+        // The reset summary and the cadence switch sit directly under the
+        // header, above everything else: how long is left is the reason the
+        // card gets opened, and the switch governs what it counts.
+        if resetSummaryCount > 0 {
+            height += blockSpacing + summaryBlockHeight
+        }
+        if cadenceOptionCount > 0 {
+            height += blockSpacing + cadenceRowHeight
+        }
 
         // The blocked line sits under the header, above everything else — it
         // is the reading that stops you working, so it leads.
@@ -428,9 +418,8 @@ enum NotchLayout {
     }
 
 
-    /// Room at each end of the stack: enough for the settings orb to hang past
-    /// the foot of the shape, and enough for a tooltip anchored to the first or
-    /// last cell to still have somewhere to sit.
+    /// Room at each end of the stack: enough for a tooltip anchored to the first
+    /// or last cell to still have somewhere to sit.
     ///
     /// Both orientations need half a card past each end, and for the same
     /// reason: the card is centred on the cell it belongs to, so hovering the
@@ -485,7 +474,9 @@ enum NotchLayout {
                                 groupCount: Int = 2,
                                 hasTokenUsage: Bool = false,
                                 hasPlan: Bool = false,
-                                hasResetCredits: Bool = false) -> Int {
+                                hasResetCredits: Bool = false,
+                                hasResetSummary: Bool = false,
+                                hasCadenceSwitch: Bool = false) -> Int {
         var fits = 0
         for n in 1...sessionCeiling {
             // Costed as though something were still hidden, so that admitting
@@ -494,7 +485,9 @@ enum NotchLayout {
             let height = cardHeight(windowCount: windowCount, groupCount: groupCount,
                                     sessionCount: n + 1, sessionCap: n,
                                     hasTokenUsage: hasTokenUsage, hasPlan: hasPlan,
-                                    hasResetCredits: hasResetCredits)
+                                    hasResetCredits: hasResetCredits,
+                                    resetSummaryCount: hasResetSummary ? 1 : 0,
+                                    cadenceOptionCount: hasCadenceSwitch ? 1 : 0)
             guard height <= cardBudget else { break }
             fits = n
         }

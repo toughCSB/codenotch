@@ -56,12 +56,41 @@ protocol UsageProvider {
     /// so users see sign-in guidance; local daemon providers return `false`
     /// so an inactive service does not take up a ring in the notch.
     var isVisibleWhenAbsent: Bool { get }
+    /// Which of `windows` this provider's ring means for a given cadence, when
+    /// that is a question only the provider can answer. Nil means it has no
+    /// opinion, and the store's shared rule (`HeadlineWindow`) decides.
+    ///
+    /// A requirement, not an extension member alone, for the reason spelled out
+    /// above `account()`: a method that exists only in a protocol extension is
+    /// dispatched statically and would never reach the implementation.
+    ///
+    /// Antigravity needs this because its windows are split by model family as
+    /// well as by cadence, and a rule that only knows durations would move its
+    /// ring onto the other family's window.
+    func resolveRingWindow(in windows: [LimitWindow], cadence: RingCadence) -> String?
+    /// Which cadences this provider can actually be asked for, when only it
+    /// knows. Nil means the shared rule (`HeadlineWindow.cadences(in:weeklyID:)`)
+    /// decides, which is every provider whose windows can be told apart by their
+    /// durations and how they name themselves.
+    ///
+    /// A requirement, with a default, for the reason spelled out above
+    /// `account()`. Antigravity overrides it because it reports two lanes per
+    /// cadence — one per model family — which the shared rule cannot tell apart
+    /// and therefore refuses to name, leaving its menu offering less than the
+    /// provider can do.
+    func ringCadences(in windows: [LimitWindow]) -> [RingCadence]?
 }
 
 extension UsageProvider {
     func presentAccountSwitch() { presentSignIn() }
 
     var isVisibleWhenAbsent: Bool { true }
+
+    /// No opinion: the store's cadence rule answers from the windows.
+    func resolveRingWindow(in windows: [LimitWindow], cadence: RingCadence) -> String? { nil }
+
+    /// No opinion: the same rule decides which cadences to offer.
+    func ringCadences(in windows: [LimitWindow]) -> [RingCadence]? { nil }
 }
 
 extension UsageProvider {

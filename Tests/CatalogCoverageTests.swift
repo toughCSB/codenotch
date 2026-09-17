@@ -61,6 +61,93 @@ final class CatalogCoverageTests: XCTestCase {
         }
     }
 
+    /// Korean is a language of the person this app is for, and it is served from
+    /// the same catalog as every other one. Spot-checked rather than counted, for
+    /// the reason spelled out below: a completeness test passes only until the
+    /// next string is added, and then blocks the change that adds it.
+    func testKoreanCoreCopyIsTranslated() throws {
+        let catalog = try loadCatalog().json
+        let expected = [
+            "just now": "방금 전",
+            "Resets in %lld min": "%lld분 후 재설정",
+            "%lld%% Used · %lld%% left": "%lld%% 사용 · %lld%% 남음",
+            "Always show": "항상 표시",
+            "Settings…": "설정…",
+            "Sign in to %@": "%@에 로그인",
+            "%lld%% of its %@ limit used.": "%lld%% 사용 · %@ 한도"
+        ]
+
+        for (key, value) in expected {
+            XCTAssertEqual(
+                catalog.strings[key]?.localizations?["ko"]?.stringUnit?.value,
+                value,
+                "missing Korean translation for \(key)"
+            )
+        }
+    }
+
+    /// A placeholder and a bare percent sign cannot live in the same string.
+    ///
+    /// `String(localized:)` applies the entry as a format once there is an
+    /// argument to substitute, and a stray `%` — "80% and" reads as the
+    /// conversion `% a` — makes the whole entry unloadable. The app then shows
+    /// the English source instead, in *every* language, silently, and only for
+    /// that one string. Three of them sat in here doing exactly that. A percent
+    /// sign next to a placeholder has to be written `%%`.
+    func testNoEntryMixesAPlaceholderWithABarePercent() throws {
+        let catalog = try loadCatalog().json
+        let placeholder = try NSRegularExpression(pattern: "%(?:\\d+\\$)?[0-9.]*[a-zA-Z@]")
+
+        func mixesThem(_ text: String) -> Bool {
+            // `%%` is a literal percent sign, so it is neither a placeholder nor
+            // a bare one. This is where the three bad strings were found.
+            let undoubled = text.replacingOccurrences(of: "%%", with: "")
+            let range = NSRange(undoubled.startIndex..., in: undoubled)
+            guard placeholder.firstMatch(in: undoubled, range: range) != nil else { return false }
+            let withoutPlaceholders = placeholder.stringByReplacingMatches(
+                in: undoubled, range: range, withTemplate: ""
+            )
+            return withoutPlaceholders.contains("%")
+        }
+
+        for (key, entry) in catalog.strings {
+            XCTAssertFalse(mixesThem(key),
+                           "the source for \(key) mixes a placeholder with a bare percent")
+            for (language, localization) in entry.localizations ?? [:] {
+                guard let value = localization.stringUnit?.value else { continue }
+                XCTAssertFalse(mixesThem(value),
+                               "\(language) copy for \(key) mixes a placeholder with a bare percent")
+            }
+        }
+    }
+
+    /// Every Korean entry has to keep the placeholders the English source has.
+    /// A translation that drops one is not a wording preference — it prints a
+    /// number the reader was promised nowhere, or swallows one they were.
+    func testEveryKoreanEntryKeepsItsPlaceholders() throws {
+        let catalog = try loadCatalog().json
+        let placeholders = try NSRegularExpression(pattern: "%(?:\\d+\\$)?[0-9.]*[a-zA-Z@]")
+
+        func found(in text: String) -> [String] {
+            // `%%` is a literal percent sign, not a placeholder, and the source
+            // strings use it — "12% used · 88% left" among them.
+            let text = text.replacingOccurrences(of: "%%", with: "")
+            let range = NSRange(text.startIndex..., in: text)
+            return placeholders.matches(in: text, range: range).map {
+                String(text[Range($0.range, in: text)!])
+            }
+        }
+
+        var checked = 0
+        for (key, entry) in catalog.strings {
+            guard let value = entry.localizations?["ko"]?.stringUnit?.value else { continue }
+            checked += 1
+            XCTAssertEqual(found(in: value).sorted(), found(in: key).sorted(),
+                           "Korean copy for \(key) does not carry the same placeholders")
+        }
+        XCTAssertGreaterThan(checked, 500, "the Korean localization looks unbuilt")
+    }
+
     /// There is deliberately no "language X covers every key" test.
     ///
     /// The rule at the top of this file is that a missing translation falls

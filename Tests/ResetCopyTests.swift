@@ -245,3 +245,58 @@ final class WindowSummaryTests: XCTestCase {
         XCTAssertEqual(LimitWindow(id: "w", label: "Tokens", used: 651_061).summary, "651k used")
     }
 }
+
+/// The compact countdown the hover card's summary leads with.
+///
+/// The rows inside a card keep reporting *when* a window rolls, in the user's
+/// own date and clock format. This is the other half of the same fact, at a
+/// size where a date and a time would be two lines of small print.
+final class ResetCountdownTests: XCTestCase {
+    private let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+    private func countdown(_ seconds: TimeInterval) -> String {
+        ResetCountdown.text(for: now.addingTimeInterval(seconds), now: now)
+    }
+
+    /// Days and hours while there are days: at that range the minutes are a
+    /// digit nobody plans around.
+    func testDaysDropTheMinute() {
+        XCTAssertEqual(countdown(3 * 86_400 + 14 * 3_600), "3d 14h")
+        XCTAssertEqual(countdown(86_400 + 3_600), "1d 1h")
+    }
+
+    func testHoursAndMinutesUnderADay() {
+        XCTAssertEqual(countdown(5 * 3_600 + 22 * 60), "5h 22m")
+        XCTAssertEqual(countdown(3_600), "1h 0m")
+    }
+
+    func testMinutesUnderAnHour() {
+        XCTAssertEqual(countdown(42 * 60), "42m")
+    }
+
+    /// Rounded up, not down: thirty seconds left is the last minute of the
+    /// window, not no time at all.
+    func testAPartialMinuteStillReadsAsOneMinute() {
+        XCTAssertEqual(countdown(30), "1m")
+        XCTAssertEqual(countdown(1), "1m")
+    }
+
+    /// A window that has already rolled says so rather than counting backwards.
+    func testAPassedResetSaysItIsResetting() {
+        XCTAssertEqual(countdown(0), L10n.t("Resetting…"))
+        XCTAssertEqual(countdown(-60), L10n.t("Resetting…"))
+    }
+
+    /// The units come from the catalogue rather than being spelled in English
+    /// here, which is the whole reason the countdown is not a string built out
+    /// of "d", "h" and "m".
+    func testTheUnitsAreTheCatalogs() {
+        let previous = L10n.testLocale
+        defer { L10n.testLocale = previous }
+        L10n.testLocale = Locale(identifier: "ko")
+
+        XCTAssertEqual(countdown(3 * 86_400 + 14 * 3_600), "3일 14시간")
+        XCTAssertEqual(countdown(5 * 3_600 + 22 * 60), "5시간 22분")
+        XCTAssertEqual(countdown(42 * 60), "42분")
+    }
+}

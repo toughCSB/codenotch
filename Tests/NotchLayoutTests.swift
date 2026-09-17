@@ -378,85 +378,46 @@ final class PointerStateTests: XCTestCase {
     }
 }
 
-/// The settings orb sits in the corner the notch's bottom flare makes, and its
-/// resting arc follows that curve rather than merely sitting near it.
-@MainActor
-final class SettingsOrbTests: XCTestCase {
-    func testCameraNotchHandlesMirrorEachOther() {
-        let model = NotchViewModel()
-        model.edge = .top
-        model.hardwareNotch = HardwareNotch(width: 220, height: 37)
-
-        XCTAssertEqual(model.moveAlong + model.orbAlong, model.shapeLength, accuracy: 0.001,
-                       "The buttons must sit equally far from the two ends")
-        let moveArc = model.moveAlong + model.moveArcOffset.width
-        let settingsArc = model.orbAlong + model.orbArcOffset.width
-        XCTAssertEqual(moveArc + settingsArc, model.shapeLength, accuracy: 0.001,
-                       "The resting arcs must mirror around the notch's centre")
-        XCTAssertEqual(model.moveArcOffset.height, model.orbArcOffset.height, accuracy: 0.001)
+/// The card's reset summary and its cadence switch are two blocks the window
+/// rows sit below, so the budget has to grow by exactly their height — the card
+/// is clipped rather than scrolled, and a budget that forgot them would push the
+/// rows off the bottom instead of showing the countdown.
+final class CardSummaryLayoutTests: XCTestCase {
+    private func height(summary: Int = 0, cadence: Int = 0) -> CGFloat {
+        NotchLayout.cardHeight(windowCount: 2, resetSummaryCount: summary,
+                               cadenceOptionCount: cadence)
     }
 
-    private func centre(_ count: Int) -> CGFloat {
-        NotchLayout.orbCenterAlong(cellCount: count)
+    func testTheSummaryAndTheSwitchAreBothBudgetedFor() {
+        let plain = height()
+        let withSummary = height(summary: 2)
+        let withBoth = height(summary: 2, cadence: 4)
+
+        XCTAssertEqual(withSummary - plain,
+                       NotchLayout.blockSpacing + NotchLayout.summaryBlockHeight, accuracy: 0.001)
+        XCTAssertEqual(withBoth - withSummary,
+                       NotchLayout.blockSpacing + NotchLayout.cadenceRowHeight, accuracy: 0.001)
     }
 
-    private func shapeBottom(_ count: Int) -> CGFloat {
-        NotchLayout.shapeLength(cellCount: count)
+    /// A reading with nothing to count down to, or nothing to choose between,
+    /// pays for neither block: the height is the one the card always had.
+    func testNoBlockCostsNothing() {
+        XCTAssertEqual(height(), height(summary: 0, cadence: 0), accuracy: 0.001)
     }
 
-    /// The whole point: the orb shares the flare's centre of curvature, so the
-    /// two arcs are concentric and the resting stroke parallels the edge. Centre
-    /// it anywhere else — on the body's axis, say — and it stops following the
-    /// contour, which is exactly what went wrong first time.
-    func testItSharesTheFlaresCentreOfCurvature() {
-        XCTAssertEqual(NotchLayout.orbInsetFromEdge, NotchLayout.curlRadius, accuracy: 0.001)
-        for count in 1...4 {
-            XCTAssertEqual(centre(count), shapeBottom(count), accuracy: 0.001,
-                           "\(count): the orb's centre must be the flare's centre")
-        }
+    /// Two countdowns are one row, not two: the summary is a pair of columns,
+    /// and its height must not grow with the second window the way the window
+    /// rows below it do.
+    func testTheSecondSummaryColumnIsNotASecondRow() {
+        XCTAssertEqual(height(summary: 1), height(summary: 2), accuracy: 0.001)
     }
 
-    /// Inside the flare, with a real gap — touching it would read as a smudge on
-    /// the notch rather than as a separate control.
-    func testTheArcSitsInsideTheFlareWithAGap() {
-        XCTAssertLessThan(NotchLayout.orbArcRadius, NotchLayout.curlRadius)
-        let gap = NotchLayout.curlRadius - NotchLayout.orbArcRadius
-        XCTAssertGreaterThan(gap, NotchLayout.orbStroke / 2,
-                             "the stroke would touch the flare")
-    }
-
-    /// The filled disc goes inside the arc, so hovering does not push past it.
-    func testTheDiscFitsWithinTheArc() {
-        XCTAssertLessThan(NotchLayout.orbDiameter / 2, NotchLayout.orbArcRadius)
-    }
-
-    /// The notch itself must not grow for it — the orb is not part of the shape.
-    func testTheNotchDoesNotGrowForIt() {
-        let cells = NotchLayout.cellExtent
-        let body = NotchLayout.bodyLength(cellCount: 2)
-        let bare = NotchLayout.padTop + 2 * cells + NotchLayout.cellSpacing + NotchLayout.padBottom
-        XCTAssertEqual(body, bare, accuracy: 0.001)
-    }
-
-    /// The panel has to reserve room below the shape or the orb is clipped away.
-    func testThePanelHasRoomBelowTheNotch() {
-        let overhang = NotchLayout.orbArcRadius + NotchLayout.orbStroke
-        XCTAssertLessThanOrEqual(overhang, NotchLayout.slack(for: .right))
-    }
-
-    /// Like the pill's, the region you can hit is larger than what is drawn.
-    func testTheHitRegionIsLargerThanTheOrb() {
-        XCTAssertGreaterThan(NotchLayout.orbHotZone, NotchLayout.orbDiameter)
-    }
-
-    /// The glass arc is masked by this path inside the view's bounds, so a band
-    /// running along the frame's edge would lose the outer half of its stroke.
-    func testTheArcBandStaysInsideItsFrame() {
-        let frame = CGRect(x: 0, y: 0, width: 100, height: 100)
-        let path = ArcBand(trim: 0...0.25, lineWidth: NotchLayout.orbStroke).path(in: frame)
-        XCTAssertFalse(path.isEmpty)
-        XCTAssertTrue(frame.insetBy(dx: -0.5, dy: -0.5).contains(path.boundingRect),
-                      "\(path.boundingRect) escapes the band's frame")
+    /// The countdown is drawn larger than the card's title, which is the whole
+    /// point of it, and the block has to hold that line.
+    func testTheCountdownLineIsLargerThanTheCardsOwnTitle() {
+        XCTAssertGreaterThan(NotchLayout.heroLineHeight, NotchLayout.cardTitleLineHeight)
+        XCTAssertGreaterThan(NotchLayout.summaryBlockHeight,
+                             NotchLayout.heroLineHeight + NotchLayout.cardBodyLineHeight)
     }
 }
 

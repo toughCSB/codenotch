@@ -238,8 +238,7 @@ final class MergedShapeTests: XCTestCase {
     /// Left as an ordinary deeper shape, the flares — which live in the first
     /// `curlRadius` from the bezel, and this Mac's notch is almost exactly that
     /// tall — would be drawn entirely inside the hole. The bar would emerge
-    /// from the hardware with square corners, and the settings orb, which is
-    /// concentric with the flare, would be invisible with it.
+    /// from the hardware with square corners.
     /// **The bar is shaped like the Mac's own notch, only bigger.**
     ///
     /// Straight sides meeting the bezel square, two rounded corners at the
@@ -331,15 +330,6 @@ final class MergedShapeTests: XCTestCase {
         )
     }
 
-    /// Wherever the orb ends up, all of it has to be below the hardware — the
-    /// part of it inside that band is not dimmed, it is off the display.
-    func testTheWholeOrbSitsBelowTheHardwareNotch() {
-        let m = model()
-        let radius = NotchLayout.orbArcRadius
-        XCTAssertGreaterThan(m.orbInset - radius - NotchLayout.orbStroke / 2, realNotch.height,
-                             "part of the resting arc is inside the hole")
-    }
-
     /// And the card hangs off the inner face of a shape that is now deeper.
     func testTheTooltipClearsTheDeeperShape() {
         let m = model()
@@ -347,122 +337,6 @@ final class MergedShapeTests: XCTestCase {
             m.tooltipInset, m.contentInset + NotchLayout.bodyDepth(for: .top) + NotchLayout.tailGap,
             accuracy: 0.001
         )
-    }
-}
-
-/// With the flares gone there is no concave corner for the settings orb to
-/// tuck into, and left where it was it becomes a dot on the bar's edge.
-///
-/// Same idea, turned inside out: it hugs the bar's own rounded corner from
-/// *outside* instead of a flare from inside. Hugging a corner the other way
-/// round is the same relationship through half a circle, which is all the
-/// trim has to do.
-@MainActor
-final class OrbOnAFlushBarTests: XCTestCase {
-    private func model(flush: Bool) -> NotchViewModel {
-        let model = NotchViewModel()
-        model.edge = .top
-        model.isExpanded = true
-        model.snapshots = (0..<4).map { index in
-            ProviderSnapshot(id: "p\(index)", displayName: "P", glyph: .claude,
-                             fidelity: .official, status: .ok, windows: [])
-        }
-        model.adopt(screen: flush ? notched : plain)
-        return model
-    }
-
-    /// **The orb hangs off the bar, not inside it.**
-    ///
-    /// It normally nestles into the pocket the far flare cuts out of the notch —
-    /// that is why it is concentric with the flare, one gap inside it. A flush
-    /// bar has no pocket: its far corner is convex, so an orb centred on that
-    /// corner sits *within* the black, which is where the gear was appearing.
-    func testTheWholeOrbIsOutsideTheBar() {
-        let m = model(flush: true)
-        XCTAssertGreaterThan(m.orbAlong, m.shapeLength,
-                             "the orb is not past the end of the bar")
-        XCTAssertGreaterThan(m.orbInset, m.notchDepth,
-                             "the orb is not below the foot of the bar")
-    }
-
-    /// Clear of the corner it hangs from by the same gap the flare version uses,
-    /// so the disc never overlaps the bar it belongs to.
-    func testTheDiscClearsTheCornerByTheUsualGap() {
-        let m = model(flush: true)
-        let corner = CGPoint(x: m.cornerCentreAlong,
-                             y: m.notchDepth - m.drawnCornerRadius)
-        let reach = hypot(m.orbAlong - corner.x, m.orbInset - corner.y)
-        XCTAssertEqual(
-            reach - m.drawnCornerRadius - NotchLayout.orbDiameter / 2,
-            NotchLayout.orbGap, accuracy: 0.5,
-            "the settings disc is not sitting clear of the bar's corner"
-        )
-    }
-
-    /// It hangs diagonally, so it reads as belonging to the corner rather than
-    /// to one edge or the other.
-    func testItHangsOffTheCornerDiagonally() {
-        let m = model(flush: true)
-        let past = m.orbAlong - m.cornerCentreAlong
-        let below = m.orbInset - (m.notchDepth - m.drawnCornerRadius)
-        XCTAssertEqual(past, below, accuracy: 0.001, "the orb is off to one side")
-    }
-
-    /// And traces it one gap outside, which is the same clearance the flared
-    /// version keeps from its flare.
-    func testTheArcTracesTheCornerByTheUsualGap() {
-        let m = model(flush: true)
-        XCTAssertEqual(m.orbArcRadius - m.drawnCornerRadius,
-                       NotchLayout.orbGap, accuracy: 0.001)
-    }
-
-    /// Which puts them far enough apart that one hot zone cannot cover both —
-    /// the arc is what you see, the button is what you are reaching for, and
-    /// the handle has to answer to either.
-    func testTheArcAndTheButtonNeedSeparateHitZones() {
-        let m = model(flush: true)
-        let apart = hypot(m.orbArcOffset.width, m.orbArcOffset.height)
-        XCTAssertGreaterThan(apart, NotchLayout.orbHotZone / 2,
-                             "one zone would do; the union is unnecessary")
-    }
-
-    /// Inside a flare's pocket the two are the same object, as they always were.
-    func testTheyAreConcentricWhenThereIsAFlare() {
-        let m = model(flush: false)
-        XCTAssertEqual(m.orbArcOffset.width, 0, accuracy: 0.001)
-        XCTAssertEqual(m.orbArcOffset.height, 0, accuracy: 0.001)
-    }
-
-    /// The arc faces away from the bar on both axes — out past its end, and
-    /// down past its foot. That is what makes it read as hugging the corner.
-    func testTheArcFacesAwayFromTheBar() {
-        let range = SettingsOrb.restingTrim(for: .top, convex: true)
-        let mid = Double((range.lowerBound + range.upperBound) / 2) * 2 * .pi
-        let direction = CGPoint(x: cos(mid), y: sin(mid))
-        // +along is along the bar; +across is deeper into it, away from the bezel.
-        XCTAssertGreaterThan(direction.x * NotchEdge.top.alongDirection.x
-                             + direction.y * NotchEdge.top.alongDirection.y, 0.5,
-                             "the arc does not reach past the end of the bar")
-        XCTAssertGreaterThan(direction.x * -NotchEdge.top.outward.x
-                             + direction.y * -NotchEdge.top.outward.y, 0.5,
-                             "the arc does not reach past the foot of the bar")
-    }
-
-    /// Which is the concave arrangement through half a circle, on every edge.
-    func testHuggingFromOutsideIsTheSameRelationshipTurnedAround() {
-        for edge in NotchEdge.allCases {
-            let concave = SettingsOrb.restingTrim(for: edge).lowerBound
-            let convex = SettingsOrb.restingTrim(for: edge, convex: true).lowerBound
-            let turned = (concave + 0.5).truncatingRemainder(dividingBy: 1)
-            XCTAssertEqual(convex, turned, accuracy: 0.0001, "\(edge)")
-        }
-    }
-
-    /// Nothing about the ordinary notch moves.
-    func testAnUnmergedNotchKeepsTheOrbWhereItWas() {
-        let m = model(flush: false)
-        XCTAssertEqual(m.orbAlong, m.shapeLength, accuracy: 0.001)
-        XCTAssertEqual(m.orbInset, NotchLayout.orbInsetFromEdge, accuracy: 0.001)
     }
 }
 
@@ -652,134 +526,6 @@ final class BarEndMarginTests: XCTestCase {
         let m = model(screen: plain)
         XCTAssertEqual((m.shapeLength - m.bodyLength) / 2, NotchLayout.curlRadius,
                        accuracy: 0.001)
-    }
-}
-
-/// The handle answers where it is drawn, and not in the space around it.
-@MainActor
-final class OrbHitAccuracyTests: XCTestCase {
-    private func model(flush: Bool = true) -> NotchViewModel {
-        let model = NotchViewModel()
-        model.edge = .top
-        model.isExpanded = true
-        model.snapshots = (0..<4).map { index in
-            ProviderSnapshot(id: "p\(index)", displayName: "P", glyph: .claude,
-                             fidelity: .official, status: .ok, windows: [])
-        }
-        model.adopt(screen: flush ? notched : plain)
-        return model
-    }
-
-    private func arcCentre(_ m: NotchViewModel) -> CGPoint {
-        CGPoint(x: m.orbAlong + m.orbArcOffset.width, y: m.orbInset + m.orbArcOffset.height)
-    }
-
-    /// You can reach the button itself.
-    func testTheButtonAnswers() {
-        let m = model()
-        XCTAssertTrue(m.isOnOrbHandle(along: m.orbAlong, across: m.orbInset))
-    }
-
-    /// And the arc, which at rest is the only part of it you can see.
-    func testTheArcAnswers() {
-        let m = model()
-        let centre = arcCentre(m)
-        // The middle of the quadrant: out from its centre, the way the button went.
-        let reach = hypot(m.orbAlong - centre.x, m.orbInset - centre.y)
-        let mid = CGPoint(x: centre.x + m.orbArcRadius * (m.orbAlong - centre.x) / reach,
-                          y: centre.y + m.orbArcRadius * (m.orbInset - centre.y) / reach)
-        XCTAssertTrue(m.isOnOrbHandle(along: mid.x, across: mid.y),
-                      "pointing at the arc does not reach the handle")
-    }
-
-    /// **But not the empty ground beside them.**
-    ///
-    /// The arc stayed back on the bar's corner while the button hangs off it,
-    /// and a *bounding box* around the pair takes in a good deal that is near
-    /// neither — which is why the button used to appear well before the pointer
-    /// got anywhere close to the arc. The box's own corners are the proof: a
-    /// box test accepts them, and nothing is drawn within reach of either.
-    func testTheCornersOfTheBoxBetweenThemDoNotAnswer() {
-        let m = model()
-        let points = m.orbHandlePoints
-        guard points.count == 2 else { return XCTFail("expected an arc and a button") }
-        let reach = NotchLayout.orbHotZone / 2
-        let box = CGRect(
-            x: min(points[0].x, points[1].x) - reach,
-            y: min(points[0].y, points[1].y) - reach,
-            width: abs(points[0].x - points[1].x) + reach * 2,
-            height: abs(points[0].y - points[1].y) + reach * 2
-        )
-        for corner in [CGPoint(x: box.minX, y: box.maxY), CGPoint(x: box.maxX, y: box.minY)] {
-            XCTAssertFalse(
-                m.isOnOrbHandle(along: corner.x, across: corner.y),
-                "the handle answers at a corner of its own bounding box, where nothing is drawn"
-            )
-        }
-    }
-
-    /// Nor anywhere back inside the bar.
-    func testItDoesNotAnswerInsideTheBar() {
-        let m = model()
-        XCTAssertFalse(m.isOnOrbHandle(along: m.shapeLength / 2, across: m.notchDepth / 2))
-    }
-
-    /// A flared notch is reached exactly as it always was: one zone, on the orb.
-    func testAFlaredNotchAnswersOnItsOrb() {
-        let m = model(flush: false)
-        XCTAssertTrue(m.isOnOrbHandle(along: m.orbAlong, across: m.orbInset))
-        XCTAssertFalse(m.isOnOrbHandle(along: m.orbAlong + NotchLayout.orbHotZone,
-                                       across: m.orbInset))
-    }
-}
-
-/// The resting arc traces the bar's corner, so it must turn about the very
-/// point the *drawn* corner turns about.
-@MainActor
-final class ArcConcentricityTests: XCTestCase {
-    private func model() -> NotchViewModel {
-        let model = NotchViewModel()
-        model.edge = .top
-        model.isExpanded = true
-        model.snapshots = (0..<4).map { index in
-            ProviderSnapshot(id: "p\(index)", displayName: "P", glyph: .claude,
-                             fidelity: .official, status: .ok, windows: [])
-        }
-        model.adopt(screen: notched)
-        return model
-    }
-
-    /// Measured off the path rather than restated from the formula, because the
-    /// formula was the thing that was wrong: the corner's centre is inset from
-    /// the bar's end by the *frame fillet* as well as by its own radius, and
-    /// leaving the fillet out slid the arc a whole 10pt down the bar. The gap
-    /// then opened from 9pt at one end of the arc to 19pt at the other, which
-    /// is what stopped it looking like a curve drawn around the corner.
-    func testTheArcTurnsAboutTheCornerTheBarActuallyDraws() {
-        let m = model()
-        let size = m.notchSize
-        let place = NotchPlacement(edge: .top, panelSize: size)
-        let path = SideNotchShape(edge: .top, joining: realNotch)
-            .path(in: CGRect(origin: .zero, size: size))
-        let centre = CGPoint(x: m.orbAlong + m.orbArcOffset.width,
-                             y: m.orbInset + m.orbArcOffset.height)
-
-        for degrees in stride(from: 5.0, through: 85.0, by: 10.0) {
-            let angle = degrees * .pi / 180
-            var edge: CGFloat = -1
-            var radius: CGFloat = 0
-            while radius < 140 {
-                let point = place.point(along: centre.x + cos(angle) * radius,
-                                        across: centre.y + sin(angle) * radius)
-                if path.contains(point) { edge = radius }
-                radius += 0.25
-            }
-            XCTAssertEqual(
-                edge, m.drawnCornerRadius, accuracy: 1.5,
-                "at \(Int(degrees))° the bar's edge is \(edge)pt from the arc's centre, "
-                    + "not the corner's own \(m.drawnCornerRadius)pt"
-            )
-        }
     }
 }
 

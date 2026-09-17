@@ -57,9 +57,10 @@ final class NotchFleet {
     /// ring on one display and not another would read as a bug.
     private var weeklyRing: WeeklyRing = .off
     private var weeklyRingDashed: Bool = false
-    private var showsMoveHandle = true
     private var foldsForFullScreen = true
     private var surfaceStyle: NotchSurfaceStyle = .glass
+    private var alwaysOnTop = true
+    private var percentBasis: Percent.Basis = .remaining
     private var deepSeekPricingEnabled = true
     private var deepSeekPricingSchedule = DeepSeekPricing.Schedule.current
     /// The ⌥-drag nudge along the current edge. One value for the whole
@@ -75,15 +76,19 @@ final class NotchFleet {
     var onToggleKeepOpen: (() -> Void)?
     var onRefreshProvider: ((String) async -> Void)?
     var onOpenSettings: (() -> Void)?
+    var onToggleAlwaysOnTop: (() -> Void)?
+    /// Toggles "Always show" — the standing choice that keeps the notch on
+    /// screen, which is what outranks a frontmost full-screen app.
+    var onToggleAlwaysShow: (() -> Void)?
+    var onTogglePercentBasis: (() -> Void)?
     var onFocusSession: ((pid_t) -> Void)?
+    /// A cadence chosen from a hover card: which provider's ring, and the
+    /// choice. Persisting it is Preferences' job, as it is for the Settings row.
+    var onSetRingCadence: ((String, RingCadence) -> Void)?
     var signInItems: [(title: String, action: () -> Void)] = []
     /// An ⌥-drag on any one panel settled at a new offset. Persisting it is
     /// Preferences' job, same division `apply(edge:)` already keeps.
     var onReposition: ((CGFloat) -> Void)?
-    /// A move handle carried a notch to another edge. Persisting it is
-    /// Preferences' job, the same division `onReposition` keeps.
-    var onMoveToEdge: ((NotchEdge) -> Void)?
-
     /// What the fleet settled on, for tests that need to see panels come and
     /// go rather than take our word for it.
     var controllersForTesting: [NotchWindowController] { Array(controllers.values) }
@@ -165,13 +170,6 @@ final class NotchFleet {
         }
     }
 
-    func apply(showsMoveHandle: Bool) {
-        self.showsMoveHandle = showsMoveHandle
-        for controller in controllers.values {
-            controller.apply(showsMoveHandle: showsMoveHandle)
-        }
-    }
-
     func apply(foldsForFullScreen: Bool) {
         self.foldsForFullScreen = foldsForFullScreen
         for controller in controllers.values {
@@ -213,6 +211,20 @@ final class NotchFleet {
         self.surfaceStyle = surfaceStyle
         for controller in controllers.values {
             controller.model.surfaceStyle = surfaceStyle
+        }
+    }
+
+    func apply(alwaysOnTop: Bool) {
+        self.alwaysOnTop = alwaysOnTop
+        for controller in controllers.values {
+            controller.model.isAlwaysOnTop = alwaysOnTop
+        }
+    }
+
+    func apply(percentBasis: Percent.Basis) {
+        self.percentBasis = percentBasis
+        for controller in controllers.values {
+            controller.model.percentBasis = percentBasis
         }
     }
 
@@ -423,17 +435,20 @@ final class NotchFleet {
         controller.model.criticalLimit = criticalLimit
         controller.model.weeklyRing = weeklyRing
         controller.model.weeklyRingDashed = weeklyRingDashed
-        controller.model.showsMoveHandle = showsMoveHandle
         controller.model.surfaceStyle = surfaceStyle
+        controller.model.isAlwaysOnTop = alwaysOnTop
+        controller.model.percentBasis = percentBasis
         controller.model.deepSeekPricingEnabled = deepSeekPricingEnabled
         controller.model.deepSeekPricingSchedule = deepSeekPricingSchedule
         controller.onRefresh = onRefresh
         controller.onRefreshProvider = onRefreshProvider
         controller.onOpenSettings = onOpenSettings
-        controller.model.onOpenSettings = onOpenSettings
+        controller.onToggleAlwaysOnTop = onToggleAlwaysOnTop
+        controller.onToggleAlwaysShow = onToggleAlwaysShow
+        controller.onTogglePercentBasis = onTogglePercentBasis
         controller.model.onFocusSession = onFocusSession
+        controller.model.onSetRingCadence = onSetRingCadence
         controller.onReposition = onReposition
-        controller.onMoveToEdge = onMoveToEdge
         controller.onToggleKeepOpen = onToggleKeepOpen
         controller.signInItems = signInItems
         controller.model.updateSnapshots(snapshots)

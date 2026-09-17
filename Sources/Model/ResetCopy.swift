@@ -102,3 +102,30 @@ enum ResetCopy {
         return calendar.dateComponents([.day], from: start, to: end).day ?? 0
     }
 }
+
+/// How long is left, in the compact form the hover card's reset summary leads
+/// with: "3d 14h", "5h 22m", "42m".
+///
+/// Separate from `ResetCopy` because the two answer different questions. The
+/// rows inside a card report when a window rolls — a clock time, a date, in the
+/// user's own 12- or 24-hour format. This is the other half of the same fact,
+/// and it is the half that fits above everything else at hero size, where a
+/// date and a time would be two lines of small print.
+///
+/// One vocabulary on purpose: the units are the catalogue's, not English
+/// abbreviations invented here, so "3 Tage 14 Std" and "3日 14時間" are what a
+/// German or Japanese Mac reads rather than "3d 14h".
+enum ResetCountdown {
+    static func text(for resetsAt: Date, now: Date = Date()) -> String {
+        let seconds = resetsAt.timeIntervalSince(now)
+        guard seconds > 0 else { return L10n.t("Resetting…") }
+        // Rounded up: a window with thirty seconds left reads "1m" rather than
+        // "0m". The two are the same instant to a clock and not to a reader.
+        let minutes = max(1, Int((seconds / 60).rounded(.up)))
+        let hours = minutes / 60
+        let days = hours / 24
+        if days > 0 { return L10n.t("\(days)d \(hours % 24)h") }
+        if hours > 0 { return L10n.t("\(hours)h \(minutes % 60)m") }
+        return L10n.t("\(minutes)m")
+    }
+}

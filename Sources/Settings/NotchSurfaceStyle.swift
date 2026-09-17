@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The material the expanded notch, tooltip and settings orb are painted with.
+/// The material the expanded notch and its tooltip are painted with.
 ///
 /// Raw values are persistence keys, not display copy: keeping them stable lets
 /// labels change without losing an existing choice. The default is `.glass`

@@ -133,7 +133,7 @@ private struct SidebarIcon: View {
     }
 }
 
-/// The settings sheet, reached from the orb below the notch.
+/// The settings sheet, reached from the notch's own menu or the menu bar.
 ///
 /// A sidebar of subjects rather than one long scroll, the way macOS's own
 /// System Settings groups a much bigger list of the same kind of thing:
@@ -192,6 +192,11 @@ struct SettingsView: View {
     let resetPosition: () -> Void
     let quit: () -> Void
     @ObservedObject var updater: Updater
+    /// Installing this build is the pane's own business and nothing else's:
+    /// no other window shows the outcome, and no other part of the app acts on
+    /// it, so it is created here rather than handed in from the delegate the
+    /// way `updater` is.
+    @StateObject private var installer = LocalInstall()
     var ollamaRelay: OllamaActivityRelay? = nil
     var lmstudioMetrics: LMStudioMetrics? = nil
     var usageStore: UsageStore? = nil
@@ -655,58 +660,79 @@ struct SettingsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                // Two ways to answer the same question, because they suit
-                // different people: three named sizes for anyone who wants a
-                // decision made for them, and a slider for anyone who has a
-                // particular size in mind and will not be talked out of it.
-                Picker(L10n.t("Size"), selection: Binding(
-                    get: { preferences.usesCustomNotchScale },
-                    set: { preferences.usesCustomNotchScale = $0 }
-                )) {
-                    Text(L10n.t("Preset")).tag(false)
-                    Text(L10n.t("Custom")).tag(true)
+                // One size, answered two ways: a slider for anyone who has a
+                // Which way round the number under each ring reads. The arc is
+                // not part of the choice — it fills as the limit is spent —
+                // only the figure under it changes hands.
+                Picker(L10n.t("Ring number"), selection: $preferences.percentBasis) {
+                    ForEach(Percent.Basis.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
 
-                if preferences.usesCustomNotchScale {
-                    HStack(spacing: 10) {
-                        // Continuous, with no step: a step quantises the drag
-                        // into a dozen visible jumps, which is exactly what
-                        // this control exists to avoid.
-                        Slider(value: $preferences.customNotchScale,
-                               in: Preferences.customScaleRange)
-                        // Monospaced digits, so the number does not jitter
-                        // sideways while the slider is being dragged.
-                        Text(Self.scalePercent(preferences.customNotchScale))
-                            .font(.callout.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                            .frame(width: 46, alignment: .trailing)
-                    }
+                Text(preferences.percentBasis.explanation)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    Text(L10n.t("Scales the whole surface — rings, text and tooltip together — so the proportions stay as drawn. 100% is the size the notch was designed at."))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    Picker(L10n.t("Preset size"), selection: $preferences.notchSize) {
-                        ForEach(NotchSize.allCases) { Text($0.title).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
+                Toggle(L10n.t("Always on top"), isOn: $preferences.notchAlwaysOnTop)
+                Text(L10n.t("The notch floats above other windows. Off lets another application's windows cover it, as they cover each other."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    Text(preferences.notchSize.explanation)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                // One size, answered two ways: a slider for anyone who has a
+                // particular size in mind, and the three named sizes as
+                // shortcuts onto it for anyone who would rather not decide.
+                //
+                // They used to be a switch between two rival controls, which
+                // read as "three sizes, or nothing" — the slider was behind
+                // the word Custom, and the size looked unchangeable without it.
+                Picker(L10n.t("Size"), selection: Binding(
+                    // The preset the slider is nearest, so the highlight always
+                    // describes what is drawn. A stored preset that the slider
+                    // has since moved past would otherwise sit there claiming a
+                    // size the notch is not.
+                    get: { Self.nearestPreset(to: preferences.customNotchScale) },
+                    // Applied outright rather than through `notchSize`'s own
+                    // observer: clicking the preset the highlight already shows
+                    // is a change of nothing, and would leave a size that has
+                    // drifted from it exactly where it was.
+                    set: { preset in
+                        preferences.notchSize = preset
+                        preferences.customNotchScale = Double(preset.scale)
+                    }
+                )) {
+                    ForEach(NotchSize.allCases) { Text($0.title).tag($0) }
                 }
+                .pickerStyle(.segmented)
+
+                HStack(spacing: 10) {
+                    // Continuous, with no step: a step quantises the drag
+                    // into a dozen visible jumps, which is exactly what
+                    // this control exists to avoid.
+                    Slider(value: $preferences.customNotchScale,
+                           in: Preferences.customScaleRange)
+                    // Monospaced digits, so the number does not jitter
+                    // sideways while the slider is being dragged.
+                    Text(Self.scalePercent(preferences.customNotchScale))
+                        .font(.callout.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .frame(width: 46, alignment: .trailing)
+                }
+
+                Text(L10n.t("Scales the whole surface — rings, text and tooltip together — so the proportions stay as drawn. 100% is the size the notch was designed at."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 // The nudge has been draggable since the edge picker existed,
                 // and nothing on screen has ever said so — the only way to
-                // find it was to hold ⌥ on the notch and see what happened.
+                // find it was to hold ⌥ on the notch and see what happened,
+                // which is a gesture nobody tries. A plain drag slides it now.
                 // This is also the only way back from a nudge that went too
                 // far, short of dragging it out again.
                 HStack {
-                    Text(L10n.t("Hold ⌥ and drag the notch to slide it along its edge. Each edge remembers where you left it."))
+                    Text(L10n.t("Drag the notch to slide it along its edge — or hold ⌥, which has always done the same. Each edge remembers where you left it."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -732,14 +758,6 @@ struct SettingsView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
                 }
-
-                // The arc above the notch. Hiding it loses nothing that cannot
-                // be reached another way: Edge, above, moves the notch too.
-                Toggle(L10n.t("Show move handle"), isOn: $preferences.showsMoveHandle)
-                Text(L10n.t("The arc above the notch. Hold it to carry the notch to another edge — Edge above does the same."))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
 
                 Picker(L10n.t("Displays"), selection: $preferences.notchScope) {
                     ForEach(NotchScreenScope.allCases) { Text($0.title).tag($0) }
@@ -965,19 +983,18 @@ struct SettingsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Toggle(L10n.t("Install updates automatically"), isOn: Binding(
+                Toggle(L10n.t("Check for updates automatically"), isOn: Binding(
                     get: { updater.automatic },
                     set: { updater.automatic = $0 }
                 ))
 
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    // Disclosed rather than merely silent. An app that updates
-                    // itself unprompted *and* reads other apps' credentials is
-                    // exactly the shape security tooling flags; saying so, with
-                    // a way to switch it off, is the difference between a
-                    // background updater and something that looks like it is
-                    // hiding.
-                    Text(L10n.t("Version \(updater.currentVersion). Updates install in the background and apply next time Provider Monitor starts."))
+                    // Which build this is, and where it is running from. The
+                    // second half is the question the install button answers:
+                    // a copy in DerivedData is the ordinary state while a fork
+                    // is being worked on, and it is not the app anyone launches
+                    // from Spotlight.
+                    Text(L10n.t("Version \(updater.currentVersion), running from \(installer.runningFrom.path)"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -998,6 +1015,40 @@ struct SettingsView: View {
                         )
                         .fixedSize(horizontal: false, vertical: true)
                 }
+
+                // The reason the check only reports. Said here rather than left
+                // to the code, because "why will this not update itself?" is
+                // the first thing the row above raises, and the answer is the
+                // fork's whole reason for existing.
+                Text(L10n.t("The check follows the original Codenotch app's update feed, so it reports what upstream has shipped. Installing from that feed would replace this build with the original app, so Provider Monitor never does."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            // The other half of the update story: this build, on this Mac.
+            Section {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(L10n.t("Provider Monitor"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                    Button(L10n.t("Install Provider Monitor")) { installer.install() }
+                        .controlSize(.small)
+                        .disabled(installer.isInstalledCopy)
+                }
+
+                if let message = installer.outcome.message {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(installer.outcome.isFailure ? .orange : .secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Text(L10n.t("Copies the build that is running into /Applications, so the copy you launch is the one whose readings you are looking at. Nothing about it leaves this Mac."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             // An ordinary row here, not a bar pinned across every pane —
@@ -1046,6 +1097,15 @@ struct SettingsView: View {
     /// about "a bit bigger" — 1.15 means nothing, 115% is immediate.
     static func scalePercent(_ scale: Double) -> String {
         "\(Int((scale * 100).rounded()))%"
+    }
+
+    /// Which of the three named sizes a free scale is nearest, so the preset
+    /// row can describe what is drawn however the size was arrived at. Ties go
+    /// to the smaller one, which is the one that takes less room on the edge.
+    static func nearestPreset(to scale: Double) -> NotchSize {
+        NotchSize.allCases.min {
+            abs(Double($0.scale) - scale) < abs(Double($1.scale) - scale)
+        } ?? .medium
     }
 
     static let authorURL = URL(string: "https://x.com/hivinz_")!
@@ -1434,6 +1494,15 @@ private struct AccountRow: View {
                     .buttonStyle(.borderless)
                     .help(isMuted
                           ? L10n.t("Alerts for \(provider.name) are muted. Click to unmute.")
+                          // A single `%` here, deliberately: a source string that
+                          // carries a placeholder is looked up with its literal
+                          // percents doubled, so the catalog key for this one is
+                          // spelled `80%% and 100%%`. Writing the doubling here as
+                          // well would look up a single-percent key that does not
+                          // exist — which is exactly why this string served the
+                          // English source in every language until the catalog
+                          // key was respelled. See
+                          // `CatalogCoverageTests.testNoEntryMixesAPlaceholderWithABarePercent`.
                           : L10n.t("Alert when \(provider.name) crosses 80% and 100% of a limit."))
                 }
 
@@ -1547,45 +1616,75 @@ private struct AccountRow: View {
             .frame(width: 12, height: 22)
     }
 
+    /// The cadences this provider can answer, or nil when there is nothing to
+    /// choose between.
+    ///
+    /// The list comes from the same matcher the ring itself uses, so the menu
+    /// and the reading cannot disagree about what is available — and a provider
+    /// with a single window gets no menu at all, since every option in it would
+    /// draw the same number.
+    private var cadenceOptions: [RingCadence]? {
+        // Chosen by the store, which is the only thing that holds both the
+        // windows and the provider that reported them. `automatic` is added
+        // here because it is not one of the windows, it is the absence of a
+        // request.
+        let available = provider.ringCadences
+        guard provider.windows.count > 1, !available.isEmpty else { return nil }
+        var options: [RingCadence] = [.automatic] + available
+        // A choice that has since stopped being answerable — the vendor
+        // renamed a window, or the plan changed — still has to appear, or the
+        // menu would display a different option from the one in force. The same
+        // rule the sound picker follows for a sound that is no longer installed.
+        let chosen = preferences.ringCadence(for: provider.id)
+        if chosen != .automatic, !available.contains(chosen) { options.append(chosen) }
+        return options
+    }
+
     @ViewBuilder
     private var detail: some View {
         VStack(alignment: .leading, spacing: 6) {
             accountDetail
-            
-            // Antigravity limit dropdown
-            if isConnected, provider.id == "gemini" {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 8) {
-                        Text(L10n.t("Notch reads"))
-                            .foregroundStyle(.secondary)
-                        Picker(L10n.t("Notch reads"), selection: $preferences.antigravityHeadlineLimit) {
-                            ForEach(AntigravityHeadlineLimit.allCases) { limit in
-                                Text(limit.title).tag(limit)
-                            }
+
+            // Which of this provider's limits its ring means, for every provider
+            // that has more than one to choose between — Claude's session and
+            // its week, Codex's primary and secondary, Antigravity's lanes.
+            if isConnected, let options = cadenceOptions {
+                HStack(spacing: 8) {
+                    Text(L10n.t("Notch reads"))
+                        .foregroundStyle(.secondary)
+                    Picker(L10n.t("Notch reads"), selection: Binding(
+                        get: { preferences.ringCadence(for: provider.id) },
+                        set: { preferences.setRingCadence($0, for: provider.id) }
+                    )) {
+                        ForEach(options) { limit in
+                            Text(limit.title).tag(limit)
                         }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                        .frame(width: 140)
                     }
-                    
-                    HStack(spacing: 8) {
-                        Text(L10n.t("Model data"))
-                            .foregroundStyle(.secondary)
-                        Picker(L10n.t("Model data"), selection: $preferences.antigravityHeadlineModel) {
-                            ForEach(AntigravityHeadlineModel.allCases) { model in
-                                Text(model.explanation).tag(model)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.menu)
-                        .frame(width: 140)
-                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(width: 140)
                 }
                 .padding(.top, 2)
-                .help(L10n.t("Choose which limit appears in the main notch for Antigravity."))
-                .onChange(of: preferences.antigravityHeadlineLimit) { _ in
-                    refresh(provider.id)
+                .help(L10n.t("Choose which of this provider's limits the ring draws."))
+            }
+
+            // Antigravity answers for one model family at a time, which is why
+            // its own rows go here as well as everywhere else's.
+            if isConnected, provider.id == "gemini" {
+                HStack(spacing: 8) {
+                    Text(L10n.t("Model data"))
+                        .foregroundStyle(.secondary)
+                    Picker(L10n.t("Model data"), selection: $preferences.antigravityHeadlineModel) {
+                        ForEach(AntigravityHeadlineModel.allCases) { model in
+                            Text(model.explanation).tag(model)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(width: 140)
                 }
+                .padding(.top, 2)
+                .help(L10n.t("Choose which model family Antigravity's readings cover."))
                 .onChange(of: preferences.antigravityHeadlineModel) { _ in
                     refresh(provider.id)
                 }

@@ -198,7 +198,10 @@ final class UsageStore: ObservableObject {
             guard let remembered = lastGood[provider.id] else { return Self.placeholder(provider) }
             var snapshot = remembered.snapshot
             snapshot.status = .stale(since: remembered.fetchedAt)
-            return snapshot
+            // The choice has to reach a reading that was never fetched this
+            // launch, or the ring opens on the provider's window and changes its
+            // mind a minute later when the first fetch lands.
+            return applyingRingCadence(snapshot)
         }
         updateNotchSnapshots()
     }
@@ -224,16 +227,37 @@ final class UsageStore: ObservableObject {
     /// Enough to list the providers in settings without exposing them.
     var providerSummaries: [ProviderSummary] {
         let models = localModelSummaries
+        // What each provider last reported, so a settings row can offer only
+        // the cadences its provider actually has. Read from the snapshots rather
+        // than kept on the provider: the windows belong to the reading.
+        let reportedWindows = Dictionary(snapshots.map { ($0.providerID, $0.windows) },
+                                         uniquingKeysWith: { first, _ in first })
+        let reportedWeekly = Dictionary(snapshots.compactMap { snapshot in
+            snapshot.weeklyID.map { (snapshot.providerID, $0) }
+        }, uniquingKeysWith: { first, _ in first })
         let summaries = orderedProviders.flatMap { provider in
             let summary = ProviderSummary(kind: provider.kind, id: provider.id, name: provider.displayName,
                             glyph: provider.glyph,
                             account: disconnected.contains(provider.id) ? nil : provider.account(),
                             signIn: provider.signInRoute,
                             wasRefusedAccess: refusedAccess.contains(provider.id),
-                            needsSignInRenewal: needsRenewal.contains(provider.id))
+                            needsSignInRenewal: needsRenewal.contains(provider.id),
+                            windows: reportedWindows[provider.id] ?? [],
+                            ringCadences: Self.ringCadences(
+                                in: reportedWindows[provider.id] ?? [],
+                                weeklyID: reportedWeekly[provider.id],
+                                provider: provider))
             return [summary] + models.filter { $0.sourceProviderID == provider.id }
         }
         return ProviderOrder.arrange(summaries, by: order, id: \.id)
+    }
+
+    /// The cadences a settings row may offer: what the provider says it can
+    /// answer, and otherwise what the shared rule can name from the windows.
+    private static func ringCadences(in windows: [LimitWindow], weeklyID: String?,
+                                     provider: UsageProvider) -> [RingCadence] {
+        if let own = provider.ringCadences(in: windows), !own.isEmpty { return own }
+        return HeadlineWindow.cadences(in: windows, weeklyID: weeklyID)
     }
 
     func start() {
@@ -491,6 +515,9 @@ final class UsageStore: ObservableObject {
 
     private func publish(_ snapshot: ProviderSnapshot) {
         guard !disconnected.contains(snapshot.id) else { return }
+        // The provider's declaration is recorded here, on the way in, so that
+        // the store can always undo its own override.
+        let snapshot = applyingRingCadence(snapshot)
         var current = Dictionary(uniqueKeysWithValues: snapshots.map { ($0.id, $0) })
         current[snapshot.id] = snapshot
         snapshots = orderedProviders.compactMap { disconnected.contains($0.id) ? nil : current[$0.id] }
@@ -604,16 +631,105 @@ final class UsageStore: ObservableObject {
     }
 
     func reevaluate(providerID: String) {
-        guard let provider = providers.first(where: { $0.id == providerID }) else { return }
-        if let idx = snapshots.firstIndex(where: { $0.id == providerID }) {
-            var snapshot = snapshots[idx]
-            if let ag = provider as? AntigravityProvider {
-                snapshot.headlineID = ag.resolveHeadlineID(for: snapshot.windows)
-                snapshot.weeklyID = ag.resolveWeeklyID(for: snapshot.windows)
-                snapshots[idx] = snapshot
-                updateNotchSnapshots()
-            }
+        guard let provider = providers.first(where: { $0.id == providerID }),
+              let idx = snapshots.firstIndex(where: { $0.id == providerID })
+        else { return }
+        let snapshot = snapshots[idx]
+        var updated = applyingRingCadence(snapshot)
+        // Antigravity's second ring follows the model family the same way its
+        // first does, and that family is a setting of its own.
+        if let ag = provider as? AntigravityProvider {
+            updated.weeklyID = ag.resolveWeeklyID(for: updated.windows)
         }
+        guard updated != snapshot else { return }
+        snapshots[idx] = updated
+        updateNotchSnapshots()
+    }
+
+    /// Which window each provider's ring means, by provider id. Absent means the
+    /// provider's own choice. Held here rather than read from Preferences at
+    /// each use, because the store reads it off the main actor.
+    ///
+    /// Deliberately not `@Published`: its `didSet` runs at init, where
+    /// `snapshots` is not built yet — the same trap `disconnected` documents.
+    var ringCadence: [String: RingCadence] = [:] {
+        didSet {
+            guard ringCadence != oldValue else { return }
+            reapplyRingCadence()
+        }
+    }
+
+    /// Which half of a used-fraction every ring's number reports. Held for the
+    /// same reason `ringCadence` is, and not `@Published` for the same reason:
+    /// its `didSet` runs at init, where `snapshots` is not built yet.
+    var percentBasis: Percent.Basis = .remaining {
+        didSet {
+            guard percentBasis != oldValue else { return }
+            reapplyPercentBasis()
+        }
+    }
+
+    /// Re-letters every ring from the numbers already in hand. No refetch: a
+    /// choice about which half of a percentage to print cannot change what the
+    /// provider reported, and asking again to answer it spends that provider's
+    /// rate-limit budget for nothing.
+    func reapplyPercentBasis() {
+        var changed = false
+        for index in snapshots.indices where snapshots[index].percentBasis != percentBasis {
+            snapshots[index].percentBasis = percentBasis
+            changed = true
+        }
+        if changed { updateNotchSnapshots() }
+    }
+
+    /// Re-picks every ring's window from the numbers already in hand.
+    ///
+    /// No refetch: the windows a provider reports do not change because the
+    /// user changed which of them to look at, and asking Claude for a fresh
+    /// reading to answer a question about the reading we already have spends
+    /// that provider's rate-limit budget for nothing.
+    func reapplyRingCadence() {
+        var changed = false
+        for index in snapshots.indices {
+            let updated = applyingRingCadence(snapshots[index])
+            guard updated != snapshots[index] else { continue }
+            snapshots[index] = updated
+            changed = true
+        }
+        if changed { updateNotchSnapshots() }
+    }
+
+    /// The provider's own answer where it has one, and the user's cadence on
+    /// top of the provider's declaration otherwise.
+    ///
+    /// Also stamps the percent basis, which is the other choice the store makes
+    /// on the user's behalf: both are decided once, here, as the reading goes
+    /// in, so nothing downstream has to consult `Preferences` to draw a
+    /// snapshot and nothing can disagree with anything else about it.
+    private func applyingRingCadence(_ snapshot: ProviderSnapshot) -> ProviderSnapshot {
+        var snapshot = snapshot
+        snapshot.percentBasis = percentBasis
+        // Captured the first time the reading is seen, and never overwritten:
+        // the provider's declaration is what Automatic has to go back to, and
+        // after the first override the current value is no longer it.
+        if snapshot.declaredHeadlineID == nil { snapshot.declaredHeadlineID = snapshot.headlineID }
+        let cadence = ringCadence[snapshot.providerID] ?? .automatic
+        // The card's switch and its badge both read this off the snapshot, so
+        // it travels with the reading rather than being asked of Preferences
+        // again per view.
+        snapshot.ringCadence = cadence
+        let provider = providers.first { $0.id == snapshot.providerID }
+        if let own = provider?.resolveRingWindow(in: snapshot.windows, cadence: cadence) {
+            snapshot.headlineID = own
+            return snapshot
+        }
+        if let resolved = HeadlineWindow.resolve(windows: snapshot.windows,
+                                                declared: snapshot.declaredHeadlineID,
+                                                weeklyID: snapshot.weeklyID,
+                                                cadence: cadence) {
+            snapshot.headlineID = resolved
+        }
+        return snapshot
     }
 
     private func snapshot(from provider: UsageProvider, generation: Int) async -> ProviderSnapshot? {

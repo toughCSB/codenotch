@@ -262,6 +262,12 @@ struct ProviderCell: View {
         snapshot.hasReading ? snapshot.headlineText : "—"
     }
 
+    /// Which window the ring is reading. Answered by the reading itself, so a
+    /// ring on Automatic wears the letter of the limit it is actually showing —
+    /// a provider whose only window is a week says W whether or not anyone
+    /// chose the week.
+    private var cadenceBadge: RingCadence? { snapshot.ringBadge }
+
     var body: some View {
         VStack(spacing: NotchLayout.ringLabelGap) {
             ProviderRing(
@@ -276,6 +282,15 @@ struct ProviderCell: View {
                 weeklyFraction: snapshot.hasReading ? snapshot.weeklyFraction : nil,
                 weeklyRing: weeklyRing
             )
+            // On the ring's own leading corner, over the flare's margin rather
+            // than over the readings: it qualifies the number below it, so it
+            // belongs to the ring and not to the stack.
+            .overlay(alignment: .topLeading) {
+                if let cadence = cadenceBadge {
+                    CadenceBadge(cadence: cadence)
+                        .offset(x: -NotchLayout.badgeOffset, y: -NotchLayout.badgeOffset)
+                }
+            }
             Text(readingText)
                 .font(Typography.percent)
                 .foregroundStyle(snapshot.showsLocalPerformance && snapshot.localPerformance == nil
@@ -313,6 +328,58 @@ struct ProviderCell: View {
         guard let ledger = snapshot.localLedger else { return "" }
         let context = snapshot.localContextFraction.map { ", Context \(Percent.text(for: $0))% full" } ?? ""
         return "\(context), Tokens today \(ledger.tokensTodayText), \(ledger.requestsTodayText) requests"
+    }
+}
+
+/// Which window a ring is reading, in shorthand: M, W or 5h.
+///
+/// Drawn on the ring itself rather than kept in the card, because "which limit
+/// is this percentage?" is the first thing a stacked reading raises and it
+/// should not cost a hover to answer. The Windows port's own letters and its
+/// own colours — one per cadence, so the three are told apart at a glance
+/// rather than by reading the glyph.
+private struct CadenceBadge: View {
+    let cadence: RingCadence
+
+    /// Not localized, and not spelled out: these are three labels for three
+    /// durations, and the width is what makes them work on a 44pt ring.
+    private var text: String {
+        switch cadence {
+        case .automatic: return ""
+        case .weekly:    return "W"
+        case .monthly:   return "M"
+        case .fiveHour:  return "5h"
+        }
+    }
+
+    private var edge: Color {
+        switch cadence {
+        case .automatic: return Palette.ringTrack
+        case .weekly:    return Palette.cadenceWeeklyEdge
+        case .monthly:   return Palette.cadenceMonthlyEdge
+        case .fiveHour:  return Palette.cadenceFiveHourEdge
+        }
+    }
+
+    private var ink: Color {
+        switch cadence {
+        case .automatic: return Palette.textPrimary
+        case .weekly:    return Palette.cadenceWeeklyInk
+        case .monthly:   return Palette.cadenceMonthlyInk
+        case .fiveHour:  return Palette.cadenceFiveHourInk
+        }
+    }
+
+    var body: some View {
+        Text(text)
+            .font(Typography.badge)
+            .monospacedDigit()
+            .foregroundStyle(ink)
+            .padding(.horizontal, NotchLayout.badgePad)
+            .frame(height: NotchLayout.badgeHeight)
+            .background(Capsule().fill(Palette.notch))
+            .overlay(Capsule().strokeBorder(edge, lineWidth: 1))
+            .fixedSize()
     }
 }
 

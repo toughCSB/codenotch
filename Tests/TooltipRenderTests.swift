@@ -28,6 +28,70 @@ final class TooltipRenderTests: XCTestCase {
         XCTAssertLessThanOrEqual(width * 0.85, NotchLayout.cardTextWidth)
     }
 
+    /// The card that leads with a reset summary and a cadence switch is exactly
+    /// the height its budget says it is.
+    ///
+    /// Worth asserting against the render rather than the arithmetic, because
+    /// the failure this catches is not a wrong number: it is a block added to
+    /// the card and not to the budget, which shows up as rows quietly clipped
+    /// off the bottom of a card that still looks deliberate.
+    func testTheSummaryAndSwitchAreInTheCardsBudget() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let snapshot = ProviderSnapshot(
+            id: "claude", displayName: "Claude", glyph: .claude,
+            fidelity: .official, status: .ok,
+            windows: [
+                LimitWindow(id: "session", label: "Current session", usedFraction: 0.2,
+                            resetsAt: now.addingTimeInterval(2 * 3_600), duration: 5 * 3_600),
+                LimitWindow(id: "weekly_all", label: "All models", usedFraction: 0.6,
+                            resetsAt: now.addingTimeInterval(5 * 86_400), duration: 7 * 86_400)
+            ],
+            headlineID: "session", weeklyID: "weekly_all"
+        )
+        // What the card is about to draw, and therefore what it has to have
+        // budgeted for. Automatic means the session, which is also the short
+        // window, so the summary is one column rather than the same countdown
+        // printed twice.
+        XCTAssertEqual(snapshot.resetSummaryIDs, ["session"])
+        XCTAssertEqual(snapshot.switchableCadences, [.automatic, .fiveHour, .weekly])
+
+        let renderer = ImageRenderer(content: TooltipCard(snapshot: snapshot, now: now))
+        renderer.scale = 2
+        let image = try XCTUnwrap(renderer.nsImage)
+
+        // And the pair it becomes once the week is the ring's window: the week
+        // leads, the session sits beside it as the short one, and the card has
+        // to have budgeted for a second column that is taller than the first
+        // row of window text.
+        var weekly = snapshot
+        weekly.ringCadence = .weekly
+        weekly.headlineID = "weekly_all"
+        XCTAssertEqual(weekly.resetSummaryIDs, ["weekly_all", "session"])
+        let weeklyRenderer = ImageRenderer(content: TooltipCard(snapshot: weekly, now: now))
+        weeklyRenderer.scale = 2
+        let weeklyImage = try XCTUnwrap(weeklyRenderer.nsImage)
+        XCTAssertEqual(weeklyImage.size.height, image.size.height, accuracy: 1,
+                       "a second summary column changed the card's height")
+
+        let budget = NotchLayout.cardHeight(
+            windowCount: snapshot.windows.count,
+            groupCount: snapshot.windowGroupCount,
+            moneyWindowCount: 0,
+            sessionCap: NotchLayout.defaultSessionCap,
+            resetSummaryCount: snapshot.resetSummaryIDs.count,
+            cadenceOptionCount: snapshot.switchableCadences.count
+        )
+        XCTAssertEqual(image.size.height, budget, accuracy: 1,
+                       "the card is drawn \(image.size.height)pt tall against a \(budget)pt budget")
+
+        if let path = ProcessInfo.processInfo.environment["TOOLTIP_RENDER_PATH"] {
+            let tiff = try XCTUnwrap(image.tiffRepresentation)
+            let png = try XCTUnwrap(NSBitmapImageRep(data: tiff)?
+                .representation(using: .png, properties: [:]))
+            try png.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
     func testTheCardLaysOutEverySessionState() throws {
         let snapshot = ProviderSnapshot(
             id: "claude", displayName: "Claude", glyph: .claude,

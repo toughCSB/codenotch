@@ -1,13 +1,15 @@
 import Foundation
 
-/// How large the notch is drawn.
+/// A notch size, as one of three named ones.
 ///
-/// A fixed set rather than a free number, for the same reason `PeekDuration` is
-/// one: the useful range is narrow. Below about three quarters the percentage
-/// under each ring stops being readable at a glance, which is the one thing the
-/// notch exists to do; much above a quarter larger and a stack of five
-/// providers is competing with the windows it sits beside rather than reporting
-/// on them.
+/// A shortcut, not a second control: choosing one moves the size slider
+/// (`Preferences.customNotchScale`), which is what the drawn size follows. The
+/// three exist because most people want a decision made for them; the slider
+/// exists because the useful range is narrow enough to be worth aiming at
+/// directly — below about three quarters the percentage under each ring stops
+/// being readable at a glance, which is the one thing the notch exists to do,
+/// and much above a quarter larger a stack of five providers competes with the
+/// windows it sits beside rather than reporting on them.
 ///
 /// The scale multiplies the whole surface — rings, text, tooltip and all — so
 /// the proportions stay exactly as they were drawn. `NotchLayout` keeps every
@@ -34,17 +36,6 @@ enum NotchSize: String, CaseIterable, Identifiable {
         case .small:  return L10n.t("Small")
         case .medium: return L10n.t("Medium")
         case .large:  return L10n.t("Large")
-        }
-    }
-
-    var explanation: String {
-        switch self {
-        case .small:
-            return L10n.t("Takes the least room on the edge. Readable, but not from across the desk.")
-        case .medium:
-            return L10n.t("The size the notch was drawn at.")
-        case .large:
-            return L10n.t("Easier to read at a glance, and harder to ignore.")
         }
     }
 }

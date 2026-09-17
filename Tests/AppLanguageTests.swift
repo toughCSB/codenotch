@@ -113,4 +113,25 @@ final class AppLanguageTests: XCTestCase {
         L10n.testLocale = nil
         XCTAssertEqual(L10n.locale.identifier, "uk")
     }
+
+    func testKoreanIsOfferedAndMapsToKo() {
+        XCTAssertTrue(AppLanguage.allCases.contains(.korean))
+        XCTAssertEqual(AppLanguage.korean.title, "한국어")
+        XCTAssertEqual(AppLanguage.korean.locale?.identifier, "ko")
+    }
+
+    func testApplyKoreanStoresTheOverride() {
+        L10n.apply(.korean)
+        L10n.testLocale = nil
+        XCTAssertEqual(L10n.locale.identifier, "ko")
+    }
+
+    /// And the copy actually arrives. `ko` is one of the languages the catalog
+    /// carries in full, so this asserts the translated reading rather than the
+    /// English fallback — the one thing a registered language can still fail at.
+    func testApplyKoreanServesKoreanCopy() {
+        L10n.apply(.korean)
+        L10n.testLocale = nil
+        XCTAssertEqual(L10n.t("Always show"), "항상 표시")
+    }
 }

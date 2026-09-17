@@ -22,6 +22,7 @@
 		<string>ru</string>
 		<string>zh-Hans</string>
 		<string>uk</string>
+		<string>ko</string>
 	</array>
 	<key>CFBundleName</key>
 	<string>Provider Monitor</string>

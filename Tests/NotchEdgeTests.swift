@@ -114,7 +114,7 @@ final class NotchPlacementTests: XCTestCase {
     }
 
     /// The centre of a rect is the point at its own middle, whichever way round
-    /// the axes are — this is what positions the tooltip and the orb.
+    /// the axes are — this is what positions the tooltip.
     func testACentredRectAgreesWithItsOwnCentrePoint() {
         for edge in NotchEdge.allCases {
             let place = placement(edge)
@@ -378,35 +378,6 @@ final class FoldingOnEveryEdgeTests: XCTestCase {
     }
 }
 
-/// The orb hangs past the far end of the notch, one flare-radius in from the
-/// bezel. That has to stay true when the notch turns.
-@MainActor
-final class OrbOnEveryEdgeTests: XCTestCase {
-    func testTheOrbClearsTheEndOfTheShapeOnEveryEdge() {
-        for edge in NotchEdge.allCases {
-            let along = NotchLayout.slack(for: edge) + NotchLayout.orbCenterAlong(
-                cellCount: 3
-            )
-            let panelLength = NotchLayout.shapeLength(
-                cellCount: 3
-            ) + 2 * NotchLayout.slack(for: edge)
-            let overhang = NotchLayout.orbArcRadius + NotchLayout.orbStroke
-            XCTAssertLessThanOrEqual(along + overhang, panelLength, "\(edge): the orb is clipped")
-        }
-    }
-
-    /// It sits inward of the bezel by the flare's radius, never on top of it.
-    func testTheOrbSitsInsideTheBezelOnEveryEdge() {
-        for edge in NotchEdge.allCases {
-            let size = NotchPlacement.panelSize(edge: edge, length: 900, depth: 400)
-            let place = NotchPlacement(edge: edge, panelSize: size)
-            let centre = place.point(along: 500, across: NotchLayout.orbInsetFromEdge)
-            XCTAssertEqual(place.across(of: centre), NotchLayout.orbInsetFromEdge, accuracy: 0.001, "\(edge)")
-            XCTAssertGreaterThan(place.across(of: centre), 0, "\(edge)")
-        }
-    }
-}
-
 /// Turning the stack is not just a rotation. The percent label sits *below* its
 /// ring, so on a side edge it spends the stack's length and on a horizontal one
 /// it spends the notch's depth — which means the two notches are not the same
@@ -481,117 +452,9 @@ final class HorizontalCellTests: XCTestCase {
     }
 }
 
-/// The settings orb is a segment of the *same circle* the notch's far flare
-/// curves around, one gap inside it. That is what makes it read as following
-/// the contour of the edge rather than merely sitting near it — and it means
-/// the quadrant it occupies has to turn with the notch.
-final class OrbOrientationTests: XCTestCase {
-    /// Where the middle of the resting arc points, as a unit vector in panel
-    /// coordinates. SwiftUI's `Circle` trim starts at 3 o'clock and runs
-    /// clockwise with y growing downward.
-    private func arcDirection(_ edge: NotchEdge) -> CGPoint {
-        let range = SettingsOrb.restingTrim(for: edge)
-        let mid = (range.lowerBound + range.upperBound) / 2
-        let angle = Double(mid) * 2 * .pi
-        return CGPoint(x: cos(angle), y: sin(angle))
-    }
-
+/// The two directions every placement is built from.
+final class EdgeAxisTests: XCTestCase {
     private func dot(_ a: CGPoint, _ b: CGPoint) -> CGFloat { a.x * b.x + a.y * b.y }
-
-    /// It faces the bezel — the arc is the outer edge of the orb, and the orb
-    /// merges into the notch's black by travelling that way.
-    func testTheArcFacesTheBezelOnEveryEdge() {
-        for edge in NotchEdge.allCases {
-            XCTAssertGreaterThan(
-                dot(arcDirection(edge), edge.outward), 0.5,
-                "\(edge): the resting arc faces away from the bezel"
-            )
-        }
-    }
-
-    /// And back toward the notch it hangs off, not out into open screen.
-    func testTheArcFacesBackTowardTheNotchOnEveryEdge() {
-        for edge in NotchEdge.allCases {
-            let backwards = CGPoint(x: -edge.alongDirection.x, y: -edge.alongDirection.y)
-            XCTAssertGreaterThan(
-                dot(arcDirection(edge), backwards), 0.5,
-                "\(edge): the resting arc points away from the notch"
-            )
-        }
-    }
-
-    /// A quarter of the circle on every edge — the same object, turned.
-    func testItIsAQuadrantOnEveryEdge() {
-        for edge in NotchEdge.allCases {
-            let range = SettingsOrb.restingTrim(for: edge)
-            XCTAssertEqual(range.upperBound - range.lowerBound, 0.25, accuracy: 0.0001, "\(edge)")
-        }
-    }
-
-    /// The right edge is untouched: this is the arc that was drawn before there
-    /// was any choice of edge.
-    func testTheRightEdgeKeepsTheArcItAlwaysHad() {
-        XCTAssertEqual(SettingsOrb.restingTrim(for: .right).lowerBound, 0.75, accuracy: 0.0001)
-        XCTAssertEqual(SettingsOrb.restingTrim(for: .right).upperBound, 1.0, accuracy: 0.0001)
-    }
-
-    // MARK: - Move handle
-
-    /// The move handle's arc, by the same measurement.
-    private func moveArcDirection(_ edge: NotchEdge) -> CGPoint {
-        let range = MoveHandle.restingTrim(for: edge, convex: false)
-        let mid = (range.lowerBound + range.upperBound) / 2
-        let angle = Double(mid) * 2 * .pi
-        return CGPoint(x: cos(angle), y: sin(angle))
-    }
-
-    /// The move handle hangs off the *other* end of the stack, but off the same
-    /// screen edge — so its arc faces the bezel exactly as the orb's does.
-    ///
-    /// This is the assertion that fails if the quadrant is reached by rotating
-    /// half a circle instead of reflecting along the stack: a half turn
-    /// reverses this direction too, and the arc curls away into open screen.
-    func testTheMoveArcFacesTheBezelOnEveryEdge() {
-        for edge in NotchEdge.allCases {
-            XCTAssertGreaterThan(
-                dot(moveArcDirection(edge), edge.outward), 0.5,
-                "\(edge): the move handle's arc faces away from the bezel"
-            )
-        }
-    }
-
-    /// And back toward the notch — which for this handle is *forward* along the
-    /// stack, since it hangs off the near end.
-    func testTheMoveArcFacesBackTowardTheNotchOnEveryEdge() {
-        for edge in NotchEdge.allCases {
-            XCTAssertGreaterThan(
-                dot(moveArcDirection(edge), edge.alongDirection), 0.5,
-                "\(edge): the move handle's arc points away from the notch"
-            )
-        }
-    }
-
-    /// The two handles mirror each other along the stack: same bezel component,
-    /// opposite component along it.
-    func testTheTwoHandlesMirrorEachOther() {
-        for edge in NotchEdge.allCases {
-            let orb = arcDirection(edge)
-            let move = moveArcDirection(edge)
-            XCTAssertEqual(dot(orb, edge.outward), dot(move, edge.outward),
-                           accuracy: 0.0001,
-                           "\(edge): the handles lean differently against the bezel")
-            XCTAssertEqual(dot(orb, edge.alongDirection), -dot(move, edge.alongDirection),
-                           accuracy: 0.0001,
-                           "\(edge): the handles are not mirrored along the stack")
-        }
-    }
-
-    func testTheMoveArcIsAQuadrantOnEveryEdge() {
-        for edge in NotchEdge.allCases {
-            let range = MoveHandle.restingTrim(for: edge, convex: false)
-            XCTAssertEqual(range.upperBound - range.lowerBound, 0.25, accuracy: 0.0001, "\(edge)")
-        }
-    }
 
     /// `alongDirection` and `outward` are perpendicular by construction — the
     /// stack runs along the bezel and `across` leaves it at a right angle.

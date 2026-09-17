@@ -103,13 +103,6 @@ final class NotchViewModel: ObservableObject {
     var staysOpen: Bool { isPinned || isAlwaysOn }
     /// Providers with a fetch in flight, driven by the store.
     @Published var refreshing: Set<String> = []
-    /// Bumped each time the settings orb is clicked, by either route.
-    ///
-    /// A count rather than a flag: the gear turns to `spins * 360`, so a
-    /// second click while the first turn is still running carries on round
-    /// instead of restarting from wherever it had got to.
-    @Published var settingsSpins = 0
-
     @Published private(set) var refreshingCells: Set<String> = []
 
     func isRefreshing(_ snapshot: ProviderSnapshot) -> Bool {
@@ -131,34 +124,13 @@ final class NotchViewModel: ObservableObject {
         await refreshProvider(snapshot.providerID)
         _ = try? await feedback
     }
-    /// The settings handle is under the cursor.
-    @Published var isHoveringSettings = false
-    /// The move handle is under the cursor.
-    @Published var isHoveringMove = false
-    /// Bumped each time the move handle is pressed, on the same counter
-    /// pattern `settingsSpins` uses and for the same reason.
-    @Published var moveSpins = 0
-    /// The notch is in hand: the move handle has been held past its threshold
-    /// and the drop zones are up, waiting for a release.
-    @Published var isMoving = false
-    /// Which edge a release would land on. Nil before the pointer has moved
-    /// far enough for a target to be meaningful.
-    @Published var moveTarget: NotchEdge?
-    /// A move finished on `edge`. The controller owns persisting it, for the
-    /// same reason it owns `onReposition`: this type knows the geometry, not
-    /// where preferences live.
-    var onMove: ((NotchEdge) -> Void)?
-    /// A direct SwiftUI tap on the settings orb, independent of the panel's
-    /// own AppKit-level click routing (`NotchPanel.mouseDown` →
-    /// `NotchWindowController.handleClick`). That path relies on the panel's
-    /// `ignoresMouseEvents` toggle and a custom `hitTest` staying in exact
-    /// agreement with this model's own geometry on every click; this gives
-    /// the one action people actually get stuck without a second, ordinary
-    /// route that only needs SwiftUI's own gesture recognition to work.
-    var onOpenSettings: (() -> Void)?
     /// A tap on a session row in the tooltip: jump to the terminal tab the
     /// session runs in. Takes the session's pid; wired to `SessionFocus`.
     var onFocusSession: ((pid_t) -> Void)?
+    /// A tap on one of the hover card's cadence buttons: re-point a provider's
+    /// ring at another of its own limits. Persisting it is `Preferences`' job,
+    /// exactly as it is for the Settings row offering the same choice.
+    var onSetRingCadence: ((String, RingCadence) -> Void)?
     /// Which screen edge the notch is welded to. Everything geometric reads
     /// this through `placement` rather than assuming an axis.
     @Published var edge: NotchEdge = .right
@@ -188,12 +160,17 @@ final class NotchViewModel: ObservableObject {
     @Published var weeklyRingDashed: Bool = false
     @Published var watchLimit: Double = 0.50
     @Published var criticalLimit: Double = 0.70
-    /// Whether the move handle is on the notch at all. Mirrored from Settings
-    /// like `weeklyRing`.
-    @Published var showsMoveHandle = true
     /// Mirrors the persisted Appearance choice so the separate notch window
     /// redraws immediately when Settings changes it.
     @Published var surfaceStyle: NotchSurfaceStyle = .glass
+    /// Whether the panel floats above other applications' windows. Mirrored
+    /// from `Preferences.notchAlwaysOnTop`; the controller puts it on the
+    /// panel's own level.
+    @Published var isAlwaysOnTop = true
+    /// Which half of a used-fraction the number under each ring reports.
+    /// Mirrored from `Preferences.percentBasis` so the menu can show which one
+    /// is on; the rings themselves read it off their snapshots.
+    @Published var percentBasis: Percent.Basis = .remaining
     /// Whether DeepSeek's billing phase rows are visible in its usage card.
     @Published var deepSeekPricingEnabled = true
     /// The rule used by the DeepSeek card, mirrored from Preferences so a
@@ -276,27 +253,10 @@ final class NotchViewModel: ObservableObject {
     ///
     /// Not always `cornerRadius`: a bar drawn as the hardware notch caps it at
     /// the hardware's own rounding, so that the shape is the same at rest as it
-    /// is open. Everything the orb does hangs off this rather than off the
-    /// nominal figure — the orb traces the corner that is drawn, not the one
-    /// that was asked for.
+    /// is open.
     var drawnCornerRadius: CGFloat {
         guard let hardwareNotch else { return NotchLayout.cornerRadius }
         return min(NotchLayout.cornerRadius, hardwareNotch.height / 2)
-    }
-
-    /// What the orb scales to as it folds away. Nestled in a flare it grows
-    /// outward along the normal and is swallowed by the notch's black; hanging
-    /// off a corner there is nothing to be swallowed by, so it draws in on
-    /// itself and leaves by the fade.
-    var orbMergeScale: CGFloat {
-        orbHugsCorner ? 0.6 : NotchLayout.orbMergeScale
-    }
-
-    /// The circle the resting arc follows.
-    var orbArcRadius: CGFloat {
-        orbHugsCorner
-            ? NotchLayout.orbConvexArcRadius(corner: drawnCornerRadius)
-            : NotchLayout.orbArcRadius
     }
 
     /// Extra length at each end of the body so the notch has something to open
@@ -322,146 +282,6 @@ final class NotchViewModel: ObservableObject {
         let wanted = hardwareNotch.width + 2 * NotchLayout.cornerRadius
         return max(0, (wanted - drawn) / 2)
     }
-
-    /// Where the settings orb sits.
-    ///
-    /// Ordinarily it is concentric with the far flare, one radius in from the
-    /// bezel and level with the end of the shape. A flush bar has no flare, so
-    /// it hugs the bar's own bottom-end corner from outside instead — same
-    /// idea, turned inside out. Left where it was it becomes a dot on the
-    /// bar's flat edge.
-    var orbHugsCorner: Bool { isFlushWithHardware }
-
-    var orbAlong: CGFloat {
-        guard orbHugsCorner else { return shapeLength }
-        return cornerCentreAlong + NotchLayout.orbCornerOffset(corner: drawnCornerRadius)
-    }
-
-    /// Reserve the full hit area even while only the resting arc is visible,
-    /// so revealing the settings button cannot put it beyond the screen.
-    var trailingExtent: CGFloat {
-        max(0, orbAlong - shapeLength + NotchLayout.orbHotZone / 2).rounded(.up)
-    }
-
-    /// Where the move handle sits: the settings orb's position mirrored to the
-    /// near end of the stack. Measured back from zero the same distance the
-    /// orb sits past `shapeLength`, so the pair stay symmetric about the notch
-    /// at every size and on every edge.
-    var moveAlong: CGFloat {
-        shapeLength - orbAlong
-    }
-
-    /// The mirror of `trailingExtent` at the near end — the room the move
-    /// handle needs before the notch's own start.
-    var leadingExtent: CGFloat {
-        max(0, -moveAlong + NotchLayout.orbHotZone / 2).rounded(.up)
-    }
-
-    /// Where the bar's far corner actually turns, along the stack.
-    ///
-    /// Inset from the bar's end by the *flare* as well as by the corner's own
-    /// radius — the shape's body starts a flare in from each end, and the
-    /// corner is rounded off that body, not off the shape's outer bound.
-    /// Leaving the flare out slid the arc a whole fillet down the bar, and the
-    /// gap it is supposed to hold opened from 9pt at one end to 19pt at the
-    /// other.
-    var cornerCentreAlong: CGFloat {
-        shapeLength - flare - drawnCornerRadius
-    }
-
-    var orbInset: CGFloat {
-        guard orbHugsCorner else { return contentInset + NotchLayout.orbInsetFromEdge }
-        return contentInset + NotchLayout.bodyDepth(for: edge)
-            - drawnCornerRadius + NotchLayout.orbCornerOffset(corner: drawnCornerRadius)
-    }
-
-    /// Where the resting arc sits relative to the button.
-    ///
-    /// Inside a flare's pocket the two are one object — the arc is just the
-    /// outer edge of the same orb, and this is zero. Hanging off a convex
-    /// corner they part company: the button has to be clear of the bar, but the
-    /// arc's whole job is to trace the bar's contour, so it stays back on the
-    /// corner the button hangs from.
-    var orbArcOffset: CGSize {
-        guard orbHugsCorner else { return .zero }
-        let inward = CGPoint(x: -edge.outward.x, y: -edge.outward.y)
-        let back = -NotchLayout.orbCornerOffset(corner: drawnCornerRadius)
-        return CGSize(width: back * (edge.alongDirection.x + inward.x),
-                      height: back * (edge.alongDirection.y + inward.y))
-    }
-
-    /// `orbArcOffset` mirrored: the move handle hangs off the near corner, so
-    /// its arc tucks back *forward* along the stack rather than backward.
-    var moveArcOffset: CGSize {
-        guard orbHugsCorner else { return .zero }
-        let inward = CGPoint(x: -edge.outward.x, y: -edge.outward.y)
-        let forward = NotchLayout.orbCornerOffset(corner: drawnCornerRadius)
-        return CGSize(width: forward * (edge.alongDirection.x - inward.x),
-                      height: forward * (edge.alongDirection.y - inward.y))
-    }
-
-    /// The points the settings handle answers around: the button you are
-    /// reaching for, and — where it has parted company with it — the arc you
-    /// can actually see.
-    var orbHandlePoints: [CGPoint] {
-        let button = CGPoint(x: orbAlong, y: orbInset)
-        guard orbHugsCorner else { return [button] }
-
-        let arcCentre = CGPoint(x: orbAlong + orbArcOffset.width,
-                                y: orbInset + orbArcOffset.height)
-        let reach = hypot(button.x - arcCentre.x, button.y - arcCentre.y)
-        guard reach > 0 else { return [button] }
-        // The middle of the quadrant, which is out from its centre in the same
-        // direction the button went.
-        let arcMid = CGPoint(
-            x: arcCentre.x + orbArcRadius * (button.x - arcCentre.x) / reach,
-            y: arcCentre.y + orbArcRadius * (button.y - arcCentre.y) / reach
-        )
-        return [arcMid, button]
-    }
-
-    /// Whether a point in stack space is on the settings handle.
-    ///
-    /// A circle around each of those points, rather than one box around the
-    /// pair. The handle is a round thing in two places, and the bounding box of
-    /// the two takes in a great deal of ground that is near neither — which is
-    /// why the button used to appear well before the pointer reached the arc.
-    func isOnOrbHandle(along: CGFloat, across: CGFloat) -> Bool {
-        let radius = NotchLayout.orbHotZone / 2
-        return orbHandlePoints.contains {
-            hypot(along - $0.x, across - $0.y) <= radius
-        }
-    }
-
-    /// The move handle's own points, mirroring `orbHandlePoints` at the near
-    /// end of the stack.
-    var moveHandlePoints: [CGPoint] {
-        // No points, not merely no drawing. Every way of reaching the handle —
-        // hover, a press, and the window's own click-through region — is
-        // measured from these, so a hidden handle has to report none or it
-        // leaves an invisible spot that still starts a move.
-        guard showsMoveHandle else { return [] }
-        let button = CGPoint(x: moveAlong, y: orbInset)
-        guard orbHugsCorner else { return [button] }
-
-        let arcCentre = CGPoint(x: moveAlong + moveArcOffset.width,
-                                y: orbInset + moveArcOffset.height)
-        let reach = hypot(button.x - arcCentre.x, button.y - arcCentre.y)
-        guard reach > 0 else { return [button] }
-        let arcMid = CGPoint(
-            x: arcCentre.x + orbArcRadius * (button.x - arcCentre.x) / reach,
-            y: arcCentre.y + orbArcRadius * (button.y - arcCentre.y) / reach
-        )
-        return [button, arcMid]
-    }
-
-    func isOnMoveHandle(along: CGFloat, across: CGFloat) -> Bool {
-        let radius = NotchLayout.orbHotZone / 2
-        return moveHandlePoints.contains {
-            hypot(along - $0.x, across - $0.y) <= radius
-        }
-    }
-
 
     /// Where the tooltip's tail tip sits, measured in from the bezel: just off
     /// the inner face of a shape that the extension has made deeper.
@@ -546,9 +366,22 @@ final class NotchViewModel: ObservableObject {
     var slack: CGFloat { slack(cellCount: snapshots.count) }
 
     func slack(cellCount: Int) -> CGFloat {
-        NotchLayout.slack(for: edge,
-                          maxCardHeight: maxCardHeight(cellCount: cellCount),
-                          notchScale: sizeScale)
+        let wanted = NotchLayout.slack(for: edge,
+                                       maxCardHeight: maxCardHeight(cellCount: cellCount),
+                                       notchScale: sizeScale)
+        // The panel is the notch plus this padding at each end, so a display
+        // too short for the tallest card has to take the padding out of the
+        // padding rather than push the notch off the screen. The notch is what
+        // the panel exists to draw; a card clamped inwards at the ends of the
+        // stack is the degradation this layout already accepts.
+        //
+        // Both ends give way together, so the notch stays centred and whole.
+        // Vertical edges only: there the padding is spent *along* the stack,
+        // which is the screen's height, and it is why a long stack of rings on
+        // a laptop ran a card's worth of points past the bottom of the display.
+        guard edge.isVertical, screenSize.height > 0 else { return wanted }
+        let room = (screenSize.height - shapeLength(cellCount: cellCount) * sizeScale) / 2
+        return max(0, min(wanted, room))
     }
 
     /// How many sessions a tooltip may list here before it has to summarise
@@ -567,13 +400,28 @@ final class NotchViewModel: ObservableObject {
         snapshots.contains { $0.resetCredits != nil }
     }
 
+    /// Whether any card in the stack draws the reset summary or the cadence
+    /// switch. Both are blocks the card pays for before its first window row,
+    /// so the session budget has to know about them — the panel is sized for
+    /// the tallest card there is, and a block counted by the card but not by
+    /// the budget is a card taller than the panel that holds it.
+    private var hasResetSummary: Bool {
+        snapshots.contains { !$0.resetSummaryIDs.isEmpty }
+    }
+
+    private var hasCadenceSwitch: Bool {
+        snapshots.contains { !$0.switchableCadences.isEmpty }
+    }
+
     func sessionCap(cellCount: Int) -> Int {
         guard screenSize != .zero else { return NotchLayout.defaultSessionCap }
         return NotchLayout.sessionsFitting(cardBudget: cardBudget(cellCount: cellCount),
                                            windowCount: NotchLayout.maxWindowCount,
                                            hasTokenUsage: hasTokenUsage,
                                            hasPlan: hasPlan,
-                                           hasResetCredits: hasResetCredits)
+                                           hasResetCredits: hasResetCredits,
+                                           hasResetSummary: hasResetSummary,
+                                           hasCadenceSwitch: hasCadenceSwitch)
     }
 
     private func contentCardHeight(sessionCap: Int) -> CGFloat {
@@ -593,7 +441,9 @@ final class NotchViewModel: ObservableObject {
                 showsLocalPerformance: snapshot.showsLocalPerformance,
                 localLedgerRows: snapshot.localLedgerRowCount,
                 compactRowCount: snapshot.compactRowCount,
-                showsDeepSeekPricing: deepSeekPricingEnabled)
+                showsDeepSeekPricing: deepSeekPricingEnabled,
+                resetSummaryCount: snapshot.resetSummaryIDs.count,
+                cadenceOptionCount: snapshot.switchableCadences.count)
         }.max() ?? 0
     }
 
@@ -708,7 +558,7 @@ final class NotchViewModel: ObservableObject {
         return NotchPlacement.panelSize(
             edge: edge,
             length: shapeLength(cellCount: cellCount) * sizeScale
-                + 2 * NotchLayout.slack(for: edge, maxCardHeight: card, notchScale: sizeScale),
+                + 2 * slack(cellCount: cellCount),
             depth: (contentInset + NotchLayout.bodyDepth(for: edge)) * sizeScale
                 + NotchLayout.tooltipDepth(for: edge, maxCardHeight: card)
         )

@@ -18,66 +18,6 @@ struct NotchRootView: View {
 
                 notch(place)
 
-                // Outside the notch and outside its clip: the orb hangs past
-                // the end of the shape, tucked into the corner the far flare
-                // makes.
-                SettingsOrb(isHovered: model.isHoveringSettings, edge: model.edge,
-                                    convex: model.orbHugsCorner,
-                                    arcRadius: model.orbArcRadius,
-                                    arcOffset: model.orbArcOffset,
-                                    spins: model.settingsSpins)
-                        // A second route to the same action the panel's own
-                        // `mouseDown` override reaches for — see
-                        // `NotchViewModel.onOpenSettings`. Both still depend
-                        // on the panel's `ignoresMouseEvents`/`hitTest` gate
-                        // to receive the click at all, so this alone would
-                        // not rescue a click that never reaches the content
-                        // view — but once it does, this fires reliably where
-                        // the AppKit-level path did not.
-                        .contentShape(Circle())
-                        .onTapGesture {
-                            model.settingsSpins += 1
-                            model.onOpenSettings?()
-                        }
-                        // Before `position`, not after. `position` hands back a
-                        // view the size of the whole panel with the orb placed
-                        // inside it, so a scale applied after this one scales
-                        // *that* layer about the panel's centre — which moves
-                        // the orb away from the notch by a share of the panel,
-                        // and left the arc floating off the corner it is drawn
-                        // to hug. Here it scales the orb about its own centre,
-                        // which is what `orbCentre` then places.
-                        .scaleEffect(model.sizeScale)
-                        .position(orbCentre(place))
-                        // Outward, into the black — not inward to nothing.
-                        .scaleEffect(model.isExpanded ? 1 : model.orbMergeScale)
-                        // Full strength the whole way in. The arc is buried in
-                        // the notch before this reaches zero, so the fade is
-                        // only there to guarantee nothing is left on screen
-                        // once the notch has folded — it is never what the eye
-                        // sees the arc leave by.
-                        .opacity(model.isExpanded ? 1 : 0)
-                        .animation(motion(orbMotion), value: model.isExpanded)
-
-                // The move handle, mirroring the settings orb at the other end
-                // of the stack. Same construction, same reasons — see the
-                // comments on the orb above; only the placement differs.
-                if model.showsMoveHandle {
-                    MoveHandle(isHovered: model.isHoveringMove || model.isMoving,
-                               isArmed: model.isMoving,
-                               edge: model.edge,
-                               convex: model.orbHugsCorner,
-                               arcRadius: model.orbArcRadius,
-                               arcOffset: model.moveArcOffset,
-                               spins: model.moveSpins)
-                            .contentShape(Circle())
-                            .scaleEffect(model.sizeScale)
-                            .position(moveCentre(place))
-                            .scaleEffect(model.isExpanded ? 1 : model.orbMergeScale)
-                            .opacity(model.isExpanded ? 1 : 0)
-                            .animation(motion(orbMotion), value: model.isExpanded)
-                }
-
                 if let resetEvent = model.activeResetAlert,
                    model.isExpanded,
                    model.hoveredIndex == nil {
@@ -110,7 +50,8 @@ struct NotchRootView: View {
                         deepSeekPricingEnabled: model.deepSeekPricingEnabled,
                         deepSeekPricingSchedule: model.deepSeekPricingSchedule,
                         tailOffset: tooltipTailOffset(index: index, snapshot: snapshot),
-                        onFocusSession: model.onFocusSession
+                        onFocusSession: model.onFocusSession,
+                        onSetCadence: model.onSetRingCadence
                     )
                         // Deliberately *no* `.id` here: the card is one object
                         // that travels and resizes between cells, which reads
@@ -135,16 +76,6 @@ struct NotchRootView: View {
         .environment(\.weeklyRingDashed, model.weeklyRingDashed)
         .environment(\.usageWatchLimit, model.watchLimit)
         .environment(\.usageCriticalLimit, model.criticalLimit)
-    }
-
-    /// Opening and closing are not mirror images. Appearing, the arc waits its
-    /// turn behind the cells before it; hiding, any delay at all lets the notch
-    /// start folding first, and the arc reads as going with the frame rather
-    /// than into it.
-    private var orbMotion: Animation {
-        model.isExpanded
-            ? NotchMotion.stagger(index: model.snapshots.count)
-            : NotchMotion.merge
     }
 
     private func notch(_ place: NotchPlacement) -> some View {
@@ -377,25 +308,6 @@ struct NotchRootView: View {
         NotchMotion.respectingReduceMotion(animation, reduceMotion)
     }
 
-    /// The orb sits on the flare's own centre of curvature, one radius in from
-    /// the bezel and level with the far end of the shape.
-    /// The orb belongs to the notch, not to the tooltip, so it scales with it —
-    /// it is tucked into the corner the shape's own flare makes, and a fixed
-    /// orb against a scaled flare would sit off that corner.
-    private func orbCentre(_ place: NotchPlacement) -> CGPoint {
-        place.point(
-            along: model.slack + model.orbAlong * model.sizeScale,
-            across: model.orbInset * model.sizeScale
-        )
-    }
-
-    private func moveCentre(_ place: NotchPlacement) -> CGPoint {
-        place.point(
-            along: model.slack + model.moveAlong * model.sizeScale,
-            across: model.orbInset * model.sizeScale
-        )
-    }
-
     private func tooltipLength(_ snapshot: ProviderSnapshot) -> CGFloat {
         model.edge.isVertical
             ? NotchLayout.cardHeight(
@@ -414,7 +326,9 @@ struct NotchRootView: View {
                 showsLocalPerformance: snapshot.showsLocalPerformance,
                 localLedgerRows: snapshot.localLedgerRowCount,
                 compactRowCount: snapshot.compactRowCount,
-                showsDeepSeekPricing: model.deepSeekPricingEnabled
+                showsDeepSeekPricing: model.deepSeekPricingEnabled,
+                resetSummaryCount: snapshot.resetSummaryIDs.count,
+                cadenceOptionCount: snapshot.switchableCadences.count
             )
             : NotchLayout.cardWidth
     }
@@ -447,7 +361,9 @@ struct NotchRootView: View {
                 showsLocalPerformance: snapshot.showsLocalPerformance,
                 localLedgerRows: snapshot.localLedgerRowCount,
                 compactRowCount: snapshot.compactRowCount,
-                showsDeepSeekPricing: model.deepSeekPricingEnabled
+                showsDeepSeekPricing: model.deepSeekPricingEnabled,
+                resetSummaryCount: snapshot.resetSummaryIDs.count,
+                cadenceOptionCount: snapshot.switchableCadences.count
             )
         // The ring it points at has moved with the notch, so the tail follows
         // it — but the card beyond the tail is drawn at its own size, and

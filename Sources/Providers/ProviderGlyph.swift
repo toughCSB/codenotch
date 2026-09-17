@@ -59,7 +59,9 @@ enum ProviderGlyph: String, Codable, Equatable {
         case .geminiSpark: return 1.0
         case .glm:    return 0.95
         case .grok:   return 1.0
-        case .opencode: return 0.95
+        // Now the vendor's own mark rather than a traced outline, so it is
+        // measured with the rest of the bundled artwork.
+        case .opencode: return 1.0
         case .commandcode: return 0.96
         case .copilot: return 0.96
         case .kimi:   return 0.95

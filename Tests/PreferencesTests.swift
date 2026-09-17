@@ -291,19 +291,6 @@ final class PreferencesMigrationTests: XCTestCase {
         XCTAssertEqual(Preferences(defaults: UserDefaults(suiteName: name)!).weeklyRing, .outside)
     }
 
-    /// On by default — it is how the notch is carried to another edge — and
-    /// once somebody hides it, it has to stay hidden across a relaunch.
-    func testTheMoveHandleShowsUntilHiddenAndStaysHidden() {
-        let (fresh, name) = makeDefaults()
-        XCTAssertTrue(Preferences(defaults: fresh).showsMoveHandle)
-
-        Preferences(defaults: fresh).showsMoveHandle = false
-
-        XCTAssertFalse(Preferences(defaults: UserDefaults(suiteName: name)!).showsMoveHandle)
-    }
-
-    /// The size has to outlive the launch that chose it, or it reads as a
-    /// setting that did not take.
     func testTheNotchSizeSurvivesARelaunch() {
         let (fresh, name) = makeDefaults()
         Preferences(defaults: fresh).notchSize = .large
@@ -317,42 +304,50 @@ final class PreferencesMigrationTests: XCTestCase {
         XCTAssertEqual(NotchSize.medium.scale, 1)
     }
 
-    // MARK: The slider, and which control is in charge
+    // MARK: The size
 
-    /// The presets stay in charge until the slider is explicitly chosen, so
-    /// an install that predates it draws exactly the notch it always drew.
-    func testThePresetsAreStillInChargeByDefault() {
+    /// A fresh install is drawn at the design frame, and the slider says so.
+    func testAFreshInstallIsDrawnAtTheDesignFrame() {
         let (defaults, _) = makeDefaults()
         let preferences = Preferences(defaults: defaults)
 
-        XCTAssertFalse(preferences.usesCustomNotchScale)
         XCTAssertEqual(preferences.notchScale, NotchSize.medium.scale)
+        XCTAssertEqual(preferences.customNotchScale, 1, accuracy: 0.0001)
     }
 
-    /// Whichever control is in charge is the one `notchScale` answers with —
-    /// that resolution is the whole point of keeping the two apart.
-    func testTheScaleFollowsWhicheverControlIsInCharge() {
+    /// The named sizes are shortcuts onto the one slider, so choosing one has
+    /// to move it. They were two rival controls until the switch between them
+    /// went away.
+    func testChoosingAPresetMovesTheSlider() {
         let (defaults, _) = makeDefaults()
         let preferences = Preferences(defaults: defaults)
-        preferences.notchSize = .large
-        preferences.customNotchScale = 0.9
 
+        preferences.notchSize = .large
+        XCTAssertEqual(preferences.customNotchScale, Double(NotchSize.large.scale), accuracy: 0.0001)
         XCTAssertEqual(preferences.notchScale, NotchSize.large.scale)
-        preferences.usesCustomNotchScale = true
+
+        preferences.notchSize = .small
+        XCTAssertEqual(preferences.notchScale, NotchSize.small.scale)
+    }
+
+    /// And the slider is what the drawn size follows, with no second opinion.
+    func testTheSliderIsTheSize() {
+        let (defaults, _) = makeDefaults()
+        let preferences = Preferences(defaults: defaults)
+
+        preferences.customNotchScale = 0.9
         XCTAssertEqual(preferences.notchScale, 0.9, accuracy: 0.0001)
     }
 
-    /// Switching back to the presets returns to the preset that was chosen,
-    /// not to whichever one happens to sit nearest the slider.
-    func testLeavingTheSliderReturnsToTheChosenPreset() {
-        let (defaults, _) = makeDefaults()
-        let preferences = Preferences(defaults: defaults)
-        preferences.notchSize = .small
-        preferences.usesCustomNotchScale = true
-        preferences.customNotchScale = 1.5
-        preferences.usesCustomNotchScale = false
-
-        XCTAssertEqual(preferences.notchScale, NotchSize.small.scale)
+    /// The preset row has to describe what is drawn however the size was
+    /// arrived at, so a free scale highlights the size nearest it.
+    func testThePresetRowReportsTheNearestSizeToTheSlider() {
+        XCTAssertEqual(SettingsView.nearestPreset(to: 0.8), .small)
+        XCTAssertEqual(SettingsView.nearestPreset(to: 1.0), .medium)
+        XCTAssertEqual(SettingsView.nearestPreset(to: 1.25), .large)
+        XCTAssertEqual(SettingsView.nearestPreset(to: 1.5), .large)
+        XCTAssertEqual(SettingsView.nearestPreset(to: 0.75), .small)
+        XCTAssertEqual(SettingsView.nearestPreset(to: 1.1), .medium)
     }
 
     /// A value written straight into `defaults` could otherwise shrink the
@@ -375,17 +370,49 @@ final class PreferencesMigrationTests: XCTestCase {
                        Preferences.customScaleRange.upperBound, accuracy: 0.0001)
     }
 
-    /// Both halves of the choice have to outlive the launch that made it.
-    func testTheSliderChoiceSurvivesARelaunch() {
+    /// The size has to outlive the launch that chose it, whichever control was
+    /// used to choose it.
+    func testTheSizeSurvivesARelaunch() {
         let (fresh, name) = makeDefaults()
         let preferences = Preferences(defaults: fresh)
-        preferences.usesCustomNotchScale = true
         preferences.customNotchScale = 1.35
 
         let reloaded = Preferences(defaults: UserDefaults(suiteName: name)!)
-        XCTAssertTrue(reloaded.usesCustomNotchScale)
         XCTAssertEqual(reloaded.customNotchScale, 1.35, accuracy: 0.0001)
         XCTAssertEqual(reloaded.notchScale, 1.35, accuracy: 0.0001)
+    }
+
+    func testAPresetSurvivesARelaunchAsTheSizeItDraws() {
+        let (fresh, name) = makeDefaults()
+        Preferences(defaults: fresh).notchSize = .large
+
+        let reloaded = Preferences(defaults: UserDefaults(suiteName: name)!)
+        XCTAssertEqual(reloaded.notchSize, .large)
+        XCTAssertEqual(reloaded.notchScale, NotchSize.large.scale)
+    }
+
+    /// An install that never found the slider was drawn at its preset, and
+    /// that is the size the one remaining control has to open on — anything
+    /// else is the resize looking like a bug on the launch after an update.
+    func testAnInstallThatNeverUsedTheSliderOpensAtItsPreset() {
+        let (fresh, name) = makeDefaults()
+        fresh.set(NotchSize.small.rawValue, forKey: "notchSize")
+        fresh.set(false, forKey: "usesCustomNotchScale")
+
+        let reloaded = Preferences(defaults: UserDefaults(suiteName: name)!)
+        XCTAssertEqual(reloaded.customNotchScale, Double(NotchSize.small.scale), accuracy: 0.0001)
+        XCTAssertEqual(reloaded.notchScale, NotchSize.small.scale)
+    }
+
+    /// And one that did use it keeps its own number rather than being snapped
+    /// back onto a preset.
+    func testAnInstallThatUsedTheSliderKeepsItsOwnSize() {
+        let (fresh, name) = makeDefaults()
+        fresh.set(true, forKey: "usesCustomNotchScale")
+        fresh.set(1.15, forKey: "customNotchScale")
+
+        let reloaded = Preferences(defaults: UserDefaults(suiteName: name)!)
+        XCTAssertEqual(reloaded.notchScale, 1.15, accuracy: 0.0001)
     }
 }
 

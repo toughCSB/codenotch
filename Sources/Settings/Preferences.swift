@@ -95,22 +95,22 @@ final class Preferences: ObservableObject {
 
     /// How large the notch is drawn, as one of three named sizes.
     ///
-    /// Ignored while `usesCustomNotchScale` is on — the two are kept apart
-    /// rather than collapsed into one number so that switching back to the
-    /// presets returns to the preset you last chose, instead of to whichever
-    /// preset happens to sit nearest the slider.
+    /// A shortcut onto `customNotchScale`, not a second control: choosing a
+    /// preset moves the slider to it. They were once two rival controls with
+    /// the slider hidden behind a switch, which made the size look like
+    /// something you could either pick from three or not change at all — the
+    /// slider was there and nobody found it.
     @Published var notchSize: NotchSize {
-        didSet { defaults.set(notchSize.rawValue, forKey: Keys.size) }
+        didSet {
+            defaults.set(notchSize.rawValue, forKey: Keys.size)
+            customNotchScale = Double(notchSize.scale)
+        }
     }
 
-    /// Whether the slider decides the size rather than the three presets.
-    @Published var usesCustomNotchScale: Bool {
-        didSet { defaults.set(usesCustomNotchScale, forKey: Keys.usesCustomSize) }
-    }
-
-    /// The slider's own multiplier, honoured only when the slider is in
-    /// charge. Clamped on the way in: a value typed straight into `defaults`
-    /// could otherwise shrink the notch to nothing or blow it off the screen.
+    /// The notch's size, as a multiplier of the design frame. The one control
+    /// the drawn size actually follows. Clamped on the way in: a value typed
+    /// straight into `defaults` could otherwise shrink the notch to nothing or
+    /// blow it off the screen.
     @Published var customNotchScale: Double {
         didSet {
             let clamped = min(max(customNotchScale, Self.customScaleRange.lowerBound),
@@ -125,10 +125,8 @@ final class Preferences: ObservableObject {
     /// stops being readable, which is the one thing the notch exists for.
     static let customScaleRange: ClosedRange<Double> = 0.75...1.5
 
-    /// What the notch is actually drawn at, whichever control is in charge.
-    var notchScale: CGFloat {
-        usesCustomNotchScale ? CGFloat(customNotchScale) : notchSize.scale
-    }
+    /// What the notch is actually drawn at.
+    var notchScale: CGFloat { CGFloat(customNotchScale) }
 
     /// The display the notch stays on, or the original focus-following behaviour.
     ///
@@ -152,9 +150,31 @@ final class Preferences: ObservableObject {
         didSet { defaults.set(notchScope.rawValue, forKey: Keys.scope) }
     }
 
-    /// The preferred limit window to show for Antigravity provider (automatic, 5h, or weekly).
-    @Published var antigravityHeadlineLimit: AntigravityHeadlineLimit {
-        didSet { defaults.set(antigravityHeadlineLimit.rawValue, forKey: Keys.antigravityHeadlineLimit) }
+    /// Which window each provider's ring draws, by provider id — automatic,
+    /// 5-hour, weekly or monthly. A provider with no entry keeps its own choice.
+    ///
+    /// One dictionary rather than a property per provider: it is the same
+    /// question for all of them, and the ones that can answer it are exactly the
+    /// ones that report more than one window — a set that grows whenever a
+    /// vendor adds a limit.
+    @Published var providerRingCadence: [String: RingCadence] {
+        didSet { defaults.set(providerRingCadence.mapValues(\.rawValue), forKey: Keys.ringCadence) }
+    }
+
+    /// What this provider's ring means, or `automatic` when it has not been
+    /// asked — the same answer the provider gives itself.
+    func ringCadence(for providerID: String) -> RingCadence {
+        providerRingCadence[providerID] ?? .automatic
+    }
+
+    /// Automatic is stored as the absence of an entry, so a provider reset to
+    /// it behaves exactly like one that was never asked.
+    func setRingCadence(_ cadence: RingCadence, for providerID: String) {
+        if cadence == .automatic {
+            providerRingCadence.removeValue(forKey: providerID)
+        } else {
+            providerRingCadence[providerID] = cadence
+        }
     }
 
     /// The preferred model group to show for Antigravity provider (Gemini or Claude and GPT models).
@@ -233,19 +253,34 @@ final class Preferences: ObservableObject {
         didSet { defaults.set(weeklyRing.rawValue, forKey: Keys.weeklyRing) }
     }
 
-    /// Whether the move handle's arc is drawn above the notch.
-    @Published var showsMoveHandle: Bool {
-        didSet { defaults.set(showsMoveHandle, forKey: Keys.showsMoveHandle) }
-    }
-
     /// The colour used for positive usage and active-work indicators.
     @Published var accentColor: AccentColorChoice {
         didSet { defaults.set(accentColor.rawValue, forKey: Keys.accentColor) }
     }
 
-    /// The material the expanded notch, tooltip and settings orb are painted with.
+    /// The material the expanded notch and its tooltip are painted with.
     @Published var notchSurfaceStyle: NotchSurfaceStyle {
         didSet { defaults.set(notchSurfaceStyle.rawValue, forKey: Keys.notchSurfaceStyle) }
+    }
+
+    /// Which half of a used-fraction the number under each ring reports.
+    ///
+    /// Left of centre by default — "how much is left" is the question a quota
+    /// is usually asked, and the arc already says how much has gone. The arc is
+    /// unaffected either way: it fills as the limit is spent, which is the one
+    /// reading that has to mean the same thing on every provider.
+    @Published var percentBasis: Percent.Basis {
+        didSet { defaults.set(percentBasis.rawValue, forKey: Keys.percentBasis) }
+    }
+
+    /// Whether the notch floats above other applications' windows.
+    ///
+    /// On by default and worth leaving there: a notch that other windows can
+    /// cover is one that disappears behind the window you were about to read it
+    /// against. Off is for anyone who wants the notch to take its turn in the
+    /// window order like everything else.
+    @Published var notchAlwaysOnTop: Bool {
+        didSet { defaults.set(notchAlwaysOnTop, forKey: Keys.notchAlwaysOnTop) }
     }
 
     @Published var watchLimit: Double {
@@ -420,6 +455,8 @@ final class Preferences: ObservableObject {
         static let edge = "notchEdge"
         // A new key, so there is nothing under the old app name to migrate.
         static let size = "notchSize"
+        /// Read once, on launch, to work out what size an install was actually
+        /// drawing before the slider became the only control. Never written.
         static let usesCustomSize = "usesCustomNotchScale"
         static let customSize = "customNotchScale"
         static let display = "notchDisplay"
@@ -430,8 +467,9 @@ final class Preferences: ObservableObject {
         static let weeklyRing = "weeklyRing"
         static let weeklyRingDashed = "weeklyRingDashed"
         static let claudeDailyPaceRing = "claudeDailyPaceRing"
-        static let showsMoveHandle = "showsMoveHandle"
         static let notchSurfaceStyle = "notchSurfaceStyle"
+        static let percentBasis = "percentBasis"
+        static let notchAlwaysOnTop = "notchAlwaysOnTop"
         static let watchLimit = "watchLimit"
         static let criticalLimit = "criticalLimit"
         static let lastSeenVersion = "lastSeenVersion"
@@ -451,7 +489,12 @@ final class Preferences: ObservableObject {
         /// A new key, so there is nothing under the old app name to migrate.
         static let geminiAPIMonthlyTokenBudget = "geminiAPIMonthlyTokenBudget"
         static let minimaxRegion = "minimaxRegion"
+        /// Antigravity's own ring choice, from when it was the only provider
+        /// that offered one. Read once, on launch, into `ringCadence`; never
+        /// written again.
         static let antigravityHeadlineLimit = "antigravityHeadlineLimit"
+        /// Which window each provider's ring draws, by provider id.
+        static let ringCadence = "providerRingCadence"
         static let antigravityHeadlineModel = "antigravityHeadlineModel"
         static let deepSeekPricingEnabled = "deepSeekPricingEnabled"
         static let deepSeekPricingSchedule = "deepSeekPricingSchedule"
@@ -472,15 +515,6 @@ final class Preferences: ObservableObject {
         return budget
     }
     
-    nonisolated static func storedAntigravityHeadlineLimit(
-        defaults: UserDefaults = .standard
-    ) -> AntigravityHeadlineLimit {
-        guard let value = defaults.string(forKey: Keys.antigravityHeadlineLimit),
-              let limit = AntigravityHeadlineLimit(rawValue: value)
-        else { return .automatic }
-        return limit
-    }
-
     nonisolated static func storedAntigravityHeadlineModel(
         defaults: UserDefaults = .standard
     ) -> AntigravityHeadlineModel {
@@ -659,15 +693,18 @@ final class Preferences: ObservableObject {
             .flatMap(NotchEdge.init(rawValue:)) ?? .right
         // Medium is the design frame at 1:1, so an install that predates this
         // choice keeps exactly the notch it already had.
-        self.notchSize = defaults.string(forKey: Keys.size)
+        let preset = defaults.string(forKey: Keys.size)
             .flatMap(NotchSize.init(rawValue:)) ?? .medium
-        // Absent means never chosen, and the presets are what every earlier
-        // version had — so the slider is opt-in rather than the default.
-        self.usesCustomNotchScale = defaults.bool(forKey: Keys.usesCustomSize)
+        self.notchSize = preset
+        // The size used to be either a preset or, behind a switch, the slider.
+        // The switch is gone and `customNotchScale` is now the only control, so
+        // an install that never turned it on is given the size it was actually
+        // being drawn at rather than the slider's own 100%.
         let stored = defaults.object(forKey: Keys.customSize) as? Double
+        let legacyCustom = defaults.bool(forKey: Keys.usesCustomSize)
         self.customNotchScale = stored.map {
             min(max($0, Self.customScaleRange.lowerBound), Self.customScaleRange.upperBound)
-        } ?? 1
+        } ?? (legacyCustom ? 1 : Double(preset.scale))
         self.displayPreference = defaults.string(forKey: Keys.display)
             .map(DisplayPreference.display) ?? .followActiveWindow
         self.resetTimeFormat = defaults.string(forKey: Keys.resetTimeFormat)
@@ -689,8 +726,19 @@ final class Preferences: ObservableObject {
         // would put notches where none were expected.
         self.notchScope = defaults.string(forKey: Keys.scope)
             .flatMap(NotchScreenScope.init(rawValue:)) ?? .mainDisplay
-        self.antigravityHeadlineLimit = defaults.string(forKey: Keys.antigravityHeadlineLimit)
-            .flatMap(AntigravityHeadlineLimit.init(rawValue:)) ?? .automatic
+        // One dictionary of ring choices, by provider id. Antigravity's own
+        // setting was the first of them, and it is the same question, so an
+        // install that chose "weekly" there keeps it rather than finding the
+        // ring back on automatic after an update.
+        var ringCadence = (defaults.dictionary(forKey: Keys.ringCadence) as? [String: String])?
+            .compactMapValues(RingCadence.init(rawValue:)) ?? [:]
+        if ringCadence["gemini"] == nil,
+           let legacy = defaults.string(forKey: Keys.antigravityHeadlineLimit),
+           let cadence = RingCadence(rawValue: legacy),
+           cadence != .automatic {
+            ringCadence["gemini"] = cadence
+        }
+        self.providerRingCadence = ringCadence
         self.antigravityHeadlineModel = defaults.string(forKey: Keys.antigravityHeadlineModel)
             .flatMap(AntigravityHeadlineModel.init(rawValue:)) ?? .gemini
         // Follow the Mac unless the user explicitly chooses a Provider Monitor colour.
@@ -700,13 +748,17 @@ final class Preferences: ObservableObject {
 
         self.weeklyRing = defaults.string(forKey: Keys.weeklyRing)
             .flatMap(WeeklyRing.init(rawValue:)) ?? .off
-        // On unless turned off: it is how the notch is carried to another edge,
-        // and a control that is missing by default is one nobody finds.
-        self.showsMoveHandle = defaults.object(forKey: Keys.showsMoveHandle) as? Bool ?? true
         self.accentColor = defaults.string(forKey: Keys.accentColor)
             .flatMap(AccentColorChoice.init(rawValue:)) ?? .system
         self.notchSurfaceStyle = defaults.string(forKey: Keys.notchSurfaceStyle)
             .flatMap(NotchSurfaceStyle.init(rawValue:)) ?? .glass
+        // Remaining by default: the figure counts down, which is the way round
+        // a quota is usually read. See `Percent.Basis`.
+        self.percentBasis = defaults.string(forKey: Keys.percentBasis)
+            .flatMap(Percent.Basis.init(rawValue:)) ?? .remaining
+        // `bool(forKey:)` answers false for a key that was never written, so an
+        // absent value has to be distinguished from an explicit no.
+        self.notchAlwaysOnTop = defaults.object(forKey: Keys.notchAlwaysOnTop) as? Bool ?? true
         let storedWatchLimit = defaults.object(forKey: Keys.watchLimit) as? Double ?? 0.50
         let storedCriticalLimit = defaults.object(forKey: Keys.criticalLimit) as? Double ?? 0.70
         // `didSet` does the clamping, and it does not run for these assignments,

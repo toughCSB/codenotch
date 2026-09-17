@@ -160,8 +160,23 @@ actor AntigravityProvider: UsageProvider {
         )
     }
 
+    /// What Antigravity's ring means when nobody has said otherwise: the most
+    /// constrained lane, within the model family the user picked. The provider's
+    /// *declaration* — the store applies the chosen cadence on top of it, the
+    /// same way it does for every other provider.
     nonisolated func resolveHeadlineID(for windows: [LimitWindow]) -> String {
-        let preferredLimit = Preferences.storedAntigravityHeadlineLimit()
+        resolveHeadlineID(for: windows, cadence: .automatic)
+    }
+
+    /// Which window Antigravity's ring means, given a cadence.
+    ///
+    /// Split by model family as well as by cadence, which is why the store asks
+    /// the provider instead of applying its own duration rule: Antigravity
+    /// reports a lane per family, and a rule that only knew durations would move
+    /// the ring onto the other family's window — a real reading of the wrong
+    /// thing, which is the one outcome worth going out of the way to avoid.
+    nonisolated func resolveHeadlineID(for windows: [LimitWindow], cadence: RingCadence) -> String {
+        let preferredLimit = cadence
         let preferredModel = Preferences.storedAntigravityHeadlineModel()
         let modelCandidates = windows.filter { $0.id.hasPrefix(preferredModel.rawValue) }
         let candidates = modelCandidates.isEmpty ? windows : modelCandidates
@@ -182,7 +197,7 @@ actor AntigravityProvider: UsageProvider {
             ?? "\(preferredModel.rawValue)-hourly"
     }
 
-    private nonisolated func matches(_ window: LimitWindow, cadence: AntigravityHeadlineLimit) -> Bool {
+    private nonisolated func matches(_ window: LimitWindow, cadence: RingCadence) -> Bool {
         let value = "\(window.id) \(window.label)".lowercased()
         switch cadence {
         case .fiveHour:
@@ -191,6 +206,10 @@ actor AntigravityProvider: UsageProvider {
                     .contains(where: { value.contains($0) })
         case .weekly:
             return window.duration == 7 * 86400 || value.contains("weekly")
+        case .monthly:
+            // Antigravity meters nothing by the month. Rather than match a lane
+            // that is not one, the ring stays on the provider's own choice.
+            return false
         case .automatic:
             return true
         }
@@ -201,6 +220,24 @@ actor AntigravityProvider: UsageProvider {
         let right = rhs.usedFraction ?? 0
         if left != right { return left < right }
         return lhs.id > rhs.id
+    }
+
+    /// The store's question, answered here rather than by its own rule — see
+    /// `resolveHeadlineID(for:cadence:)`.
+    nonisolated func resolveRingWindow(in windows: [LimitWindow],
+                                      cadence: RingCadence) -> String? {
+        windows.isEmpty ? nil : resolveHeadlineID(for: windows, cadence: cadence)
+    }
+
+    /// Both cadences Antigravity's lanes actually cover, and never a third it
+    /// does not have. Asked of the provider rather than worked out from the
+    /// windows alone, because each cadence arrives as two lanes — one per model
+    /// family — and a rule that insists on a single answer finds none.
+    nonisolated func ringCadences(in windows: [LimitWindow]) -> [RingCadence]? {
+        let offered = RingCadence.allCases.filter { cadence in
+            cadence != .automatic && windows.contains { matches($0, cadence: cadence) }
+        }
+        return offered.isEmpty ? nil : offered
     }
 
     nonisolated func resolveWeeklyID(for windows: [LimitWindow]) -> String? {

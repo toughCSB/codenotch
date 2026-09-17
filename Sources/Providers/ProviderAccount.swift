@@ -149,4 +149,13 @@ struct ProviderSummary: Identifiable, Equatable {
     /// place and looking fine. Tying the warning to "is there a reading" would
     /// hide it behind exactly the stale number it is warning about.
     var needsSignInRenewal: Bool = false
+    /// The limit windows this provider last reported, so a row can offer a
+    /// choice that its provider can actually answer — and name only the
+    /// cadences it has. Empty for a local model, which has no limit to choose
+    /// between, and for a provider that has not been read yet.
+    var windows: [LimitWindow] = []
+    /// The cadences the row may offer, `automatic` aside. Names only what this
+    /// provider can answer, so a menu never lists a duration whose window it
+    /// does not have.
+    var ringCadences: [RingCadence] = []
 }

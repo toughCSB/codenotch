@@ -978,7 +978,6 @@ final class OllamaRenderTests: XCTestCase {
             }
         }
         model.updateSnapshots([])
-        model.isHoveringSettings = true
         let size = model.panelSize
         let renderer = ImageRenderer(content: NotchRootView(model: model)
             .frame(width: size.width, height: size.height))

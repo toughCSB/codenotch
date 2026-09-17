@@ -167,24 +167,34 @@ enum AntigravityQuotaParser {
             }
         }
 
+        // Through `L10n.t`, not as bare literals: these are the group title and
+        // the window label the hover card prints, and both were already in the
+        // string catalog — translated into every language — with nothing asking
+        // for them, so the card showed English under a Korean title bar. The
+        // ids stay English because they are what the cadence rules read.
+        let geminiGroup = L10n.t("Gemini Models")
+        let thirdPartyGroup = L10n.t("Claude and GPT models")
+        let fiveHourLabel = L10n.t("5-hour Limit")
+        let weeklyLabel = L10n.t("Weekly Limit")
+
         var windows: [LimitWindow] = []
         if let window = self.aggregate(
-            geminiHourly, id: "gemini-hourly", group: "Gemini Models", label: "5-hour Limit", weekly: false)
+            geminiHourly, id: "gemini-hourly", group: geminiGroup, label: fiveHourLabel, weekly: false)
         {
             windows.append(window)
         }
         if let window = self.aggregate(
-            geminiWeekly, id: "gemini-weekly", group: "Gemini Models", label: "Weekly Limit", weekly: true)
+            geminiWeekly, id: "gemini-weekly", group: geminiGroup, label: weeklyLabel, weekly: true)
         {
             windows.append(window)
         }
         if let window = self.aggregate(
-            thirdPartyHourly, id: "3p-hourly", group: "Claude and GPT models", label: "5-hour Limit", weekly: false)
+            thirdPartyHourly, id: "3p-hourly", group: thirdPartyGroup, label: fiveHourLabel, weekly: false)
         {
             windows.append(window)
         }
         if let window = self.aggregate(
-            thirdPartyWeekly, id: "3p-weekly", group: "Claude and GPT models", label: "Weekly Limit", weekly: true)
+            thirdPartyWeekly, id: "3p-weekly", group: thirdPartyGroup, label: weeklyLabel, weekly: true)
         {
             windows.append(window)
         }
