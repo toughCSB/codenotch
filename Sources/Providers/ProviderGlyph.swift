@@ -121,10 +121,28 @@ struct ProviderGlyphView: View {
     var size: CGFloat = Design.px(46)
 
     var body: some View {
+        if let colour = brandColour {
+            mark.foregroundStyle(colour)
+        } else {
+            mark
+        }
+    }
+
+    /// The provider's own colour for its mark, or `nil` when the mark either has
+    /// a colour of its own to keep (Antigravity's four-colour arch) or has none
+    /// worth inventing (OpenCode, Ollama). `nil` leaves the caller's colour in
+    /// charge, which is the app's text colour everywhere it is drawn today.
+    private var brandColour: Color? {
+        ProviderBrand.isFullColourMark(glyph) ? nil : ProviderBrand.markColor(glyph)
+    }
+
+    private var mark: some View {
         Group {
             if let image = NSImage(named: glyph.assetName) {
                 Image(nsImage: image)
-                    .renderingMode(.template)
+                    // Artwork in its own colours is drawn as it is; a one-colour
+                    // mark is a stencil for whatever colour it is drawn in.
+                    .renderingMode(ProviderBrand.isFullColourMark(glyph) ? .original : .template)
                     .resizable()
                     .scaledToFit()
             } else {
