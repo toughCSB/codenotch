@@ -35,7 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// that rate-limits, actively harmful.
     private var isRunningTests: Bool { Runtime.isUnderTest }
 
-    /// Quit any copy of Codenotch that was already running.
+    /// Quit any copy of Provider Monitor that was already running.
     ///
     /// Every notch is a window on the screen edge, so a second copy is not a
     /// harmless duplicate the way a second text editor is: it draws a second
@@ -105,7 +105,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             fleet.setSnapshots(Fixtures.snapshots())
         } else {
             // DeepSeek's Platform usage page is a browser-session provider:
-            // login is explicit, stays in Codenotch's own WKWebView store, and
+            // login is explicit, stays in Provider Monitor's own WKWebView store, and
             // the page-local requests are refreshed only after that login.
             let deepSeek = WebSessionProvider(site: Sites.deepSeek)
             // MiniMax's ring is MiniMaxProvider. The sheet is the same kind of
@@ -245,7 +245,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
             } else {
                 let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-                dir = appSupport.appendingPathComponent("Codenotch/phone-link", isDirectory: true)
+                dir = appSupport.appendingPathComponent("Provider Monitor/phone-link", isDirectory: true)
             }
             let phoneSecretStore: PhoneLinkSecretStore = NSClassFromString("XCTestCase") != nil
                 ? InMemoryPhoneLinkSecretStore()

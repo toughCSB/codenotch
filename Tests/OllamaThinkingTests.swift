@@ -3,7 +3,7 @@ import SwiftUI
 import NIOCore
 import NIOHTTP1
 import NIOPosix
-@testable import Codenotch
+@testable import ProviderMonitor
 
 final class OllamaThinkingStreamTests: XCTestCase {
     func testFragmentedNativeThinkingStopsAtAnswerAndCompletion() {

@@ -31,8 +31,8 @@ struct ProviderRing: View {
     var weeklyRing: WeeklyRing = .off
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.codenotchReduceTransparency) private var reduceTransparency
-    @Environment(\.codenotchAccentColor) private var accentColor
+    @Environment(\.providerMonitorReduceTransparency) private var reduceTransparency
+    @Environment(\.providerMonitorAccentColor) private var accentColor
     @State private var spin: Double = 0
 
     private var band: UsageBand {
@@ -183,7 +183,7 @@ private struct ActivityArc: View {
     let summary: ActivitySummary
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.codenotchReduceTransparency) private var reduceTransparency
+    @Environment(\.providerMonitorReduceTransparency) private var reduceTransparency
     @State private var spinning = false
     @State private var pulsing = false
 

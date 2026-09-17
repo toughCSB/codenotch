@@ -28,10 +28,10 @@ enum LMStudioWire {
             identifier = parts.clientIdentifier
             passkey = parts.clientPasskey
         } else if let token {
-            identifier = "codenotch"
+            identifier = "providermonitor"
             passkey = token
         } else {
-            identifier = "codenotch-" + random().prefix(8)
+            identifier = "providermonitor-" + random().prefix(8)
             passkey = random()
         }
         return ["authVersion": authVersion, "clientIdentifier": identifier, "clientPasskey": passkey]

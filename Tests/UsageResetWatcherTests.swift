@@ -1,5 +1,5 @@
 import XCTest
-@testable import Codenotch
+@testable import ProviderMonitor
 
 @MainActor
 final class UsageResetWatcherTests: XCTestCase {

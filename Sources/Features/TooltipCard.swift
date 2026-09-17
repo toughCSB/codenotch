@@ -133,7 +133,7 @@ private struct TooltipShell<Content: View>: View {
     var tailOffset: CGFloat = 0
     @ViewBuilder let content: Content
 
-    @Environment(\.codenotchReduceTransparency) private var reduceTransparency
+    @Environment(\.providerMonitorReduceTransparency) private var reduceTransparency
     @Environment(\.notchSurfaceStyle) private var surfaceStyle
 
     /// Reduce transparency means "no see-through chrome", which for this card
@@ -372,7 +372,7 @@ private struct LimitWindowRow: View {
     let now: Date
     let resetTimeFormat: ResetTimeFormat
     let showsUsagePace: Bool
-    @Environment(\.codenotchAccentColor) private var accentColor
+    @Environment(\.providerMonitorAccentColor) private var accentColor
 
     private var band: UsageBand { UsageBand.band(for: window.usedFraction ?? 0) }
     private var trackWidth: CGFloat { NotchLayout.cardWidth - 2 * NotchLayout.cardPadding - inset }
@@ -436,7 +436,7 @@ private struct MoneyBreakdownView: View {
     let title: String
     let money: UsageMoneyBreakdown
     let fidelity: Fidelity
-    @Environment(\.codenotchAccentColor) private var accentColor
+    @Environment(\.providerMonitorAccentColor) private var accentColor
 
     private var symbol: String {
         switch money.currency.uppercased() {
@@ -891,7 +891,7 @@ private struct SessionRow: View {
     let now: Date
     /// Set when rows can be clicked to jump to the session's terminal.
     var onFocus: ((pid_t) -> Void)? = nil
-    @Environment(\.codenotchAccentColor) private var accentColor
+    @Environment(\.providerMonitorAccentColor) private var accentColor
 
     private var stateColor: Color {
         switch session.state {

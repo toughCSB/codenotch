@@ -7,8 +7,8 @@ struct UsageResetCard: View {
     var tailOffset: CGFloat = 0
     var onDismiss: (() -> Void)? = nil
 
-    @Environment(\.codenotchAccentColor) private var accentColor
-    @Environment(\.codenotchReduceTransparency) private var reduceTransparency
+    @Environment(\.providerMonitorAccentColor) private var accentColor
+    @Environment(\.providerMonitorReduceTransparency) private var reduceTransparency
     @Environment(\.notchSurfaceStyle) private var surfaceStyle
 
     static let cardHeight: CGFloat = Design.px(210)

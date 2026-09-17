@@ -1,5 +1,5 @@
 import XCTest
-@testable import Codenotch
+@testable import ProviderMonitor
 
 /// The token path of `ClaudeOAuthProvider`.
 ///
@@ -266,7 +266,7 @@ final class ClaudeOAuthProviderTests: XCTestCase {
         XCTAssertEqual(StubEndpoint.requestCount, 1)
     }
 
-    /// Claude Desktop is signed into one account; Codenotch draws a ring per
+    /// Claude Desktop is signed into one account; Provider Monitor draws a ring per
     /// Claude Code profile. A profile whose organization does not match the
     /// cached URL gets nothing from Desktop — the alternative is the personal
     /// account's session percentage on the work ring.

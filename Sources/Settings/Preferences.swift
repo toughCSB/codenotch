@@ -503,28 +503,35 @@ final class Preferences: ObservableObject {
     /// at all.
     let isFirstLaunch: Bool
 
-    /// The bundle identifier before the app was renamed to Codenotch.
+    /// The bundle identifiers this app has been renamed away from, newest
+    /// first.
     ///
     /// A bundle id is the name of the defaults domain, so renaming the app
     /// silently moved every setting to a new, empty one — connection choices,
     /// the notch's mode, the archived readings, all apparently lost. Copying
     /// the old domain across once is the difference between a rename and what
     /// looks like a reset.
-    private static let previousDomain = "com.vinz.usagenotch"
+    static let previousDomains = ["com.vinz.codenotch", "com.vinz.usagenotch"]
 
     static func migrateFromPreviousName(into defaults: UserDefaults = .standard,
-                                        from domain: String = previousDomain) {
+                                        from domain: String = "") {
         // The emptiness test has to be about the object being written to, not
         // about `Bundle.main` — under test those are different domains, and the
         // first version happily copied real settings into a test's scratch
         // suite. `hasLaunched` is the sentinel: `Preferences.init` sets it, so
         // its absence means nothing has ever used this domain.
-        guard defaults.object(forKey: Keys.hasLaunched) == nil,
-              let old = defaults.persistentDomain(forName: domain), !old.isEmpty
-        else { return }
+        guard defaults.object(forKey: Keys.hasLaunched) == nil else { return }
 
-        for (key, value) in old { defaults.set(value, forKey: key) }
-        Log.usage.info("migrated \(old.count) settings from the previous app name")
+        // Only the newest non-empty one is taken. An older domain beside it
+        // holds settings that were already superseded by the newer rename, and
+        // copying both would let the oldest win.
+        for candidate in domain.isEmpty ? previousDomains : [domain] {
+            guard let old = defaults.persistentDomain(forName: candidate), !old.isEmpty
+            else { continue }
+            for (key, value) in old { defaults.set(value, forKey: key) }
+            Log.usage.info("migrated \(old.count) settings from \(candidate, privacy: .public)")
+            return
+        }
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -663,7 +670,7 @@ final class Preferences: ObservableObject {
             .flatMap(AntigravityHeadlineLimit.init(rawValue:)) ?? .automatic
         self.antigravityHeadlineModel = defaults.string(forKey: Keys.antigravityHeadlineModel)
             .flatMap(AntigravityHeadlineModel.init(rawValue:)) ?? .gemini
-        // Follow the Mac unless the user explicitly chooses a Codenotch colour.
+        // Follow the Mac unless the user explicitly chooses a Provider Monitor colour.
         // Off by default: an extra arc in a 44pt circle is a change to how
         // every reading looks, and nobody asked for it on their behalf.
         self.weeklyRing = defaults.string(forKey: Keys.weeklyRing)
@@ -840,7 +847,7 @@ final class Preferences: ObservableObject {
     /// update, and wiping data on every Sparkle update would be catastrophic.
     /// It has to be something the user asks for.
     static func eraseAllData() {
-        let bundleID = Bundle.main.bundleIdentifier ?? "com.vinz.codenotch"
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.toughcsb.providermonitor"
         UserDefaults.standard.removePersistentDomain(forName: bundleID)
         UserDefaults.standard.synchronize()
 
@@ -874,7 +881,7 @@ final class Preferences: ObservableObject {
             // Commonly refused for an app running from a build directory rather
             // than /Applications, which is worth saying plainly.
             Log.usage.error("launch at login failed: \(error.localizedDescription, privacy: .public)")
-            launchAtLoginProblem = L10n.t("macOS refused this — try moving Codenotch to /Applications.")
+            launchAtLoginProblem = L10n.t("macOS refused this — try moving Provider Monitor to /Applications.")
             launchAtLogin = Self.isRegisteredForLogin
         }
     }

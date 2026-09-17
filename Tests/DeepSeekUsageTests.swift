@@ -1,6 +1,6 @@
 import XCTest
 import SwiftUI
-@testable import Codenotch
+@testable import ProviderMonitor
 
 @MainActor
 final class DeepSeekUsageTests: XCTestCase {

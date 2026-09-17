@@ -103,7 +103,7 @@ private struct VisualEffect: NSViewRepresentable {
     }
 
     private func apply(to view: NSVisualEffectView, context: Context) {
-        if context.environment.codenotchReduceTransparency {
+        if context.environment.providerMonitorReduceTransparency {
             view.material = .windowBackground
             view.blendingMode = .withinWindow
         } else {
@@ -198,7 +198,7 @@ struct SettingsView: View {
     var previewResetAlert: (() -> Void)? = nil
     var previewSessionLimitAlert: (() -> Void)? = nil
     var previewWeeklyLimitAlert: (() -> Void)? = nil
-    @Environment(\.codenotchReduceTransparency) private var reduceTransparency
+    @Environment(\.providerMonitorReduceTransparency) private var reduceTransparency
 
     var body: some View {
         // A plain HStack rather than `NavigationSplitView`: the sidebar here
@@ -233,7 +233,7 @@ struct SettingsView: View {
         // the bug and no way to notice.
         .id(preferences.language)
         .tint(preferences.accentColor.color)
-        .environment(\.codenotchAccentColor, preferences.accentColor.color)
+        .environment(\.providerMonitorAccentColor, preferences.accentColor.color)
         // Fills the window rather than claiming a fixed size. Under
         // `fullSizeContentView` the content view is the whole frame — title
         // bar included — so a view sized to `SettingsView.height` left the
@@ -336,7 +336,7 @@ struct SettingsView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             Button(role: .destructive, action: quit) {
                 Label {
-                    Text(L10n.t("Quit Codenotch"))
+                    Text(L10n.t("Quit Provider Monitor"))
                 } icon: {
                     SidebarIcon(systemName: "power", tint: .red)
                 }
@@ -522,7 +522,7 @@ struct SettingsView: View {
                 }
                 // Beside the switches it explains, not stranded at the end of
                 // the page.
-                Text(L10n.t("Most readings are borrowed from a tool that already holds the account. DeepSeek and MiniMax are the exceptions: clicking Sign in opens a Codenotch window for that account, and signing out here clears only that session and its saved reading."))
+                Text(L10n.t("Most readings are borrowed from a tool that already holds the account. DeepSeek and MiniMax are the exceptions: clicking Sign in opens a Provider Monitor window for that account, and signing out here clears only that session and its saved reading."))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -560,9 +560,9 @@ struct SettingsView: View {
         .animation(.snappy(duration: 0.25), value: preferences.disabledModels)
     }
 
-    // One pane, because they are one question: what Codenotch looks like and
+    // One pane, because they are one question: what Provider Monitor looks like and
     // where it turns up. Split across several it read as unrelated settings,
-    // and "Where Codenotch appears" was a header long enough to look like a
+    // and "Where Provider Monitor appears" was a header long enough to look like a
     // warning.
     private var appearancePane: some View {
         Form {
@@ -845,7 +845,7 @@ struct SettingsView: View {
                 SoundRow(label: L10n.t("Waiting on you"), name: $preferences.sessionBlockedSoundName,
                          pickerEnabled: preferences.sessionEndSound)
 
-                Text(L10n.t("Codenotch already knows the moment an agent stops working or stops to ask you something. Clicking the notch while it is open brings that session's app to the front — the app, not the tab: only some terminals let anything outside them choose a tab, so the tooltip names the session instead."))
+                Text(L10n.t("Provider Monitor already knows the moment an agent stops working or stops to ask you something. Clicking the notch while it is open brings that session's app to the front — the app, not the tab: only some terminals let anything outside them choose a tab, so the tooltip names the session instead."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -918,7 +918,7 @@ struct SettingsView: View {
         .formStyle(.grouped)
     }
 
-    // Startup and updates together: both are about what Codenotch does
+    // Startup and updates together: both are about what Provider Monitor does
     // without being asked, and one switch under its own header looked
     // like an oversight rather than a section.
     private var generalPane: some View {
@@ -926,7 +926,7 @@ struct SettingsView: View {
             // No title on the group: the pane's own header above already
             // says "General", and repeating it here would say it twice.
             Section {
-                Toggle(L10n.t("Open Codenotch at login"), isOn: $preferences.launchAtLogin)
+                Toggle(L10n.t("Open Provider Monitor at login"), isOn: $preferences.launchAtLogin)
                 if let problem = preferences.launchAtLoginProblem {
                     Text(problem)
                         .font(.caption)
@@ -946,7 +946,7 @@ struct SettingsView: View {
                     // a way to switch it off, is the difference between a
                     // background updater and something that looks like it is
                     // hiding.
-                    Text(L10n.t("Version \(updater.currentVersion). Updates install in the background and apply next time Codenotch starts."))
+                    Text(L10n.t("Version \(updater.currentVersion). Updates install in the background and apply next time Provider Monitor starts."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -1006,7 +1006,7 @@ struct SettingsView: View {
             if let display = displays.first(where: { $0.id == id }) {
                 return L10n.t("Pinned to \(display.name).")
             }
-            return L10n.t("That display is disconnected. Codenotch follows the active window until it returns.")
+            return L10n.t("That display is disconnected. Provider Monitor follows the active window until it returns.")
         }
     }
 
@@ -1081,7 +1081,7 @@ struct SettingsView: View {
     /// this, sees four blank rings and concludes it is broken — and the
     /// distinction that catches them out is Claude *Code*, not the Claude app.
     static var setupCopy: String {
-        L10n.t("Codenotch reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor (the editor or cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot, Kimi Code, Kiro or a Gemini API key (via Gemini CLI, OpenCode or Hermes), and its ring appears in the notch.")
+        L10n.t("Provider Monitor reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor (the editor or cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot, Kimi Code, Kiro or a Gemini API key (via Gemini CLI, OpenCode or Hermes), and its ring appears in the notch.")
     }
 
     /// Said before it happens rather than after. A system dialogue asking to
@@ -1218,7 +1218,7 @@ private struct AccentColorSwatch: View {
     let isSelected: Bool
     let select: () -> Void
 
-    @Environment(\.codenotchReduceTransparency) private var reduceTransparency
+    @Environment(\.providerMonitorReduceTransparency) private var reduceTransparency
 
     var body: some View {
         Button(action: select) {
@@ -1250,7 +1250,7 @@ private struct AccentColorSwatch: View {
     }
 }
 
-/// One provider: whether Codenotch reads it, whose account that is, and where
+/// One provider: whether Provider Monitor reads it, whose account that is, and where
 /// to go if there is nothing to read.
 /// One sound choice, with a preview button.
 private struct SoundRow: View {
@@ -1312,7 +1312,7 @@ private struct AccountRow: View {
     /// now belongs. The row itself cannot: it can see only itself.
     let didConnect: () -> Void
 
-    @Environment(\.codenotchReduceTransparency) private var reduceTransparency
+    @Environment(\.providerMonitorReduceTransparency) private var reduceTransparency
 
     /// The handle only appears under the pointer, so a row at rest stays as
     /// quiet as it was before there was anything to drag.
@@ -1590,7 +1590,7 @@ private struct AccountRow: View {
                 ollamaKeyEntry
             }
 
-            // MiniMax is signed into in Codenotch, or by a Coding Plan key
+            // MiniMax is signed into in Provider Monitor, or by a Coding Plan key
             // pasted here. The region is which console that key belongs to.
             // Stored in the keychain on Save, the same way Ollama's is.
             if provider.id == "minimax" {
@@ -1667,7 +1667,7 @@ private struct AccountRow: View {
             minimaxKeyEntry
             minimaxCookieEntry
 
-            Text(L10n.t("Sign in to MiniMax in Codenotch, or paste a Coding Plan key. A Cookie header is optional. Codenotch never reads a browser's cookies."))
+            Text(L10n.t("Sign in to MiniMax in Provider Monitor, or paste a Coding Plan key. A Cookie header is optional. Provider Monitor never reads a browser's cookies."))
                 .foregroundStyle(.tertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -1757,7 +1757,7 @@ private struct AccountRow: View {
             // Not a sign-in problem, so do not send them off to sign in. The
             // credential is right there and macOS is the one saying no — the
             // remedy is the button on this same row.
-            Text(L10n.t("macOS is not letting Codenotch read \(provider.name)'s saved login. Choose Allow access… above, then Always Allow."))
+            Text(L10n.t("macOS is not letting Provider Monitor read \(provider.name)'s saved login. Choose Allow access… above, then Always Allow."))
                 .foregroundStyle(.orange)
                 .fixedSize(horizontal: false, vertical: true)
         } else {

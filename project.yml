@@ -1,6 +1,6 @@
-name: Codenotch
+name: ProviderMonitor
 options:
-  bundleIdPrefix: com.vinz
+  bundleIdPrefix: com.toughcsb
   deploymentTarget:
     macOS: "15.0"
   createIntermediateGroups: true
@@ -44,7 +44,7 @@ packages:
     from: "2.6.0"
 
 targets:
-  Codenotch:
+  ProviderMonitor:
     type: application
     platform: macOS
     sources:
@@ -68,8 +68,8 @@ targets:
         # notch is ambient, but the *app* still has to be findable: without a
         # Dock tile there is nothing to click to open it, nothing in Cmd-Tab,
         # and no obvious way to reach settings or quit.
-        CFBundleName: Codenotch
-        CFBundleDisplayName: Codenotch
+        CFBundleName: Provider Monitor
+        CFBundleDisplayName: Provider Monitor
         CFBundleDevelopmentRegion: en
         CFBundleLocalizations:
           - en
@@ -85,7 +85,7 @@ targets:
         # build settings keeps one place to bump.
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
-        NSLocalNetworkUsageDescription: "Codenotch answers your phone on this network so it can show your usage."
+        NSLocalNetworkUsageDescription: "Provider Monitor answers your phone on this network so it can show your usage."
         # --- Sparkle -------------------------------------------------------
         # Beside the download itself, on hivinz.com. It used to point at a
         # GitHub Pages URL for a repo that was never created, so every check
@@ -100,15 +100,23 @@ targets:
         # or a swapped download cannot install code. Losing the private key
         # means no existing install can ever be updated again — back it up.
         SUPublicEDKey: rmUfT5r49nR+3HdkbR5/YYLghfnAi6L49eOk3sIegSk=
-        # Set explicitly so Sparkle never asks on first launch. Left unset, it
-        # shows a "check for updates automatically?" prompt, which is exactly
-        # the permission this is meant to avoid.
-        SUEnableAutomaticChecks: true
-        SUAutomaticallyUpdate: true
+        # Both off, and this is the one deliberate departure from upstream in
+        # this fork. SUFeedURL above is upstream's feed and SUPublicEDKey is
+        # upstream's key, so a check allowed to install would replace this app
+        # with upstream Codenotch the next time upstream ships — undoing the
+        # rename and the icon silently, in the background. Settings → About
+        # still offers a manual check, and that one asks before installing.
+        SUEnableAutomaticChecks: false
+        SUAutomaticallyUpdate: false
         SUScheduledCheckInterval: 86400
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.vinz.codenotch
+        PRODUCT_BUNDLE_IDENTIFIER: com.toughcsb.providermonitor
+        # What Finder, the Dock and the menu bar show. The module stays one
+        # word so `import` and `@testable import` are not spelled with an
+        # underscore.
+        PRODUCT_NAME: "Provider Monitor"
+        PRODUCT_MODULE_NAME: ProviderMonitor
         GENERATE_INFOPLIST_FILE: "NO"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_EMIT_LOC_STRINGS: "YES"
@@ -119,29 +127,36 @@ targets:
         # anywhere a signed, notarized app can reach — see
         # Sources/Vendor/zstd/README.md. Delete this line and that directory
         # together if the Desktop source is ever dropped.
-        SWIFT_OBJC_BRIDGING_HEADER: Sources/Codenotch-Bridging-Header.h
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/ProviderMonitor-Bridging-Header.h
 
-  CodenotchTests:
+  ProviderMonitorTests:
     type: bundle.unit-test
     platform: macOS
     sources:
       - path: Tests
     dependencies:
-      - target: Codenotch
+      - target: ProviderMonitor
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.vinz.codenotch.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.toughcsb.providermonitor.tests
         GENERATE_INFOPLIST_FILE: "YES"
+        # XcodeGen derives TEST_HOST and BUNDLE_LOADER from the *target* name,
+        # which would look for ProviderMonitor.app — while the product this
+        # target links against is "Provider Monitor.app", because PRODUCT_NAME
+        # says so. Without these two the test bundle has no host to load into
+        # and `xcodebuild test` fails with "Could not find test host".
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Provider Monitor.app/Contents/MacOS/Provider Monitor"
+        BUNDLE_LOADER: "$(TEST_HOST)"
 
 schemes:
-  Codenotch:
+  ProviderMonitor:
     build:
       targets:
-        Codenotch: all
-        CodenotchTests: [test]
+        ProviderMonitor: all
+        ProviderMonitorTests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets:
-        - CodenotchTests
+        - ProviderMonitorTests

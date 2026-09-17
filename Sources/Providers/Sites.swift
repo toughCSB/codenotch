@@ -132,7 +132,7 @@ enum Sites {
         }
     )
 
-    /// MiniMax is signed into from Codenotch's own WKWebView, the same way
+    /// MiniMax is signed into from Provider Monitor's own WKWebView, the same way
     /// DeepSeek is. Login lives on the regional platform origin; coding-plan
     /// remains is a www host, so the fetch is absolute and sign-out has to
     /// clear that host as well as the platform one.

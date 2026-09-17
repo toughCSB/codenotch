@@ -1,6 +1,6 @@
 import XCTest
 import SwiftUI
-@testable import Codenotch
+@testable import ProviderMonitor
 
 /// Memory sizes and token counts are printed through `Foundation`'s
 /// locale-aware formatting, so a machine set to Indonesian prints "4,5 GB"

@@ -1,5 +1,5 @@
 import XCTest
-@testable import Codenotch
+@testable import ProviderMonitor
 
 private struct FakeScreen: ScreenDescribing {
     var frameValue: CGRect

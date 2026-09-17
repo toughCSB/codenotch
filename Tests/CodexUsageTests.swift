@@ -1,6 +1,6 @@
 import SQLite3
 import XCTest
-@testable import Codenotch
+@testable import ProviderMonitor
 
 final class CodexUsageTests: XCTestCase {
     private func windows(_ json: String) throws -> [LimitWindow] {
@@ -485,7 +485,7 @@ final class CodexActivityTests: XCTestCase {
 
     private func rollout(_ records: [String]) throws -> URL {
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CodenotchCodexRollout-\(UUID().uuidString).jsonl")
+            .appendingPathComponent("ProviderMonitorCodexRollout-\(UUID().uuidString).jsonl")
         try records.joined(separator: "\n").data(using: .utf8)!.write(to: url)
         addTeardownBlock { try? FileManager.default.removeItem(at: url) }
         return url

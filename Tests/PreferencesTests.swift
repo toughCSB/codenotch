@@ -1,10 +1,10 @@
 import XCTest
-@testable import Codenotch
+@testable import ProviderMonitor
 
-/// The rename from UsageNotch to Codenotch moved every setting into a new,
-/// empty defaults domain — the migration is the difference between a rename
-/// and what looks like a reset, so it is pinned here. (Round-trip and
-/// first-launch basics live with the other PreferencesTests.)
+/// A rename moves every setting into a new, empty defaults domain — the
+/// migration is the difference between a rename and what looks like a reset, so
+/// it is pinned here. (Round-trip and first-launch basics live with the other
+/// PreferencesTests.)
 @MainActor
 final class PreferencesMigrationTests: XCTestCase {
     private func makeDefaults() -> (UserDefaults, String) {
@@ -57,6 +57,16 @@ final class PreferencesMigrationTests: XCTestCase {
         Preferences.migrateFromPreviousName(into: fresh, from: oldName)
         let preferences = Preferences(defaults: fresh)
         XCTAssertEqual(preferences.notchVisibility, .onHover)
+    }
+
+    /// The chain has to name every earlier bundle id, newest first, and never
+    /// the one the app runs under now: a domain copied onto itself would look
+    /// like a migration on every launch, and the wrong order would let the
+    /// oldest settings win.
+    func testTheRenameChainIsPinned() {
+        XCTAssertEqual(Preferences.previousDomains.first, "com.vinz.codenotch")
+        XCTAssertTrue(Preferences.previousDomains.contains("com.vinz.usagenotch"))
+        XCTAssertFalse(Preferences.previousDomains.contains(Bundle.main.bundleIdentifier ?? ""))
     }
 
     // MARK: Defaults

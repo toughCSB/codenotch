@@ -37,7 +37,7 @@ enum ReleaseNotes {
                 changes: [
                     ReleaseNote.Change(
                         title: L10n.t("Kiro and MiniMax"),
-                        detail: L10n.t("Kiro reads the kiro-cli sign-in already on this Mac. MiniMax signs in from Codenotch, with a choice of international or China region.")
+                        detail: L10n.t("Kiro reads the kiro-cli sign-in already on this Mac. MiniMax signs in from Provider Monitor, with a choice of international or China region.")
                     ),
                     ReleaseNote.Change(
                         title: L10n.t("Deutsch"),
@@ -90,7 +90,7 @@ enum ReleaseNotes {
                         detail: L10n.t("A quit action in the Settings sidebar, for when the menu bar icon is switched off.")
                     ),
                     ReleaseNote.Change(
-                        title: L10n.t("A web page cannot reach Codenotch's local servers"),
+                        title: L10n.t("A web page cannot reach Provider Monitor's local servers"),
                         detail: L10n.t("The Ollama relay and the Windows event server now refuse browser requests from other sites, and raw responses are kept out of the system log. Reading DeepSeek also checks the page's address exactly, where a lookalike domain could have passed before.")
                     ),
                     ReleaseNote.Change(
@@ -237,7 +237,7 @@ enum ReleaseNotes {
                     ),
                     ReleaseNote.Change(
                         title: L10n.t("A ready-made download, no Xcode needed"),
-                        detail: L10n.t("Every build now produces an app bundle you can run, so trying Codenotch no longer starts with a developer setup.")
+                        detail: L10n.t("Every build now produces an app bundle you can run, so trying Provider Monitor no longer starts with a developer setup.")
                     ),
                 ]
             ),
@@ -367,7 +367,7 @@ enum ReleaseNotes {
                 changes: [
                     ReleaseNote.Change(
                         title: L10n.t("Codex is read live instead of from a log"),
-                        detail: L10n.t("The figure came from a file Codex writes during a turn, so it was as old as the last time you used it — three days stale in one case. Codenotch now asks Codex itself, and matches its own panel.")
+                        detail: L10n.t("The figure came from a file Codex writes during a turn, so it was as old as the last time you used it — three days stale in one case. Provider Monitor now asks Codex itself, and matches its own panel.")
                     ),
                     ReleaseNote.Change(
                         title: L10n.t("The Codex ring notices the desktop app"),
@@ -415,7 +415,7 @@ enum ReleaseNotes {
                 changes: [
                     ReleaseNote.Change(
                         title: L10n.t("Antigravity shows its actual quota"),
-                        detail: L10n.t("Google will not answer Codenotch directly, so it asks Antigravity's own language server instead — the same place Antigravity's usage panel gets its figure.")
+                        detail: L10n.t("Google will not answer Provider Monitor directly, so it asks Antigravity's own language server instead — the same place Antigravity's usage panel gets its figure.")
                     ),
                     ReleaseNote.Change(
                         title: L10n.t("Usage reads both ways"),
@@ -449,10 +449,10 @@ enum ReleaseNotes {
                     ),
                     ReleaseNote.Change(
                         title: L10n.t("Claude, Cursor, Codex and Gemini"),
-                        detail: L10n.t("Each read from the tool already signed in on this Mac. Codenotch never asks for a password.")
+                        detail: L10n.t("Each read from the tool already signed in on this Mac. Provider Monitor never asks for a password.")
                     ),
                     ReleaseNote.Change(
-                        title: L10n.t("Choose where Codenotch appears"),
+                        title: L10n.t("Choose where Provider Monitor appears"),
                         detail: L10n.t("In the Dock, in the menu bar, or nowhere at all.")
                     )
                 ]

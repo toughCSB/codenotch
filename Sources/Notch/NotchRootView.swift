@@ -3,8 +3,8 @@ import SwiftUI
 struct NotchRootView: View {
     @ObservedObject var model: NotchViewModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.codenotchReduceTransparency) private var reduceTransparency
-    @Environment(\.codenotchHeadlessGlass) private var headlessGlass
+    @Environment(\.providerMonitorReduceTransparency) private var reduceTransparency
+    @Environment(\.providerMonitorHeadlessGlass) private var headlessGlass
 
     var body: some View {
         // Measured rather than assumed: the panel's real size is whatever
@@ -130,7 +130,7 @@ struct NotchRootView: View {
         }
         .animation(motion(NotchMotion.unfold), value: model.isExpanded)
         .tint(model.accentColor.color)
-        .environment(\.codenotchAccentColor, model.accentColor.color)
+        .environment(\.providerMonitorAccentColor, model.accentColor.color)
         .environment(\.notchSurfaceStyle, model.surfaceStyle)
     }
 

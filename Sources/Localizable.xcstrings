@@ -944,43 +944,43 @@
         }
       }
     },
-    "Codenotch was refused access to %@'s saved login. Click this ring to ask again, and choose Always Allow.": {
+    "Provider Monitor was refused access to %@'s saved login. Click this ring to ask again, and choose Always Allow.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch s'est vu refuser l'accès aux identifiants enregistrés de %@. Cliquez sur cet anneau pour redemander, puis choisissez Toujours autoriser."
+            "value": "Provider Monitor s'est vu refuser l'accès aux identifiants enregistrés de %@. Cliquez sur cet anneau pour redemander, puis choisissez Toujours autoriser."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch は %@ の保存済みログインへのアクセスを拒否されました。このリングをクリックして再度要求し、「常に許可」を選んでください。"
+            "value": "Provider Monitor は %@ の保存済みログインへのアクセスを拒否されました。このリングをクリックして再度要求し、「常に許可」を選んでください。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Codenotch teve acesso negado ao login salvo do %@. Clique neste anel para pedir de novo e escolha Sempre Permitir."
+            "value": "O Provider Monitor teve acesso negado ao login salvo do %@. Clique neste anel para pedir de novo e escolha Sempre Permitir."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 未能读取 %@ 已保存的登录信息。点击这个圆环再试一次，并选择「始终允许」。"
+            "value": "Provider Monitor 未能读取 %@ 已保存的登录信息。点击这个圆环再试一次，并选择「始终允许」。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch не получил доступ к сохранённому входу %@. Нажмите это кольцо, повторите запрос и выберите «Разрешать всегда»."
+            "value": "Provider Monitor не получил доступ к сохранённому входу %@. Нажмите это кольцо, повторите запрос и выберите «Разрешать всегда»."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch wurde der Zugriff auf die gespeicherte Anmeldung von %@ verweigert. Klicke auf diesen Ring, um erneut zu fragen, und wähle „Immer erlauben“."
+            "value": "Provider Monitor wurde der Zugriff auf die gespeicherte Anmeldung von %@ verweigert. Klicke auf diesen Ring, um erneut zu fragen, und wähle „Immer erlauben“."
           }
         }
       }
@@ -2953,43 +2953,43 @@
         }
       }
     },
-    "Nothing on screen. Open Codenotch again from Applications to bring these settings back.": {
+    "Nothing on screen. Open Provider Monitor again from Applications to bring these settings back.": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ничего не показывать. Откройте Codenotch снова из Программ, чтобы вернуть эти настройки."
+            "value": "Ничего не показывать. Откройте Provider Monitor снова из Программ, чтобы вернуть эти настройки."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rien à l'écran. Rouvrez Codenotch depuis Applications pour retrouver ces réglages."
+            "value": "Rien à l'écran. Rouvrez Provider Monitor depuis Applications pour retrouver ces réglages."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "画面には何も出ません。この設定に戻るには、アプリケーションから Codenotch をもう一度開いてください。"
+            "value": "画面には何も出ません。この設定に戻るには、アプリケーションから Provider Monitor をもう一度開いてください。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nada na tela. Abra o Codenotch novamente em Aplicativos para trazer estes ajustes de volta."
+            "value": "Nada na tela. Abra o Provider Monitor novamente em Aplicativos para trazer estes ajustes de volta."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "屏幕上什么都没有。从「应用程序」再打开 Codenotch，才能回到这些设置。"
+            "value": "屏幕上什么都没有。从「应用程序」再打开 Provider Monitor，才能回到这些设置。"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nichts auf dem Bildschirm. Öffne Codenotch erneut aus dem Programme-Ordner, um diese Einstellungen zurückzuholen."
+            "value": "Nichts auf dem Bildschirm. Öffne Provider Monitor erneut aus dem Programme-Ordner, um diese Einstellungen zurückzuholen."
           }
         }
       }
@@ -3117,43 +3117,43 @@
         }
       }
     },
-    "A normal app icon in the Dock while Codenotch is running.": {
+    "A normal app icon in the Dock while Provider Monitor is running.": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Обычный значок приложения в Dock во время работы Codenotch."
+            "value": "Обычный значок приложения в Dock во время работы Provider Monitor."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une icône d'app normale dans le Dock tant que Codenotch fonctionne."
+            "value": "Une icône d'app normale dans le Dock tant que Provider Monitor fonctionne."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch の実行中、Dock に通常のアプリアイコンが出ます。"
+            "value": "Provider Monitor の実行中、Dock に通常のアプリアイコンが出ます。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Um ícone de app normal no Dock enquanto o Codenotch está em execução."
+            "value": "Um ícone de app normal no Dock enquanto o Provider Monitor está em execução."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 运行时，程序坞里有一个普通应用图标。"
+            "value": "Provider Monitor 运行时，程序坞里有一个普通应用图标。"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ein normales App-Symbol im Dock, solange Codenotch läuft."
+            "value": "Ein normales App-Symbol im Dock, solange Provider Monitor läuft."
           }
         }
       }
@@ -3199,43 +3199,43 @@
         }
       }
     },
-    "No icon anywhere. Open Codenotch again from Applications to bring these settings back.": {
+    "No icon anywhere. Open Provider Monitor again from Applications to bring these settings back.": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ни одного значка. Откройте Codenotch снова из Программ, чтобы вернуть эти настройки."
+            "value": "Ни одного значка. Откройте Provider Monitor снова из Программ, чтобы вернуть эти настройки."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucune icône nulle part. Rouvrez Codenotch depuis Applications pour retrouver ces réglages."
+            "value": "Aucune icône nulle part. Rouvrez Provider Monitor depuis Applications pour retrouver ces réglages."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "どこにもアイコンが出ません。この設定に戻るには、アプリケーションから Codenotch をもう一度開いてください。"
+            "value": "どこにもアイコンが出ません。この設定に戻るには、アプリケーションから Provider Monitor をもう一度開いてください。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nenhum ícone em lugar algum. Abra o Codenotch novamente em Aplicativos para trazer estes ajustes de volta."
+            "value": "Nenhum ícone em lugar algum. Abra o Provider Monitor novamente em Aplicativos para trazer estes ajustes de volta."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "哪里都没有图标。从「应用程序」再打开 Codenotch，才能回到这些设置。"
+            "value": "哪里都没有图标。从「应用程序」再打开 Provider Monitor，才能回到这些设置。"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nirgends ein Symbol. Öffne Codenotch erneut aus dem Programme-Ordner, um diese Einstellungen zurückzuholen."
+            "value": "Nirgends ein Symbol. Öffne Provider Monitor erneut aus dem Programme-Ordner, um diese Einstellungen zurückzuholen."
           }
         }
       }
@@ -3814,43 +3814,43 @@
         }
       }
     },
-    "Open Codenotch at login": {
+    "Open Provider Monitor at login": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Открывать Codenotch при входе"
+            "value": "Открывать Provider Monitor при входе"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ouvrir Codenotch à l'ouverture de session"
+            "value": "Ouvrir Provider Monitor à l'ouverture de session"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ログイン時に Codenotch を開く"
+            "value": "ログイン時に Provider Monitor を開く"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Abrir o Codenotch ao iniciar a sessão"
+            "value": "Abrir o Provider Monitor ao iniciar a sessão"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "登录时打开 Codenotch"
+            "value": "登录时打开 Provider Monitor"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch bei der Anmeldung öffnen"
+            "value": "Provider Monitor bei der Anmeldung öffnen"
           }
         }
       }
@@ -4019,84 +4019,84 @@
         }
       }
     },
-    "Codenotch never signs in — each reading is borrowed from the tool that already holds the account. Signing out here stops the credential being read and forgets the numbers, but leaves you signed in to that tool. macOS asks once per tool the first time, and again whenever you sign in to a different account; Always Allow keeps it quiet.": {
+    "Provider Monitor never signs in — each reading is borrowed from the tool that already holds the account. Signing out here stops the credential being read and forgets the numbers, but leaves you signed in to that tool. macOS asks once per tool the first time, and again whenever you sign in to a different account; Always Allow keeps it quiet.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch ne se connecte jamais — chaque relevé est emprunté à l'outil qui détient déjà le compte. Vous déconnecter ici arrête la lecture de l'identifiant et oublie les chiffres, mais vous restez connecté à cet outil. macOS demande une fois par outil la première fois, puis à nouveau chaque fois que vous vous connectez à un autre compte ; Toujours autoriser évite les rappels."
+            "value": "Provider Monitor ne se connecte jamais — chaque relevé est emprunté à l'outil qui détient déjà le compte. Vous déconnecter ici arrête la lecture de l'identifiant et oublie les chiffres, mais vous restez connecté à cet outil. macOS demande une fois par outil la première fois, puis à nouveau chaque fois que vous vous connectez à un autre compte ; Toujours autoriser évite les rappels."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch がサインインすることはありません。読み取りはすべて、すでにアカウントを保持しているツールから借りたものです。ここでサインアウトすると資格情報の読み取りが止まり、数値も忘れられますが、そのツールへのサインインはそのまま残ります。macOS はツールごとに初回の一度、そして別のアカウントにサインインするたびに確認します。「常に許可」を選べば以後は尋ねられません。"
+            "value": "Provider Monitor がサインインすることはありません。読み取りはすべて、すでにアカウントを保持しているツールから借りたものです。ここでサインアウトすると資格情報の読み取りが止まり、数値も忘れられますが、そのツールへのサインインはそのまま残ります。macOS はツールごとに初回の一度、そして別のアカウントにサインインするたびに確認します。「常に許可」を選べば以後は尋ねられません。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Codenotch nunca faz login — cada leitura é emprestada da ferramenta que já tem a conta. Sair daqui interrompe a leitura da credencial e esquece os números, mas você continua conectado naquela ferramenta. O macOS pergunta uma vez por ferramenta na primeira vez, e de novo sempre que você entrar em outra conta; Sempre Permitir mantém isso em silêncio."
+            "value": "O Provider Monitor nunca faz login — cada leitura é emprestada da ferramenta que já tem a conta. Sair daqui interrompe a leitura da credencial e esquece os números, mas você continua conectado naquela ferramenta. O macOS pergunta uma vez por ferramenta na primeira vez, e de novo sempre que você entrar em outra conta; Sempre Permitir mantém isso em silêncio."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 从不自己登录 — 每条读数都借自已经持有该账号的工具。在这里退出只会停止读取凭证并忘掉数字，你在那个工具里仍然是登录状态。macOS 每种工具第一次会问一次，换账号再登录时还会再问；选「始终允许」就不会再打扰。"
+            "value": "Provider Monitor 从不自己登录 — 每条读数都借自已经持有该账号的工具。在这里退出只会停止读取凭证并忘掉数字，你在那个工具里仍然是登录状态。macOS 每种工具第一次会问一次，换账号再登录时还会再问；选「始终允许」就不会再打扰。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch не выполняет вход — каждое показание берётся из уже авторизованного инструмента. Выход здесь прекращает чтение учётных данных и удаляет числа, но не выполняет выход из инструмента. macOS спрашивает разрешение один раз для каждого инструмента и при смене аккаунта; «Разрешать всегда» отключает повторные запросы."
+            "value": "Provider Monitor не выполняет вход — каждое показание берётся из уже авторизованного инструмента. Выход здесь прекращает чтение учётных данных и удаляет числа, но не выполняет выход из инструмента. macOS спрашивает разрешение один раз для каждого инструмента и при смене аккаунта; «Разрешать всегда» отключает повторные запросы."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch meldet sich nie selbst an — jeder Messwert wird von dem Tool geliehen, das das Konto bereits besitzt. Sich hier abzumelden stoppt nur das Lesen der Zugangsdaten und vergisst die Zahlen, meldet dich aber nicht bei diesem Tool ab. macOS fragt beim ersten Mal einmal pro Tool nach, und erneut, sobald du dich bei einem anderen Konto anmeldest; „Immer erlauben“ hält es still."
+            "value": "Provider Monitor meldet sich nie selbst an — jeder Messwert wird von dem Tool geliehen, das das Konto bereits besitzt. Sich hier abzumelden stoppt nur das Lesen der Zugangsdaten und vergisst die Zahlen, meldet dich aber nicht bei diesem Tool ab. macOS fragt beim ersten Mal einmal pro Tool nach, und erneut, sobald du dich bei einem anderen Konto anmeldest; „Immer erlauben“ hält es still."
           }
         }
       }
     },
-    "Codenotch reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor, Codex, Antigravity, GLM, Grok or OpenCode, and its ring appears in the notch.": {
+    "Provider Monitor reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor, Codex, Antigravity, GLM, Grok or OpenCode, and its ring appears in the notch.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch lit la consommation des outils déjà connectés sur ce Mac — il ne demande jamais votre mot de passe. Installez l'un de Claude Code (l'outil en terminal, pas l'app Claude), Cursor, Codex, Antigravity, GLM, Grok ou OpenCode et connectez-vous : son anneau apparaît dans l'encoche."
+            "value": "Provider Monitor lit la consommation des outils déjà connectés sur ce Mac — il ne demande jamais votre mot de passe. Installez l'un de Claude Code (l'outil en terminal, pas l'app Claude), Cursor, Codex, Antigravity, GLM, Grok ou OpenCode et connectez-vous : son anneau apparaît dans l'encoche."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch は、この Mac ですでにサインイン済みのツールから使用量を読み取ります。パスワードを尋ねることはありません。Claude Code（Claude アプリではなくターミナルのツール）、Cursor、Codex、Antigravity、GLM、Grok、OpenCode のいずれかをインストールしてサインインすると、そのリングがノッチに現れます。"
+            "value": "Provider Monitor は、この Mac ですでにサインイン済みのツールから使用量を読み取ります。パスワードを尋ねることはありません。Claude Code（Claude アプリではなくターミナルのツール）、Cursor、Codex、Antigravity、GLM、Grok、OpenCode のいずれかをインストールしてサインインすると、そのリングがノッチに現れます。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Codenotch lê o uso de ferramentas já conectadas neste Mac — ele nunca pede sua senha. Instale e entre em qualquer um destes: Claude Code (a ferramenta de terminal, não o app Claude), Cursor, Codex, Antigravity, GLM, Grok ou OpenCode, e o anel correspondente aparece no notch."
+            "value": "O Provider Monitor lê o uso de ferramentas já conectadas neste Mac — ele nunca pede sua senha. Instale e entre em qualquer um destes: Claude Code (a ferramenta de terminal, não o app Claude), Cursor, Codex, Antigravity, GLM, Grok ou OpenCode, e o anel correspondente aparece no notch."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 读取这台 Mac 上已经登录的工具的用量 — 从不问你的密码。安装并登录 Claude Code（终端工具，不是 Claude 应用）、Cursor、Codex、Antigravity、GLM、Grok 或 OpenCode 中的任意一个，刘海里就会出现对应的圆环。"
+            "value": "Provider Monitor 读取这台 Mac 上已经登录的工具的用量 — 从不问你的密码。安装并登录 Claude Code（终端工具，不是 Claude 应用）、Cursor、Codex、Antigravity、GLM、Grok 或 OpenCode 中的任意一个，刘海里就会出现对应的圆环。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch читает использование из инструментов, уже авторизованных на этом Mac, и никогда не спрашивает пароль. Установите и авторизуйтесь в Claude Code (терминальном инструменте, не приложении Claude), Cursor, Codex, Antigravity, GLM, Grok или OpenCode — и кольцо появится на панели."
+            "value": "Provider Monitor читает использование из инструментов, уже авторизованных на этом Mac, и никогда не спрашивает пароль. Установите и авторизуйтесь в Claude Code (терминальном инструменте, не приложении Claude), Cursor, Codex, Antigravity, GLM, Grok или OpenCode — и кольцо появится на панели."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch liest die Nutzung von Tools, die auf diesem Mac bereits angemeldet sind — es fragt nie nach deinem Passwort. Installiere eines von Claude Code (das Terminal-Tool, nicht die Claude-App), Cursor, Codex, Antigravity, GLM, Grok oder OpenCode und melde dich an — der zugehörige Ring erscheint dann in der Notch."
+            "value": "Provider Monitor liest die Nutzung von Tools, die auf diesem Mac bereits angemeldet sind — es fragt nie nach deinem Passwort. Installiere eines von Claude Code (das Terminal-Tool, nicht die Claude-App), Cursor, Codex, Antigravity, GLM, Grok oder OpenCode und melde dich an — der zugehörige Ring erscheint dann in der Notch."
           }
         }
       }
@@ -4142,43 +4142,43 @@
         }
       }
     },
-    "Version %@. Updates install in the background and apply next time Codenotch starts.": {
+    "Version %@. Updates install in the background and apply next time Provider Monitor starts.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Version %@. Les mises à jour s'installent en arrière-plan et s'appliquent au prochain démarrage de Codenotch."
+            "value": "Version %@. Les mises à jour s'installent en arrière-plan et s'appliquent au prochain démarrage de Provider Monitor."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "バージョン %@。アップデートはバックグラウンドでインストールされ、次回 Codenotch を起動したときに適用されます。"
+            "value": "バージョン %@。アップデートはバックグラウンドでインストールされ、次回 Provider Monitor を起動したときに適用されます。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Versão %@. As atualizações são instaladas em segundo plano e valem na próxima vez que o Codenotch iniciar."
+            "value": "Versão %@. As atualizações são instaladas em segundo plano e valem na próxima vez que o Provider Monitor iniciar."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "版本 %@。更新在后台安装，下次启动 Codenotch 时生效。"
+            "value": "版本 %@。更新在后台安装，下次启动 Provider Monitor 时生效。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Версия %@. Обновления устанавливаются в фоне и применяются при следующем запуске Codenotch."
+            "value": "Версия %@. Обновления устанавливаются в фоне и применяются при следующем запуске Provider Monitor."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Version %@. Updates werden im Hintergrund installiert und gelten ab dem nächsten Start von Codenotch."
+            "value": "Version %@. Updates werden im Hintergrund installiert und gelten ab dem nächsten Start von Provider Monitor."
           }
         }
       }
@@ -4429,13 +4429,13 @@
         }
       }
     },
-    "macOS is not letting Codenotch read %@'s saved login. Choose Allow access… above, then Always Allow.": {
+    "macOS is not letting Provider Monitor read %@'s saved login. Choose Allow access… above, then Always Allow.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS n'autorise pas Codenotch à lire les identifiants enregistrés de %@. Choisissez Autoriser l'accès… ci-dessus, puis Toujours autoriser."
+            "value": "macOS n'autorise pas Provider Monitor à lire les identifiants enregistrés de %@. Choisissez Autoriser l'accès… ci-dessus, puis Toujours autoriser."
           }
         },
         "ja": {
@@ -4447,25 +4447,25 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O macOS não está deixando o Codenotch ler o login salvo do %@. Escolha Permitir acesso… acima e depois Sempre Permitir."
+            "value": "O macOS não está deixando o Provider Monitor ler o login salvo do %@. Escolha Permitir acesso… acima e depois Sempre Permitir."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS 不让 Codenotch 读取 %@ 已保存的登录信息。点上面的「允许访问…」，然后选「始终允许」。"
+            "value": "macOS 不让 Provider Monitor 读取 %@ 已保存的登录信息。点上面的「允许访问…」，然后选「始终允许」。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS не разрешает Codenotch читать сохранённый вход %@. Выберите выше «Разрешить доступ…», затем «Разрешать всегда»."
+            "value": "macOS не разрешает Provider Monitor читать сохранённый вход %@. Выберите выше «Разрешить доступ…», затем «Разрешать всегда»."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS erlaubt Codenotch nicht, die gespeicherte Anmeldung von %@ zu lesen. Wähle oben „Zugriff erlauben…“ und dann „Immer erlauben“."
+            "value": "macOS erlaubt Provider Monitor nicht, die gespeicherte Anmeldung von %@ zu lesen. Wähle oben „Zugriff erlauben…“ und dann „Immer erlauben“."
           }
         }
       }
@@ -4593,43 +4593,43 @@
         }
       }
     },
-    "Codenotch Settings": {
+    "Provider Monitor Settings": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Réglages de Codenotch"
+            "value": "Réglages de Provider Monitor"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 設定"
+            "value": "Provider Monitor 設定"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajustes do Codenotch"
+            "value": "Ajustes do Provider Monitor"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 设置"
+            "value": "Provider Monitor 设置"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Настройки Codenotch"
+            "value": "Настройки Provider Monitor"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch-Einstellungen"
+            "value": "Provider Monitor-Einstellungen"
           }
         }
       }
@@ -4675,43 +4675,43 @@
         }
       }
     },
-    "What's new in Codenotch": {
+    "What's new in Provider Monitor": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les nouveautés de Codenotch"
+            "value": "Les nouveautés de Provider Monitor"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch の新機能"
+            "value": "Provider Monitor の新機能"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Novidades do Codenotch"
+            "value": "Novidades do Provider Monitor"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 新变化"
+            "value": "Provider Monitor 新变化"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Что нового в Codenotch"
+            "value": "Что нового в Provider Monitor"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Neuheiten in Codenotch"
+            "value": "Neuheiten in Provider Monitor"
           }
         }
       }
@@ -4798,43 +4798,43 @@
         }
       }
     },
-    "macOS refused this — try moving Codenotch to /Applications.": {
+    "macOS refused this — try moving Provider Monitor to /Applications.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS a refusé — essayez de déplacer Codenotch dans /Applications."
+            "value": "macOS a refusé — essayez de déplacer Provider Monitor dans /Applications."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS に拒否されました — Codenotch を /Applications に移動してみてください。"
+            "value": "macOS に拒否されました — Provider Monitor を /Applications に移動してみてください。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O macOS recusou isso — tente mover o Codenotch para /Applications."
+            "value": "O macOS recusou isso — tente mover o Provider Monitor para /Applications."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS 拒绝了 — 试着把 Codenotch 移到「应用程序」。"
+            "value": "macOS 拒绝了 — 试着把 Provider Monitor 移到「应用程序」。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS отказала — попробуйте переместить Codenotch в /Applications."
+            "value": "macOS отказала — попробуйте переместить Provider Monitor в /Applications."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS hat das abgelehnt — versuche, Codenotch nach /Applications zu verschieben."
+            "value": "macOS hat das abgelehnt — versuche, Provider Monitor nach /Applications zu verschieben."
           }
         }
       }
@@ -5126,43 +5126,43 @@
         }
       }
     },
-    "Signs out of %@ — the session belongs to Codenotch.": {
+    "Signs out of %@ — the session belongs to Provider Monitor.": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Выход из %@ — сессия принадлежит Codenotch."
+            "value": "Выход из %@ — сессия принадлежит Provider Monitor."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Vous déconnecte de %@ — la session appartient à Codenotch."
+            "value": "Vous déconnecte de %@ — la session appartient à Provider Monitor."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ からサインアウトします — このセッションは Codenotch のものです。"
+            "value": "%@ からサインアウトします — このセッションは Provider Monitor のものです。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sai do %@ — a sessão pertence ao Codenotch."
+            "value": "Sai do %@ — a sessão pertence ao Provider Monitor."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "会退出 %@ — 这个会话属于 Codenotch。"
+            "value": "会退出 %@ — 这个会话属于 Provider Monitor。"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Meldet dich bei %@ ab — die Sitzung gehört Codenotch."
+            "value": "Meldet dich bei %@ ab — die Sitzung gehört Provider Monitor."
           }
         }
       }
@@ -5741,43 +5741,43 @@
         }
       }
     },
-    "Quit Codenotch": {
+    "Quit Provider Monitor": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Выйти из Codenotch"
+            "value": "Выйти из Provider Monitor"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quitter Codenotch"
+            "value": "Quitter Provider Monitor"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch を終了"
+            "value": "Provider Monitor を終了"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Encerrar o Codenotch"
+            "value": "Encerrar o Provider Monitor"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "退出 Codenotch"
+            "value": "退出 Provider Monitor"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch beenden"
+            "value": "Provider Monitor beenden"
           }
         }
       }
@@ -5864,43 +5864,43 @@
         }
       }
     },
-    "Codenotch is set to Always show. Change it in Settings.": {
+    "Provider Monitor is set to Always show. Change it in Settings.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch est réglé sur Toujours afficher. Modifiez-le dans les Réglages."
+            "value": "Provider Monitor est réglé sur Toujours afficher. Modifiez-le dans les Réglages."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch は「常に表示」に設定されています。設定で変更してください。"
+            "value": "Provider Monitor は「常に表示」に設定されています。設定で変更してください。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Codenotch está definido como Sempre exibir. Altere isso nos Ajustes."
+            "value": "O Provider Monitor está definido como Sempre exibir. Altere isso nos Ajustes."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 已设为「始终显示」。请在设置里更改。"
+            "value": "Provider Monitor 已设为「始终显示」。请在设置里更改。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Для Codenotch включён режим «Показывать всегда». Измените его в настройках."
+            "value": "Для Provider Monitor включён режим «Показывать всегда». Измените его в настройках."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch ist auf „Immer anzeigen“ eingestellt. Ändere das in den Einstellungen."
+            "value": "Provider Monitor ist auf „Immer anzeigen“ eingestellt. Ändere das in den Einstellungen."
           }
         }
       }
@@ -5946,43 +5946,43 @@
         }
       }
     },
-    "Codenotch is up to date.": {
+    "Provider Monitor is up to date.": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch обновлён."
+            "value": "Provider Monitor обновлён."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch est à jour."
+            "value": "Provider Monitor est à jour."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch は最新です。"
+            "value": "Provider Monitor は最新です。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Codenotch está atualizado."
+            "value": "O Provider Monitor está atualizado."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 已是最新版本。"
+            "value": "Provider Monitor 已是最新版本。"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch ist auf dem neuesten Stand."
+            "value": "Provider Monitor ist auf dem neuesten Stand."
           }
         }
       }
@@ -6028,43 +6028,43 @@
         }
       }
     },
-    "Couldn't reach the update server. Codenotch will try again on its own — nothing is wrong with this copy.": {
+    "Couldn't reach the update server. Provider Monitor will try again on its own — nothing is wrong with this copy.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Serveur de mise à jour injoignable. Codenotch réessaiera de lui-même — cette copie n'a aucun problème."
+            "value": "Serveur de mise à jour injoignable. Provider Monitor réessaiera de lui-même — cette copie n'a aucun problème."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アップデートサーバーに接続できませんでした。Codenotch が自動で再試行します — このコピーに問題はありません。"
+            "value": "アップデートサーバーに接続できませんでした。Provider Monitor が自動で再試行します — このコピーに問題はありません。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Não foi possível acessar o servidor de atualizações. O Codenotch tentará de novo sozinho — não há nada de errado com esta cópia."
+            "value": "Não foi possível acessar o servidor de atualizações. O Provider Monitor tentará de novo sozinho — não há nada de errado com esta cópia."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "连不上更新服务器。Codenotch 会自己再试 — 这份安装没有问题。"
+            "value": "连不上更新服务器。Provider Monitor 会自己再试 — 这份安装没有问题。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Не удалось связаться с сервером обновлений. Codenotch повторит попытку автоматически — с этой копией всё в порядке."
+            "value": "Не удалось связаться с сервером обновлений. Provider Monitor повторит попытку автоматически — с этой копией всё в порядке."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Der Update-Server war nicht erreichbar. Codenotch versucht es von selbst noch einmal — mit dieser Kopie ist alles in Ordnung."
+            "value": "Der Update-Server war nicht erreichbar. Provider Monitor versucht es von selbst noch einmal — mit dieser Kopie ist alles in Ordnung."
           }
         }
       }
@@ -7258,13 +7258,13 @@
         }
       }
     },
-    "The figure came from a file Codex writes during a turn, so it was as old as the last time you used it — three days stale in one case. Codenotch now asks Codex itself, and matches its own panel.": {
+    "The figure came from a file Codex writes during a turn, so it was as old as the last time you used it — three days stale in one case. Provider Monitor now asks Codex itself, and matches its own panel.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Le chiffre venait d'un fichier que Codex écrit pendant un tour : il datait donc de votre dernière utilisation — trois jours de retard dans un cas. Codenotch interroge désormais Codex lui-même, et correspond à son propre panneau."
+            "value": "Le chiffre venait d'un fichier que Codex écrit pendant un tour : il datait donc de votre dernière utilisation — trois jours de retard dans un cas. Provider Monitor interroge désormais Codex lui-même, et correspond à son propre panneau."
           }
         },
         "ja": {
@@ -7276,25 +7276,25 @@
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O número vinha de um arquivo que o Codex escreve durante um turno, então era tão antigo quanto a última vez que você o usou — três dias desatualizado em um caso. Agora o Codenotch pergunta ao próprio Codex, e bate com o painel dele."
+            "value": "O número vinha de um arquivo que o Codex escreve durante um turno, então era tão antigo quanto a última vez que você o usou — três dias desatualizado em um caso. Agora o Provider Monitor pergunta ao próprio Codex, e bate com o painel dele."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "数字来自 Codex 在一轮对话里写的文件，所以有多旧取决于你上次用它是什么时候 — 有一次旧了三天。Codenotch 现在直接问 Codex，并与它自己的面板一致。"
+            "value": "数字来自 Codex 在一轮对话里写的文件，所以有多旧取决于你上次用它是什么时候 — 有一次旧了三天。Provider Monitor 现在直接问 Codex，并与它自己的面板一致。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Число бралась из файла, который Codex записывает во время хода, поэтому могло устареть на несколько дней. Теперь Codenotch спрашивает сам Codex и показывает данные его панели."
+            "value": "Число бралась из файла, который Codex записывает во время хода, поэтому могло устареть на несколько дней. Теперь Provider Monitor спрашивает сам Codex и показывает данные его панели."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Zahl stammte aus einer Datei, die Codex während eines Turns schreibt, war also so alt wie deine letzte Nutzung — in einem Fall drei Tage veraltet. Codenotch fragt jetzt Codex selbst und stimmt mit dessen eigenem Panel überein."
+            "value": "Die Zahl stammte aus einer Datei, die Codex während eines Turns schreibt, war also so alt wie deine letzte Nutzung — in einem Fall drei Tage veraltet. Provider Monitor fragt jetzt Codex selbst und stimmt mit dessen eigenem Panel überein."
           }
         }
       }
@@ -8078,43 +8078,43 @@
         }
       }
     },
-    "Google will not answer Codenotch directly, so it asks Antigravity's own language server instead — the same place Antigravity's usage panel gets its figure.": {
+    "Google will not answer Provider Monitor directly, so it asks Antigravity's own language server instead — the same place Antigravity's usage panel gets its figure.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Google ne répond pas directement à Codenotch, qui interroge donc le serveur de langage d'Antigravity — là où le panneau de consommation d'Antigravity prend son chiffre."
+            "value": "Google ne répond pas directement à Provider Monitor, qui interroge donc le serveur de langage d'Antigravity — là où le panneau de consommation d'Antigravity prend son chiffre."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Google は Codenotch に直接応答しないため、代わりに Antigravity 自身の言語サーバーに問い合わせます。Antigravity の使用量パネルが数値を得ているのと同じ場所です。"
+            "value": "Google は Provider Monitor に直接応答しないため、代わりに Antigravity 自身の言語サーバーに問い合わせます。Antigravity の使用量パネルが数値を得ているのと同じ場所です。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Google não responde ao Codenotch diretamente, então ele pergunta ao servidor de linguagem do próprio Antigravity — o mesmo lugar de onde o painel de uso do Antigravity tira o número dele."
+            "value": "O Google não responde ao Provider Monitor diretamente, então ele pergunta ao servidor de linguagem do próprio Antigravity — o mesmo lugar de onde o painel de uso do Antigravity tira o número dele."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Google 不会直接回答 Codenotch，所以改问 Antigravity 自己的语言服务器 — 也就是 Antigravity 用量面板取数字的地方。"
+            "value": "Google 不会直接回答 Provider Monitor，所以改问 Antigravity 自己的语言服务器 — 也就是 Antigravity 用量面板取数字的地方。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Google не отвечает Codenotch напрямую, поэтому приложение спрашивает языковой сервер Antigravity — тот же источник использует панель использования Antigravity."
+            "value": "Google не отвечает Provider Monitor напрямую, поэтому приложение спрашивает языковой сервер Antigravity — тот же источник использует панель использования Antigravity."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Google antwortet Codenotch nicht direkt, deshalb fragt es stattdessen Antigravitys eigenen Language-Server — dieselbe Quelle, aus der auch Antigravitys Nutzungsanzeige ihre Zahl bezieht."
+            "value": "Google antwortet Provider Monitor nicht direkt, deshalb fragt es stattdessen Antigravitys eigenen Language-Server — dieselbe Quelle, aus der auch Antigravitys Nutzungsanzeige ihre Zahl bezieht."
           }
         }
       }
@@ -8693,84 +8693,84 @@
         }
       }
     },
-    "Each read from the tool already signed in on this Mac. Codenotch never asks for a password.": {
+    "Each read from the tool already signed in on this Mac. Provider Monitor never asks for a password.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Chacun lu depuis l'outil déjà connecté sur ce Mac. Codenotch ne demande jamais de mot de passe."
+            "value": "Chacun lu depuis l'outil déjà connecté sur ce Mac. Provider Monitor ne demande jamais de mot de passe."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "いずれもこの Mac ですでにサインイン済みのツールから読み取ります。Codenotch がパスワードを尋ねることはありません。"
+            "value": "いずれもこの Mac ですでにサインイン済みのツールから読み取ります。Provider Monitor がパスワードを尋ねることはありません。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cada um lido da ferramenta já conectada neste Mac. O Codenotch nunca pede uma senha."
+            "value": "Cada um lido da ferramenta já conectada neste Mac. O Provider Monitor nunca pede uma senha."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "各自读取这台 Mac 上已经登录的工具。Codenotch 从不问密码。"
+            "value": "各自读取这台 Mac 上已经登录的工具。Provider Monitor 从不问密码。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Данные читаются из уже авторизованного на этом Mac инструмента. Codenotch никогда не спрашивает пароль."
+            "value": "Данные читаются из уже авторизованного на этом Mac инструмента. Provider Monitor никогда не спрашивает пароль."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Jeder wird aus dem Tool gelesen, das auf diesem Mac bereits angemeldet ist. Codenotch fragt nie nach einem Passwort."
+            "value": "Jeder wird aus dem Tool gelesen, das auf diesem Mac bereits angemeldet ist. Provider Monitor fragt nie nach einem Passwort."
           }
         }
       }
     },
-    "Choose where Codenotch appears": {
+    "Choose where Provider Monitor appears": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choisissez où Codenotch apparaît"
+            "value": "Choisissez où Provider Monitor apparaît"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch の表示場所を選択"
+            "value": "Provider Monitor の表示場所を選択"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Escolha onde o Codenotch aparece"
+            "value": "Escolha onde o Provider Monitor aparece"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择 Codenotch 出现在哪里"
+            "value": "选择 Provider Monitor 出现在哪里"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Выберите, где показывать Codenotch"
+            "value": "Выберите, где показывать Provider Monitor"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wählen, wo Codenotch erscheint"
+            "value": "Wählen, wo Provider Monitor erscheint"
           }
         }
       }
@@ -8816,43 +8816,43 @@
         }
       }
     },
-    "Codenotch": {
+    "Provider Monitor": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch"
+            "value": "Provider Monitor"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch"
+            "value": "Provider Monitor"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch"
+            "value": "Provider Monitor"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch"
+            "value": "Provider Monitor"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch"
+            "value": "Provider Monitor"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch"
+            "value": "Provider Monitor"
           }
         }
       }
@@ -9677,43 +9677,43 @@
         }
       }
     },
-    "Nothing on screen. The readings stay in the menu bar menu when App icon is Menu bar. Otherwise, open Codenotch again from Applications to bring these settings back.": {
+    "Nothing on screen. The readings stay in the menu bar menu when App icon is Menu bar. Otherwise, open Provider Monitor again from Applications to bring these settings back.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rien à l'écran. Les relevés restent dans le menu de la barre des menus quand Icône de l'app est réglée sur Barre des menus. Sinon, rouvrez Codenotch depuis Applications pour retrouver ces réglages."
+            "value": "Rien à l'écran. Les relevés restent dans le menu de la barre des menus quand Icône de l'app est réglée sur Barre des menus. Sinon, rouvrez Provider Monitor depuis Applications pour retrouver ces réglages."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "画面には何も出ません。「アプリアイコン」が「メニューバー」なら、読み取りはメニューバーのメニューに残ります。それ以外の場合、この設定に戻るには、アプリケーションから Codenotch をもう一度開いてください。"
+            "value": "画面には何も出ません。「アプリアイコン」が「メニューバー」なら、読み取りはメニューバーのメニューに残ります。それ以外の場合、この設定に戻るには、アプリケーションから Provider Monitor をもう一度開いてください。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nada na tela. As leituras continuam no menu da barra de menus quando o Ícone do app é Barra de menus. Caso contrário, abra o Codenotch novamente em Aplicativos para trazer estes ajustes de volta."
+            "value": "Nada na tela. As leituras continuam no menu da barra de menus quando o Ícone do app é Barra de menus. Caso contrário, abra o Provider Monitor novamente em Aplicativos para trazer estes ajustes de volta."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "屏幕上什么都没有。应用图标选「菜单栏」时，读数仍在菜单栏菜单里。否则，从「应用程序」再打开 Codenotch，才能回到这些设置。"
+            "value": "屏幕上什么都没有。应用图标选「菜单栏」时，读数仍在菜单栏菜单里。否则，从「应用程序」再打开 Provider Monitor，才能回到这些设置。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "На экране ничего нет. Если значок приложения находится в строке меню, показания остаются в её меню. Иначе снова откройте Codenotch из папки «Программы», чтобы вернуть эти настройки."
+            "value": "На экране ничего нет. Если значок приложения находится в строке меню, показания остаются в её меню. Иначе снова откройте Provider Monitor из папки «Программы», чтобы вернуть эти настройки."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nichts auf dem Bildschirm. Wenn App-Symbol auf Menüleiste steht, bleiben die Messwerte im Menü der Menüleiste. Andernfalls öffne Codenotch erneut aus dem Programme-Ordner, um diese Einstellungen zurückzuholen."
+            "value": "Nichts auf dem Bildschirm. Wenn App-Symbol auf Menüleiste steht, bleiben die Messwerte im Menü der Menüleiste. Andernfalls öffne Provider Monitor erneut aus dem Programme-Ordner, um diese Einstellungen zurückzuholen."
           }
         }
       }
@@ -11727,43 +11727,43 @@
         }
       }
     },
-    "That display is disconnected. Codenotch follows the active window until it returns.": {
+    "That display is disconnected. Provider Monitor follows the active window until it returns.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cet écran est déconnecté. Codenotch suit la fenêtre active jusqu'à son retour."
+            "value": "Cet écran est déconnecté. Provider Monitor suit la fenêtre active jusqu'à son retour."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "そのディスプレイは接続されていません。復帰するまで、Codenotch はアクティブなウインドウに追従します。"
+            "value": "そのディスプレイは接続されていません。復帰するまで、Provider Monitor はアクティブなウインドウに追従します。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Essa tela está desconectada. O Codenotch acompanha a janela ativa até ela voltar."
+            "value": "Essa tela está desconectada. O Provider Monitor acompanha a janela ativa até ela voltar."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "那台显示器已断开。Codenotch 会跟随活动窗口，直到它回来。"
+            "value": "那台显示器已断开。Provider Monitor 会跟随活动窗口，直到它回来。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Этот дисплей отключён. Codenotch следует за активным окном, пока дисплей не вернётся."
+            "value": "Этот дисплей отключён. Provider Monitor следует за активным окном, пока дисплей не вернётся."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dieser Bildschirm ist getrennt. Codenotch folgt dem aktiven Fenster, bis er zurückkommt."
+            "value": "Dieser Bildschirm ist getrennt. Provider Monitor folgt dem aktiven Fenster, bis er zurückkommt."
           }
         }
       }
@@ -11973,43 +11973,43 @@
         }
       }
     },
-    "Codenotch reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor (the editor or cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot or a Gemini API key (via Gemini CLI, OpenCode or Hermes), and its ring appears in the notch.": {
+    "Provider Monitor reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor (the editor or cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot or a Gemini API key (via Gemini CLI, OpenCode or Hermes), and its ring appears in the notch.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch lit la consommation des outils déjà connectés sur ce Mac — il ne demande jamais votre mot de passe. Installez l'un de Claude Code (l'outil en terminal, pas l'app Claude), Cursor (l'éditeur ou cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot ou une clé API Gemini (via Gemini CLI, OpenCode ou Hermes) et connectez-vous : son anneau apparaît dans l'encoche."
+            "value": "Provider Monitor lit la consommation des outils déjà connectés sur ce Mac — il ne demande jamais votre mot de passe. Installez l'un de Claude Code (l'outil en terminal, pas l'app Claude), Cursor (l'éditeur ou cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot ou une clé API Gemini (via Gemini CLI, OpenCode ou Hermes) et connectez-vous : son anneau apparaît dans l'encoche."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch は、この Mac ですでにサインイン済みのツールから使用量を読み取ります。パスワードを尋ねることはありません。Claude Code（Claude アプリではなくターミナルのツール）、Cursor（エディタまたは cursor-agent）、Codex、Antigravity、GLM、Grok、OpenCode、GitHub Copilot、または Gemini API キー（Gemini CLI、OpenCode、Hermes 経由）のいずれかをインストールしてサインインすると、そのリングがノッチに現れます。"
+            "value": "Provider Monitor は、この Mac ですでにサインイン済みのツールから使用量を読み取ります。パスワードを尋ねることはありません。Claude Code（Claude アプリではなくターミナルのツール）、Cursor（エディタまたは cursor-agent）、Codex、Antigravity、GLM、Grok、OpenCode、GitHub Copilot、または Gemini API キー（Gemini CLI、OpenCode、Hermes 経由）のいずれかをインストールしてサインインすると、そのリングがノッチに現れます。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Codenotch lê o uso de ferramentas já conectadas neste Mac — ele nunca pede sua senha. Instale e entre em qualquer um destes: Claude Code (a ferramenta de terminal, não o app Claude), Cursor (o editor ou o cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot ou uma chave de API do Gemini (via CLI do Gemini, OpenCode ou Hermes), e o anel correspondente aparece no notch."
+            "value": "O Provider Monitor lê o uso de ferramentas já conectadas neste Mac — ele nunca pede sua senha. Instale e entre em qualquer um destes: Claude Code (a ferramenta de terminal, não o app Claude), Cursor (o editor ou o cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot ou uma chave de API do Gemini (via CLI do Gemini, OpenCode ou Hermes), e o anel correspondente aparece no notch."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 读取这台 Mac 上已经登录的工具的用量 — 从不问你的密码。安装并登录 Claude Code（终端工具，不是 Claude 应用）、Cursor（编辑器或 cursor-agent）、Codex、Antigravity、GLM、Grok、OpenCode、GitHub Copilot 或 Gemini API 密钥（经由 Gemini CLI、OpenCode 或 Hermes）中的任意一个，刘海里就会出现对应的圆环。"
+            "value": "Provider Monitor 读取这台 Mac 上已经登录的工具的用量 — 从不问你的密码。安装并登录 Claude Code（终端工具，不是 Claude 应用）、Cursor（编辑器或 cursor-agent）、Codex、Antigravity、GLM、Grok、OpenCode、GitHub Copilot 或 Gemini API 密钥（经由 Gemini CLI、OpenCode 或 Hermes）中的任意一个，刘海里就会出现对应的圆环。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch читает использование из инструментов, уже авторизованных на этом Mac, и никогда не спрашивает пароль. Установите и авторизуйтесь в Claude Code (терминальном инструменте, не приложении Claude), Cursor (редакторе или cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot или Gemini API через Gemini CLI, OpenCode или Hermes — и кольцо появится на панели."
+            "value": "Provider Monitor читает использование из инструментов, уже авторизованных на этом Mac, и никогда не спрашивает пароль. Установите и авторизуйтесь в Claude Code (терминальном инструменте, не приложении Claude), Cursor (редакторе или cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot или Gemini API через Gemini CLI, OpenCode или Hermes — и кольцо появится на панели."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch liest die Nutzung von Tools, die auf diesem Mac bereits angemeldet sind — es fragt nie nach deinem Passwort. Installiere eines von Claude Code (das Terminal-Tool, nicht die Claude-App), Cursor (den Editor oder cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot oder einen Gemini-API-Schlüssel (über Gemini CLI, OpenCode oder Hermes) und melde dich an — der zugehörige Ring erscheint dann in der Notch."
+            "value": "Provider Monitor liest die Nutzung von Tools, die auf diesem Mac bereits angemeldet sind — es fragt nie nach deinem Passwort. Installiere eines von Claude Code (das Terminal-Tool, nicht die Claude-App), Cursor (den Editor oder cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, GitHub Copilot oder einen Gemini-API-Schlüssel (über Gemini CLI, OpenCode oder Hermes) und melde dich an — der zugehörige Ring erscheint dann in der Notch."
           }
         }
       }
@@ -13162,43 +13162,43 @@
         }
       }
     },
-    "Codenotch uses this language even if the Mac does not.": {
+    "Provider Monitor uses this language even if the Mac does not.": {
       "extractionState": "manual",
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch использует этот язык независимо от языка Mac."
+            "value": "Provider Monitor использует этот язык независимо от языка Mac."
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch utilise cette langue même si le Mac ne le fait pas."
+            "value": "Provider Monitor utilise cette langue même si le Mac ne le fait pas."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mac がこの言語でなくても、Codenotch はこの言語を使います。"
+            "value": "Mac がこの言語でなくても、Provider Monitor はこの言語を使います。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Codenotch usa este idioma mesmo que o Mac não use."
+            "value": "O Provider Monitor usa este idioma mesmo que o Mac não use."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "即使 Mac 不是这种语言，Codenotch 也使用它。"
+            "value": "即使 Mac 不是这种语言，Provider Monitor 也使用它。"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch verwendet diese Sprache, auch wenn der Mac es nicht tut."
+            "value": "Provider Monitor verwendet diese Sprache, auch wenn der Mac es nicht tut."
           }
         }
       }
@@ -14310,43 +14310,43 @@
         }
       }
     },
-    "Codenotch reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor (the editor or cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot or a Gemini API key (via Gemini CLI, OpenCode or Hermes), and its ring appears in the notch.": {
+    "Provider Monitor reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor (the editor or cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot or a Gemini API key (via Gemini CLI, OpenCode or Hermes), and its ring appears in the notch.": {
       "extractionState": "manual",
       "localizations": {
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch lit la consommation des outils déjà connectés sur ce Mac — il ne demande jamais votre mot de passe. Installez l'un de Claude Code (l'outil en terminal, pas l'app Claude), Cursor (l'éditeur ou cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot ou une clé API Gemini (via Gemini CLI, OpenCode ou Hermes) et connectez-vous : son anneau apparaît dans l'encoche."
+            "value": "Provider Monitor lit la consommation des outils déjà connectés sur ce Mac — il ne demande jamais votre mot de passe. Installez l'un de Claude Code (l'outil en terminal, pas l'app Claude), Cursor (l'éditeur ou cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot ou une clé API Gemini (via Gemini CLI, OpenCode ou Hermes) et connectez-vous : son anneau apparaît dans l'encoche."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch は、この Mac ですでにサインイン済みのツールから使用量を読み取ります。パスワードを尋ねることはありません。Claude Code（Claude アプリではなくターミナルのツール）、Cursor（エディタまたは cursor-agent）、Codex、Antigravity、GLM、Grok、OpenCode、Command Code、GitHub Copilot、または Gemini API キー（Gemini CLI、OpenCode、Hermes 経由）のいずれかをインストールしてサインインすると、そのリングがノッチに現れます。"
+            "value": "Provider Monitor は、この Mac ですでにサインイン済みのツールから使用量を読み取ります。パスワードを尋ねることはありません。Claude Code（Claude アプリではなくターミナルのツール）、Cursor（エディタまたは cursor-agent）、Codex、Antigravity、GLM、Grok、OpenCode、Command Code、GitHub Copilot、または Gemini API キー（Gemini CLI、OpenCode、Hermes 経由）のいずれかをインストールしてサインインすると、そのリングがノッチに現れます。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Codenotch lê o uso de ferramentas já conectadas neste Mac — ele nunca pede sua senha. Instale e entre em qualquer um destes: Claude Code (a ferramenta de terminal, não o app Claude), Cursor (o editor ou o cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot ou uma chave de API do Gemini (via CLI do Gemini, OpenCode ou Hermes), e o anel correspondente aparece no notch."
+            "value": "O Provider Monitor lê o uso de ferramentas já conectadas neste Mac — ele nunca pede sua senha. Instale e entre em qualquer um destes: Claude Code (a ferramenta de terminal, não o app Claude), Cursor (o editor ou o cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot ou uma chave de API do Gemini (via CLI do Gemini, OpenCode ou Hermes), e o anel correspondente aparece no notch."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 读取这台 Mac 上已经登录的工具的用量 — 从不问你的密码。安装并登录 Claude Code（终端工具，不是 Claude 应用）、Cursor（编辑器或 cursor-agent）、Codex、Antigravity、GLM、Grok、OpenCode、Command Code、GitHub Copilot 或 Gemini API 密钥（经由 Gemini CLI、OpenCode 或 Hermes）中的任意一个，刘海里就会出现对应的圆环。"
+            "value": "Provider Monitor 读取这台 Mac 上已经登录的工具的用量 — 从不问你的密码。安装并登录 Claude Code（终端工具，不是 Claude 应用）、Cursor（编辑器或 cursor-agent）、Codex、Antigravity、GLM、Grok、OpenCode、Command Code、GitHub Copilot 或 Gemini API 密钥（经由 Gemini CLI、OpenCode 或 Hermes）中的任意一个，刘海里就会出现对应的圆环。"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch читает использование из инструментов, уже авторизованных на этом Mac, и никогда не спрашивает пароль. Установите и авторизуйтесь в Claude Code (терминальном инструменте, не приложении Claude), Cursor (редакторе или cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot или Gemini API через Gemini CLI, OpenCode или Hermes — и кольцо появится на панели."
+            "value": "Provider Monitor читает использование из инструментов, уже авторизованных на этом Mac, и никогда не спрашивает пароль. Установите и авторизуйтесь в Claude Code (терминальном инструменте, не приложении Claude), Cursor (редакторе или cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot или Gemini API через Gemini CLI, OpenCode или Hermes — и кольцо появится на панели."
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch liest die Nutzung von Tools, die auf diesem Mac bereits angemeldet sind — es fragt nie nach deinem Passwort. Installiere eines von Claude Code (das Terminal-Tool, nicht die Claude-App), Cursor (den Editor oder cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot oder einen Gemini-API-Schlüssel (über Gemini CLI, OpenCode oder Hermes) und melde dich an — der zugehörige Ring erscheint dann in der Notch."
+            "value": "Provider Monitor liest die Nutzung von Tools, die auf diesem Mac bereits angemeldet sind — es fragt nie nach deinem Passwort. Installiere eines von Claude Code (das Terminal-Tool, nicht die Claude-App), Cursor (den Editor oder cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot oder einen Gemini-API-Schlüssel (über Gemini CLI, OpenCode oder Hermes) und melde dich an — der zugehörige Ring erscheint dann in der Notch."
           }
         }
       }
@@ -16694,25 +16694,25 @@
         }
       }
     },
-    "Codenotch already knows the moment an agent stops working or stops to ask you something. Clicking the notch while it is open brings that session's app to the front — the app, not the tab: only some terminals let anything outside them choose a tab, so the tooltip names the session instead.": {
+    "Provider Monitor already knows the moment an agent stops working or stops to ask you something. Clicking the notch while it is open brings that session's app to the front — the app, not the tab: only some terminals let anything outside them choose a tab, so the tooltip names the session instead.": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch weiß bereits in dem Moment Bescheid, in dem ein Agent aufhört zu arbeiten oder dich etwas fragt. Ein Klick auf die geöffnete Notch holt die App dieser Sitzung in den Vordergrund — die App, nicht den Tab: Nur manche Terminals erlauben es, von außen einen Tab auszuwählen, deshalb nennt der Tooltip stattdessen die Sitzung."
+            "value": "Provider Monitor weiß bereits in dem Moment Bescheid, in dem ein Agent aufhört zu arbeiten oder dich etwas fragt. Ein Klick auf die geöffnete Notch holt die App dieser Sitzung in den Vordergrund — die App, nicht den Tab: Nur manche Terminals erlauben es, von außen einen Tab auszuwählen, deshalb nennt der Tooltip stattdessen die Sitzung."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch は、エージェントが作業を止めた瞬間や、あなたに質問するために止まった瞬間をすでに把握しています。開いているノッチをクリックすると、そのセッションのアプリが前面に出ます。タブではなくアプリです。外部からタブを選べるターミナルは一部に限られるため、代わりにツールチップがセッション名を示します。"
+            "value": "Provider Monitor は、エージェントが作業を止めた瞬間や、あなたに質問するために止まった瞬間をすでに把握しています。開いているノッチをクリックすると、そのセッションのアプリが前面に出ます。タブではなくアプリです。外部からタブを選べるターミナルは一部に限られるため、代わりにツールチップがセッション名を示します。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch 已经知道助手何时停下来、或停下来问你。刘海展开时点一下，会把那个会话的应用带到前台 — 是应用，不是标签页：只有部分终端允许外部选定标签，所以提示里会写会话名称。"
+            "value": "Provider Monitor 已经知道助手何时停下来、或停下来问你。刘海展开时点一下，会把那个会话的应用带到前台 — 是应用，不是标签页：只有部分终端允许外部选定标签，所以提示里会写会话名称。"
           }
         }
       }
@@ -16740,25 +16740,25 @@
         }
       }
     },
-    "Most readings are borrowed from a tool that already holds the account. DeepSeek is the exception: clicking Sign in opens its own Codenotch WebView, and signing out here clears only that session and its saved reading.": {
+    "Most readings are borrowed from a tool that already holds the account. DeepSeek is the exception: clicking Sign in opens its own Provider Monitor WebView, and signing out here clears only that session and its saved reading.": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die meisten Messwerte werden von einem Tool geliehen, das das Konto bereits besitzt. DeepSeek ist die Ausnahme: Ein Klick auf „Anmelden“ öffnet eine eigene WebView von Codenotch, und eine Abmeldung hier löscht nur diese Sitzung und ihren gespeicherten Messwert."
+            "value": "Die meisten Messwerte werden von einem Tool geliehen, das das Konto bereits besitzt. DeepSeek ist die Ausnahme: Ein Klick auf „Anmelden“ öffnet eine eigene WebView von Provider Monitor, und eine Abmeldung hier löscht nur diese Sitzung und ihren gespeicherten Messwert."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ほとんどの読み取りは、すでにアカウントを持っているツールから借りています。DeepSeek だけは例外で、「サインイン」をクリックすると Codenotch 専用の WebView が開きます。ここでサインアウトしても、消えるのはそのセッションと保存された読み取りだけです。"
+            "value": "ほとんどの読み取りは、すでにアカウントを持っているツールから借りています。DeepSeek だけは例外で、「サインイン」をクリックすると Provider Monitor 専用の WebView が開きます。ここでサインアウトしても、消えるのはそのセッションと保存された読み取りだけです。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "大多数读数借自已经持有该账号的工具。DeepSeek 是例外：点「登录」会打开 Codenotch 自己的 WebView，在这里退出只会清掉这次会话和已保存的读数。"
+            "value": "大多数读数借自已经持有该账号的工具。DeepSeek 是例外：点「登录」会打开 Provider Monitor 自己的 WebView，在这里退出只会清掉这次会话和已保存的读数。"
           }
         }
       }
@@ -17614,25 +17614,25 @@
         }
       }
     },
-    "To measure responses, point your chat client to http://127.0.0.1:11435 and keep Codenotch open.": {
+    "To measure responses, point your chat client to http://127.0.0.1:11435 and keep Provider Monitor open.": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Um Antworten zu messen, richte deinen Chat-Client auf http://127.0.0.1:11435 und lass Codenotch geöffnet."
+            "value": "Um Antworten zu messen, richte deinen Chat-Client auf http://127.0.0.1:11435 und lass Provider Monitor geöffnet."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "応答を計測するには、チャットクライアントの向き先を http://127.0.0.1:11435 にして、Codenotch を開いたままにしてください。"
+            "value": "応答を計測するには、チャットクライアントの向き先を http://127.0.0.1:11435 にして、Provider Monitor を開いたままにしてください。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "要测量回复，把聊天客户端指向 http://127.0.0.1:11435，并保持 Codenotch 打开。"
+            "value": "要测量回复，把聊天客户端指向 http://127.0.0.1:11435，并保持 Provider Monitor 打开。"
           }
         }
       }
@@ -17813,13 +17813,13 @@
         }
       }
     },
-    "Scan this code with the Codenotch app on your phone.": {
+    "Scan this code with the Provider Monitor app on your phone.": {
       "extractionState": "manual",
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "スマートフォンの Codenotch アプリでこのコードを読み取ってください。"
+            "value": "スマートフォンの Provider Monitor アプリでこのコードを読み取ってください。"
           }
         }
       }
@@ -17857,13 +17857,13 @@
         }
       }
     },
-    "1. Open Codenotch on your phone": {
+    "1. Open Provider Monitor on your phone": {
       "extractionState": "manual",
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1. スマートフォンで Codenotch を開く"
+            "value": "1. スマートフォンで Provider Monitor を開く"
           }
         }
       }
@@ -19127,13 +19127,13 @@
         }
       }
     },
-    "Codenotch reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor (the editor or cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot, Kimi Code, Kiro or a Gemini API key (via Gemini CLI, OpenCode or Hermes), and its ring appears in the notch.": {
+    "Provider Monitor reads usage from tools already signed in on this Mac — it never asks for your password. Install and sign in to any of Claude Code (the terminal tool, not the Claude app), Cursor (the editor or cursor-agent), Codex, Antigravity, GLM, Grok, OpenCode, Command Code, GitHub Copilot, Kimi Code, Kiro or a Gemini API key (via Gemini CLI, OpenCode or Hermes), and its ring appears in the notch.": {
       "extractionState": "manual",
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch は、この Mac ですでにサインイン済みのツールから使用量を読み取ります。パスワードを尋ねることはありません。Claude Code（Claude アプリではなくターミナルのツール）、Cursor（エディタまたは cursor-agent）、Codex、Antigravity、GLM、Grok、OpenCode、Command Code、GitHub Copilot、Kimi Code、Kiro、または Gemini API キー（Gemini CLI、OpenCode、Hermes 経由）のいずれかをインストールしてサインインすると、そのリングがノッチに現れます。"
+            "value": "Provider Monitor は、この Mac ですでにサインイン済みのツールから使用量を読み取ります。パスワードを尋ねることはありません。Claude Code（Claude アプリではなくターミナルのツール）、Cursor（エディタまたは cursor-agent）、Codex、Antigravity、GLM、Grok、OpenCode、Command Code、GitHub Copilot、Kimi Code、Kiro、または Gemini API キー（Gemini CLI、OpenCode、Hermes 経由）のいずれかをインストールしてサインインすると、そのリングがノッチに現れます。"
           }
         }
       }
@@ -19182,13 +19182,13 @@
         }
       }
     },
-    "Most readings are borrowed from a tool that already holds the account. DeepSeek and MiniMax are the exceptions: clicking Sign in opens a Codenotch window for that account, and signing out here clears only that session and its saved reading.": {
+    "Most readings are borrowed from a tool that already holds the account. DeepSeek and MiniMax are the exceptions: clicking Sign in opens a Provider Monitor window for that account, and signing out here clears only that session and its saved reading.": {
       "extractionState": "manual",
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ほとんどの読み取りは、すでにアカウントを持っているツールから借りています。DeepSeek と MiniMax だけは例外で、「サインイン」をクリックするとそのアカウント用の Codenotch のウインドウが開きます。ここでサインアウトしても、消えるのはそのセッションと保存された読み取りだけです。"
+            "value": "ほとんどの読み取りは、すでにアカウントを持っているツールから借りています。DeepSeek と MiniMax だけは例外で、「サインイン」をクリックするとそのアカウント用の Provider Monitor のウインドウが開きます。ここでサインアウトしても、消えるのはそのセッションと保存された読み取りだけです。"
           }
         }
       }
@@ -19248,13 +19248,13 @@
         }
       }
     },
-    "Sign in to MiniMax in Codenotch, or paste a Coding Plan key. A Cookie header is optional. Codenotch never reads a browser's cookies.": {
+    "Sign in to MiniMax in Provider Monitor, or paste a Coding Plan key. A Cookie header is optional. Provider Monitor never reads a browser's cookies.": {
       "extractionState": "manual",
       "localizations": {
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codenotch で MiniMax にサインインするか、Coding Plan のキーを貼り付けてください。Cookie ヘッダーは任意です。Codenotch がブラウザの Cookie を読むことはありません。"
+            "value": "Provider Monitor で MiniMax にサインインするか、Coding Plan のキーを貼り付けてください。Cookie ヘッダーは任意です。Provider Monitor がブラウザの Cookie を読むことはありません。"
           }
         }
       }

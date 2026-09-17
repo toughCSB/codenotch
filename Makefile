@@ -8,8 +8,8 @@ export DEVELOPER_DIR := /Applications/Xcode.app/Contents/Developer
 endif
 endif
 
-PROJECT := Codenotch.xcodeproj
-SCHEME  := Codenotch
+PROJECT := ProviderMonitor.xcodeproj
+SCHEME  := ProviderMonitor
 RESOLVED_PACKAGES := $(PROJECT)/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 ARCH    ?= $(shell uname -m)
 DEST    ?= platform=macOS,arch=$(ARCH)
@@ -25,7 +25,7 @@ DEST    ?= platform=macOS,arch=$(ARCH)
 # `grep`, not `grep -c`: `-c` prints "0" rather than nothing when it matches
 # nothing, so `ifeq (,...)` was never true and a machine *without* the
 # certificate fell through to signing with an identity it does not have —
-# "Signing for Codenotch requires a development team", on every target.
+# "Signing for Provider Monitor requires a development team", on every target.
 HAS_DEVELOPER_ID := $(shell security find-identity -v -p codesigning 2>/dev/null | grep "Developer ID Application")
 
 # A personal "Apple Development" certificate, where there is one, is preferred
@@ -87,10 +87,10 @@ verify-deps:
 	}
 
 run: build
-	@APP=$$(xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
+	@APP="$$(xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
 		-configuration Debug -showBuildSettings 2>/dev/null \
-		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/Codenotch.app; \
-	pkill -x Codenotch 2>/dev/null; sleep 0.5; \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/$(APP_BUNDLE)"; \
+	pkill -x "$(APP_PROCESS)" 2>/dev/null; sleep 0.5; \
 	open "$$APP"
 
 # Build a Release .app, sign it with whatever identity is available (Developer
@@ -104,12 +104,12 @@ run: build
 install: gen
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
 		-configuration Release $(DEV_SIGN) build
-	@APP=$$(xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
+	@APP="$$(xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
 		-configuration Release -showBuildSettings 2>/dev/null \
-		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/Codenotch.app; \
-	pkill -x Codenotch || true; \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/$(APP_BUNDLE)"; \
+	pkill -x "$(APP_PROCESS)" || true; \
 	cp -R "$$APP" /Applications/; \
-	open /Applications/Codenotch.app
+	open "/Applications/$(APP_BUNDLE)"
 
 clean:
 	rm -rf build DerivedData $(PROJECT)
@@ -127,7 +127,15 @@ clean:
 # → App-Specific Passwords. Not your Apple ID password.
 
 RELEASE_DIR := build/release
-APP_NAME    := Codenotch
+# The artifact stem: the dmg, the xcarchive and the dmg's volume name. No
+# space on purpose — make cannot carry a space through a prerequisite, and
+# `dmg`, `appcast` and `publish` all take the dmg as one.
+APP_NAME    := ProviderMonitor
+# The built bundle and the process inside it. Both are PRODUCT_NAME from
+# project.yml, which does carry the space the display name wants, so every
+# use of these two is quoted.
+APP_BUNDLE  := Provider Monitor.app
+APP_PROCESS := Provider Monitor
 # The label of the stored notarytool credential in the login keychain, not
 # anything to do with the app's name — it was created before the rename and
 # renaming the variable is what broke `make release` after it. Recreating it
@@ -144,7 +152,7 @@ archive: gen
 	rm -rf $(RELEASE_DIR)
 	mkdir -p $(RELEASE_DIR)
 	@# Spotlight indexes build output as installed applications, so every
-	@# release leaves extra "Codenotch" entries in app search next to the
+	@# release leaves extra "Provider Monitor" entries in app search next to the
 	@# real one in /Applications. This stops the whole tree being indexed.
 	@touch build/.metadata_never_index
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
@@ -169,15 +177,15 @@ dmg: archive
 	rm -f $(DMG)
 	rm -rf $(RELEASE_DIR)/stage
 	mkdir -p $(RELEASE_DIR)/stage
-	cp -R $(RELEASE_DIR)/$(APP_NAME).app $(RELEASE_DIR)/stage/
+	cp -R "$(RELEASE_DIR)/$(APP_BUNDLE)" $(RELEASE_DIR)/stage/
 	ln -s /Applications $(RELEASE_DIR)/stage/Applications
 	hdiutil create -volname "$(APP_NAME)" -srcfolder $(RELEASE_DIR)/stage \
 		-ov -format UDZO $(DMG)
 	codesign --force --sign "Developer ID Application" --timestamp $(DMG)
 	@# The app is inside the dmg now. Leaving the loose copies around is how
-	@# three spare "Codenotch" entries end up in Spotlight; everything
+	@# three spare "Provider Monitor" entries end up in Spotlight; everything
 	@# downstream (notarize, verify, appcast) works from the dmg alone.
-	rm -rf $(RELEASE_DIR)/stage $(RELEASE_DIR)/$(APP_NAME).app
+	rm -rf $(RELEASE_DIR)/stage "$(RELEASE_DIR)/$(APP_BUNDLE)"
 
 # Submits and waits. `--wait` blocks until Apple answers, which is usually a
 # couple of minutes; on rejection, the log says which binary failed and why.
@@ -186,7 +194,7 @@ notarize: dmg
 	xcrun stapler staple $(DMG)
 
 # Sparkle ships its tools inside the resolved package artifacts.
-SPARKLE_BIN = $(shell dirname $$(find $$HOME/Library/Developer/Xcode/DerivedData/Codenotch-*/SourcePackages/artifacts/sparkle -name generate_appcast 2>/dev/null | head -1))
+SPARKLE_BIN = $(shell dirname $$(find $$HOME/Library/Developer/Xcode/DerivedData/ProviderMonitor-*/SourcePackages/artifacts/sparkle -name generate_appcast 2>/dev/null | head -1))
 
 # The feed customers' copies poll. Signs each update with the EdDSA private key
 # in the login keychain — Sparkle installs nothing that key did not sign, so a
@@ -243,8 +251,8 @@ publish: $(DMG)
 verify-release:
 	xcrun stapler validate $(DMG)
 	hdiutil attach $(DMG) -nobrowse -mountpoint $(RELEASE_DIR)/mnt
-	codesign --verify --deep --strict --verbose=2 $(RELEASE_DIR)/mnt/$(APP_NAME).app
-	spctl --assess --type execute --verbose=4 $(RELEASE_DIR)/mnt/$(APP_NAME).app
+	codesign --verify --deep --strict --verbose=2 "$(RELEASE_DIR)/mnt/$(APP_BUNDLE)"
+	spctl --assess --type execute --verbose=4 "$(RELEASE_DIR)/mnt/$(APP_BUNDLE)"
 	hdiutil detach $(RELEASE_DIR)/mnt
 # --- Unsigned builds -----------------------------------------------------------
 # Everything above needs the maintainer's Developer ID certificate and the
@@ -266,7 +274,7 @@ verify-release:
 # project.yml's stable identity exists to prevent.
 CI_DIR     := build/ci
 CI_DERIVED := $(CI_DIR)/DerivedData
-CI_APP     := $(CI_DERIVED)/Build/Products/Release/$(APP_NAME).app
+CI_APP     := $(CI_DERIVED)/Build/Products/Release/$(APP_BUNDLE)
 CI_DMG     := $(CI_DIR)/$(APP_NAME)-$(VERSION)-unsigned.dmg
 # Absolute: xcodebuild resolves CODE_SIGN_ENTITLEMENTS against the project
 # directory, not the working directory.
@@ -281,7 +289,7 @@ build-ci: gen
 	rm -rf $(CI_DIR)
 	mkdir -p $(CI_DIR)
 	@# Same reason as `archive`: without this, every build leaves spare
-	@# "Codenotch" entries in Spotlight next to the installed app.
+	@# "Provider Monitor" entries in Spotlight next to the installed app.
 	@touch build/.metadata_never_index
 	@# The one entitlement an ad-hoc build cannot do without. The hardened
 	@# runtime turns on library validation, which will only load a library
@@ -295,7 +303,8 @@ build-ci: gen
 	@#   ... not valid for use in process: mapping process and mapped file
 	@#   (non-platform) have different Team IDs
 	@#
-	@# which macOS reports to the user as "Codenotch cannot be opened because
+	@# which macOS reports to the user as "Provider Monitor cannot be opened
+	@# because
 	@# of a problem". A Developer ID build has no such trouble: one identity
 	@# signs the app and re-signs the framework, so the Team IDs do match, and
 	@# this is the single difference that has to be relaxed to make up for not
@@ -324,10 +333,10 @@ build-ci: gen
 	@# The outer bundle only: the framework beside it keeps the signature it
 	@# was built with, and re-sealing the app recomputes its hashes anyway.
 	codesign --force --options runtime --entitlements $(CI_ENTITLEMENTS) \
-		--sign - $(CI_APP)
+		--sign - "$(CI_APP)"
 	@# Proof rather than assumption, because this is invisible until someone
 	@# thinks to look: fail the build if the entitlement came back.
-	@codesign -d --entitlements - --xml $(CI_APP) 2>/dev/null \
+	@codesign -d --entitlements - --xml "$(CI_APP)" 2>/dev/null \
 		| grep -q 'get-task-allow' \
 		&& { echo "get-task-allow survived the re-sign"; exit 1; } || true
 
@@ -338,7 +347,7 @@ build-ci: gen
 dmg-ci: build-ci
 	rm -rf $(CI_DIR)/stage
 	mkdir -p $(CI_DIR)/stage
-	cp -R $(CI_APP) $(CI_DIR)/stage/
+	cp -R "$(CI_APP)" "$(CI_DIR)/stage/"
 	ln -s /Applications $(CI_DIR)/stage/Applications
 	for i in 1 2 3; do \
 		hdiutil create -volname "$(APP_NAME)" -srcfolder $(CI_DIR)/stage \
