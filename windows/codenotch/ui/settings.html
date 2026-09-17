@@ -376,6 +376,17 @@
       </div>
 
       <div class="block">
+        <div class="b-head">Always on top</div>
+        <div class="row">
+          <div class="r-text">
+            <div class="r-name">Keep the notch above every other window</div>
+            <div class="r-why">On by default. Turn it off and the pill behaves like an ordinary window, sinking behind whatever you click into instead of staying on top. The same switch is on the notch's own right-click menu.</div>
+          </div>
+          <div class="r-ctl"><button class="sw" id="sw-aot" role="switch" aria-checked="true" aria-label="Keep the notch above every other window"><span class="knob"></span></button></div>
+        </div>
+      </div>
+
+      <div class="block">
         <div class="b-head">Language</div>
         <div class="row">
           <div class="r-text">
@@ -625,6 +636,8 @@ const KO_STATIC = {
   'Down the right-hand edge':'오른쪽 끝을 따라', 'Down the left-hand edge':'왼쪽 끝을 따라', 'Top half':'위쪽 절반', 'Bottom half':'아래쪽 절반', 'Column':'열', 'Remove column':'열 삭제',
   'Model data':'모델 데이터',
   'Move up':'위로 이동', 'Move down':'아래로 이동',
+  'Always on top':'항상 위에 표시', 'Keep the notch above every other window':'노치를 다른 모든 창보다 위에 유지',
+  'On by default. Turn it off and the pill behaves like an ordinary window, sinking behind whatever you click into instead of staying on top. The same switch is on the notch\'s own right-click menu.':'기본적으로 켜져 있습니다. 끄면 바가 일반 창처럼 동작해서, 항상 위에 있는 대신 클릭한 다른 창 뒤로 숨습니다. 같은 설정을 노치를 우클릭해서도 바꿀 수 있습니다.',
   'Updates':'업데이트', 'Check for updates':'업데이트 확인', 'Check now':'지금 확인', 'Checking…':'확인 중…',
   'Checking for an update…':'업데이트 확인 중…',
   'Checks this fork\'s GitHub releases for a newer Windows build.':'이 포크의 GitHub 릴리스에서 더 새로운 Windows 빌드가 있는지 확인합니다.',
@@ -1371,6 +1384,7 @@ function remoteSwitch(id, getCmd, setCmd, label){
 }
 const autoSwitch = remoteSwitch('sw-autostart', 'get_autostart', 'set_autostart', 'Start with Windows');
 const hooksSwitch = remoteSwitch('sw-hooks', 'get_hooks_installed', 'set_hooks_installed', 'The Claude Code messages');
+const aotSwitch = remoteSwitch('sw-aot', 'get_always_on_top', 'set_always_on_top', 'Always on top');
 
 /* ---- language ----------------------------------------------------------- */
 const LANGS = ['auto', 'en', 'zh', 'ja', 'ko', 'ru'];
@@ -1535,6 +1549,7 @@ function boot(){
 
   autoSwitch.refresh();
   hooksSwitch.refresh();
+  aotSwitch.refresh();
 }
 boot();
 

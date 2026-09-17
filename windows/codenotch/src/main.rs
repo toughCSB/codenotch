@@ -30,7 +30,7 @@ use tauri::{AppHandle, Emitter, Manager};
 /// and its tail on the left. `fitZoom` in ui/notch.html divides by the same width.
 pub const NOTCH_W: f64 = 360.0;
 /// Hand-bumped build tag, written to run.log at startup so a log can always be matched to the exe that wrote it.
-pub const BUILD: &str = "r39";
+pub const BUILD: &str = "r40";
 pub const NOTCH_H: f64 = 520.0; // 300 clipped the card once it held three window blocks plus the session list; 460 clipped Antigravity's two model groups once the reading was stale and an agent was working
 
 pub struct AppState {
@@ -981,6 +981,62 @@ pub fn apply_visibility(app: &AppHandle) {
     }
 }
 
+// ---------------- always on top ----------------
+
+#[tauri::command]
+fn get_always_on_top(app: AppHandle) -> bool {
+    let st = app.state::<AppState>();
+    let c = st.cfg.lock().unwrap();
+    c.always_on_top
+}
+
+#[tauri::command]
+fn set_always_on_top(app: AppHandle, on: bool) -> bool {
+    {
+        let st = app.state::<AppState>();
+        let mut c = st.cfg.lock().unwrap();
+        c.always_on_top = on;
+        config::save(&c);
+    }
+    apply_always_on_top(&app);
+    let _ = app.emit("always_on_top", on);
+    on
+}
+
+/// Puts the saved switch into effect. `false` clears the window's own topmost flag; `true` sets it
+/// once here, and `start_always_on_top_watchdog` keeps reapplying it — a single `set_always_on_top`
+/// call is not trusted to stick, since Windows can hand topmost to another app that asks for it too.
+pub fn apply_always_on_top(app: &AppHandle) {
+    let on = {
+        let st = app.state::<AppState>();
+        let c = st.cfg.lock().unwrap();
+        c.always_on_top
+    };
+    if let Some(w) = app.get_webview_window("notch") {
+        let _ = w.set_always_on_top(on);
+    }
+}
+
+/// Windows can silently drop a topmost window's z-order — another app also asking for topmost, an
+/// exclusive-fullscreen game, sometimes just waking from sleep — which is exactly 떡배님's report
+/// ("다른 앱 뒤로 가는 경우가 있다"). Re-asserting every few seconds costs nothing while nothing
+/// contests it, and wins the ordering back within a few seconds when something does.
+fn start_always_on_top_watchdog(app: AppHandle) {
+    std::thread::spawn(move || loop {
+        std::thread::sleep(std::time::Duration::from_secs(4));
+        let on = {
+            let st = app.state::<AppState>();
+            let c = st.cfg.lock().unwrap();
+            c.always_on_top
+        };
+        if on {
+            if let Some(w) = app.get_webview_window("notch") {
+                let _ = w.set_always_on_top(true);
+            }
+        }
+    });
+}
+
 // ---------------- settings that used to live in the tray menu ----------------
 
 #[tauri::command]
@@ -1327,7 +1383,9 @@ fn main() {
             get_update_info,
             check_for_update,
             install_update,
-            open_release_page
+            open_release_page,
+            get_always_on_top,
+            set_always_on_top
         ])
         .setup(move |app| {
             let handle = app.handle().clone();
@@ -1350,6 +1408,8 @@ fn main() {
             start_tray_updater(handle.clone());
             // Honours the saved switches: a notch hidden last time stays hidden.
             apply_visibility(&handle);
+            apply_always_on_top(&handle);
+            start_always_on_top_watchdog(handle.clone());
             server::start(handle.clone(), port);
             watcher::start(handle.clone());
             usage::start(handle.clone());

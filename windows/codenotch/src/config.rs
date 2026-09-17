@@ -76,6 +76,13 @@ pub struct Config {
     /// leave the app running with no way to reach it.
     #[serde(default = "yes")]
     pub tray_visible: bool,
+    /// true (the default, matching the window's own creation flag) = the notch stays above every
+    /// other window. Windows can silently drop a topmost window's z-order (another app claiming
+    /// topmost, an exclusive-fullscreen game); re-asserted periodically while this is true rather
+    /// than trusted to stick from one `set_always_on_top` call. false = an ordinary window, which
+    /// sinks behind whatever is focused, as 떡배님 asked for.
+    #[serde(default = "yes")]
+    pub always_on_top: bool,
 }
 
 fn default_notch_y() -> f64 {
@@ -127,6 +134,7 @@ impl Default for Config {
             antigravity_model: default_antigravity_model(),
             notch_visible: true,
             tray_visible: true,
+            always_on_top: true,
         }
     }
 }

@@ -141,6 +141,22 @@
     background:rgba(0,0,0,.85);border-radius:8px;padding:4px 8px;display:none
   }
   #notice.show{display:block}
+
+  /* Right-click menu on the pill/card — a right-click over a NOACTIVATE transparent window would
+     otherwise either do nothing or show WebView2's own dev menu, neither of which is a place to
+     put a setting. Built the same way the hover card is: absolutely positioned, shown/hidden by a
+     class, never by taking focus. */
+  #ctxmenu{
+    position:absolute;min-width:180px;background:#161616;border:1px solid #2e2e2e;border-radius:10px;
+    padding:5px;box-shadow:0 4px 18px rgba(0,0,0,.5);display:none;z-index:10;
+  }
+  #ctxmenu.show{display:block}
+  .ctx-item{
+    display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;color:#e8e8ea;
+    font:inherit;font-size:12px;text-align:left;padding:7px 8px;border-radius:7px;cursor:pointer;
+  }
+  .ctx-item:hover{background:#242424}
+  .ctx-check{width:14px;flex:0 0 auto;color:#8ec4ff;font-size:12px}
 </style>
 </head>
 <body>
@@ -148,6 +164,7 @@
   <div id="card"></div>
   <div id="tail"></div>
   <div id="pill"></div><!-- one .cell per provider, stacked vertically (upstream: data-driven, the same layout for 1–5 cells) -->
+  <div id="ctxmenu"></div>
   <div id="notice"></div>
 </div>
 <script>
@@ -230,12 +247,14 @@ const RU_TEXT={
   'needs your input':'требуется ваш ответ',
   'Working in':'Работает в',
   'Notch size':'Размер панели',
-  'Ring shows':'Кольцо показывает', 'Weekly':'Недельный', 'Monthly':'Месячный', '5h':'5 часов'
+  'Ring shows':'Кольцо показывает', 'Weekly':'Недельный', 'Monthly':'Месячный', '5h':'5 часов',
+  'Always on top':'Поверх всех окон'
 };
 // Korean support started with just this new control (떡배님's ask) rather than a full pass over
 // every string above — missing keys fall back to the English text unchanged.
 const KO_TEXT={
-  'Ring shows':'표시 기준', 'Weekly':'주간', 'Monthly':'월간', '5h':'5시간'
+  'Ring shows':'표시 기준', 'Weekly':'주간', 'Monthly':'월간', '5h':'5시간',
+  'Always on top':'항상 위에 표시'
 };
 function textCopy(value){
   if(!value) return '';
@@ -621,7 +640,7 @@ function placeCard(){
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 /* Hover: stays expanded while either the pill or the card is under the cursor; collapses after a 250 ms grace period (upstream motion rule) */
-const card=document.getElementById('card'), pill=document.getElementById('pill'), tail=document.getElementById('tail');
+const card=document.getElementById('card'), pill=document.getElementById('pill'), tail=document.getElementById('tail'), ctxmenu=document.getElementById('ctxmenu');
 let hideTimer=null;
 function showCard(){clearTimeout(hideTimer);card.classList.add('show');renderCard();armWatchdog();refreshClock();} // show first, then render: placeCard needs offsetHeight
 // Nothing is broadcast when the Windows clock format changes, so ask again each time the card opens
@@ -644,10 +663,59 @@ function rectOf(el){const r=el.getBoundingClientRect(),k=window.devicePixelRatio
 /* Rust gates click-through on these, so they are reported whenever the pill or card moves, not only
    when the card opens: a stale pill rectangle is a pill that cannot be clicked. */
 function reportHot(){
-  const open=card.classList.contains('show');
-  const rects=open?[rectOf(pill),rectOf(tail),rectOf(card)]:[rectOf(pill)];
-  callq('set_hot',{rects,expanded:open}).catch(()=>{});
+  const cardOpen=card.classList.contains('show');
+  const menuOpen=ctxmenu.classList.contains('show');
+  const rects=[rectOf(pill)];
+  if(cardOpen) rects.push(rectOf(tail),rectOf(card));
+  if(menuOpen) rects.push(rectOf(ctxmenu));
+  callq('set_hot',{rects,expanded:cardOpen||menuOpen}).catch(()=>{});
 }
+
+/* ---- Right-click menu ----------------------------------------------------
+   떡배님's ask: right-clicking the notch is where "keep it on top of every other window" is
+   turned on or off, intuitively (a ticked/unticked menu item), without going into Settings. */
+let alwaysOnTop=true;
+function renderCtxMenu(){
+  const label=textCopy('Always on top');
+  ctxmenu.innerHTML=`<button class="ctx-item" id="ctx-aot" role="menuitemcheckbox" aria-checked="${alwaysOnTop}">`
+    +`<span class="ctx-check">${alwaysOnTop?'&#10003;':''}</span><span>${esc(label)}</span></button>`;
+  document.getElementById('ctx-aot').addEventListener('click',()=>{
+    const want=!alwaysOnTop;
+    alwaysOnTop=want; // felt at once; the invoke result corrects it if it somehow could not be set
+    hideCtxMenu();
+    invoke('set_always_on_top',{on:want}).then(v=>{alwaysOnTop=!!v;}).catch(e=>notice('set_always_on_top failed: '+e));
+  });
+}
+function showCtxMenu(x,y){
+  clearTimeout(hideTimer);
+  hideCard();
+  renderCtxMenu();
+  ctxmenu.classList.add('show');
+  // Measured after it is in the DOM and visible, then clamped so it cannot spill past the window
+  // the way a native context menu never does either.
+  const w=ctxmenu.offsetWidth, h=ctxmenu.offsetHeight;
+  const left=Math.max(4,Math.min(x,innerWidth-w-4));
+  const top=Math.max(4,Math.min(y,innerHeight-h-4));
+  ctxmenu.style.left=left+'px';
+  ctxmenu.style.top=top+'px';
+  armWatchdog();
+  reportHot();
+}
+function hideCtxMenu(){
+  if(!ctxmenu.classList.contains('show')) return;
+  ctxmenu.classList.remove('show');
+  reportHot();
+}
+document.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  showCtxMenu(e.clientX,e.clientY);
+});
+document.addEventListener('mousedown',e=>{
+  if(ctxmenu.classList.contains('show') && !ctxmenu.contains(e.target)) hideCtxMenu();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') hideCtxMenu();
+});
 /* ---- Notch size ---------------------------------------------------------
    The pill alone is scaled, with CSS `zoom` rather than `transform`: the pill is centred by
    `top:50%; transform:translateY(-50%)`, so assigning to `transform` here would wipe that out and
@@ -737,7 +805,7 @@ document.addEventListener('mousemove',e=>{
 document.addEventListener('mouseout',e=>{ // relatedTarget null = the cursor left the page
   if(!e.relatedTarget && card.classList.contains('show')){ if(hideLogged++<5) jslog('mouseout left the page -> collapse'); scheduleHide(); }
 });
-listen('pointer_left',()=>{if(scaleDragging)return;clearTimeout(hideTimer);hideCard();}).catch(()=>{});
+listen('pointer_left',()=>{if(scaleDragging)return;clearTimeout(hideTimer);hideCard();hideCtxMenu();}).catch(()=>{});
 // The size can also be changed from the settings window, which is a different window entirely.
 // Ignore it while this page's own slider is being dragged, or the two would fight each other.
 listen('scale',e=>{
@@ -807,6 +875,8 @@ invoke('get_glyphs').then(g=>{glyphs=g||glyphs;renderRing();}).catch(()=>{});
 invoke('get_codex').then(u=>{codexSnap=u||codexSnap;renderRing();}).catch(()=>{});
 invoke('get_usage').then(u=>{usage=u||usage;renderRing();}).catch(e=>notice('get_usage failed: '+e));
 invoke('get_state').then(s=>{stateSnap=s||stateSnap;setUiLanguage(stateSnap.lang_resolved);renderRing();}).catch(()=>{});
+invoke('get_always_on_top').then(v=>{if(typeof v==='boolean')alwaysOnTop=v;}).catch(()=>{});
+listen('always_on_top',e=>{if(typeof e.payload==='boolean')alwaysOnTop=e.payload;}).catch(()=>{});
 setInterval(renderRing,30_000); // stale state and reset copy move with time
 </script>
 </body>
