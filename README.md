@@ -128,13 +128,15 @@ two never disagree.
 
 ## Download
 
-[![Download for macOS](docs/design/download-macos.svg)](../../releases/latest/download/Codenotch.dmg)
+[![Download for macOS](docs/design/download-macos.svg)](../../releases/download/v1.14.0/ProviderMonitor-1.14.0-unsigned.dmg)
 
-That button is the disk image itself, not the page it sits on — the asset is
-named `Codenotch.dmg` in every release, so `releases/latest/download/` always
-resolves to the newest one and the link never needs updating. Signed,
-notarized, and updating itself from then on. Take this one unless you have a
-reason not to; the [release page](../../releases/latest) has the notes.
+That button is the disk image itself, not the page it sits on. This fork's
+builds are named after their version and are **not** Developer ID signed or
+notarized — there is no Apple certificate on the machine that builds them — so
+macOS asks once at first launch: right-click the app in Finder, then Open.
+`Codenotch.dmg` belongs to the original project's releases; this fork's macOS
+builds are `ProviderMonitor-<version>-unsigned.dmg`. The
+[release page](../../releases/tag/v1.14.0) has the notes.
 
 To try unreleased `main` without an Xcode install, the [preview
 build](../../releases/tag/preview) is rebuilt from every commit, and the
