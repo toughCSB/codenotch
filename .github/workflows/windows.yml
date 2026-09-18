@@ -31,7 +31,9 @@ jobs:
       # their script stays green through the build and ships as an empty
       # window. Node is already on the runner.
       - name: Check the UI pages parse
-        run: node scripts/check-ui-scripts.mjs
+        run: |
+          node scripts/check-ui-scripts.mjs
+          node scripts/check-macos-ui-parity.mjs
 
       - uses: dtolnay/rust-toolchain@stable
         with:

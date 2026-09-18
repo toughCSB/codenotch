@@ -30,8 +30,11 @@ use tauri::{AppHandle, Emitter, Manager};
 /// and its tail on the left. `fitZoom` in ui/notch.html divides by the same width.
 pub const NOTCH_W: f64 = 360.0;
 /// Hand-bumped build tag, written to run.log at startup so a log can always be matched to the exe that wrote it.
-pub const BUILD: &str = "r40";
-pub const NOTCH_H: f64 = 520.0; // 300 clipped the card once it held three window blocks plus the session list; 460 clipped Antigravity's two model groups once the reading was stale and an agent was working
+pub const BUILD: &str = "r41-macos-parity";
+// The macOS geometry is 526 pt tall for five provider cells before a hover card is considered.
+// 700 leaves the same end slack the native panel keeps, so the first/last card can stay wholly on
+// screen without shrinking the rings or folding the spacing back toward the old Windows design.
+pub const NOTCH_H: f64 = 700.0;
 
 pub struct AppState {
     pub store: Mutex<state::Store>,
@@ -74,13 +77,112 @@ pub fn broadcast(app: &AppHandle) {
     let _ = app.emit("state", &snap);
 }
 
-/// Pins the notch to the right edge of the primary monitor; the other edges are a later milestone.
+fn monitor_key(mon: &tauri::Monitor) -> String {
+    mon.name().cloned().unwrap_or_else(|| {
+        format!(
+            "display-{}x{}",
+            mon.size().width,
+            mon.size().height
+        )
+    })
+}
+
+fn selected_monitor(app: &AppHandle) -> Option<tauri::Monitor> {
+    let w = app.get_webview_window("notch")?;
+    let wanted = {
+        let st = app.state::<AppState>();
+        let value = st.cfg.lock().ok()?.notch_monitor.clone();
+        value
+    };
+    if wanted != "primary" {
+        if let Ok(monitors) = w.available_monitors() {
+            if let Some(mon) = monitors.into_iter().find(|m| monitor_key(m) == wanted) {
+                return Some(mon);
+            }
+        }
+    }
+    w.primary_monitor().ok().flatten()
+}
+
+#[derive(serde::Serialize)]
+struct DisplayChoice {
+    id: String,
+    label: String,
+    primary: bool,
+    selected: bool,
+}
+
+#[tauri::command]
+fn get_displays(app: AppHandle) -> Vec<DisplayChoice> {
+    let Some(w) = app.get_webview_window("notch") else {
+        return Vec::new();
+    };
+    let wanted = {
+        let st = app.state::<AppState>();
+        st.cfg
+            .lock()
+            .map(|c| c.notch_monitor.clone())
+            .unwrap_or_else(|_| "primary".into())
+    };
+    let primary_key = w
+        .primary_monitor()
+        .ok()
+        .flatten()
+        .map(|m| monitor_key(&m));
+    let mut monitors = w.available_monitors().unwrap_or_default();
+    monitors.sort_by_key(|m| (m.position().x, m.position().y));
+    let mut choices = vec![DisplayChoice {
+        id: "primary".into(),
+        label: "Follow primary".into(),
+        primary: true,
+        selected: wanted == "primary",
+    }];
+    choices.extend(
+        monitors.into_iter().enumerate().map(|(index, mon)| {
+            let id = monitor_key(&mon);
+            let primary = primary_key.as_deref() == Some(id.as_str());
+            let name = mon.name().cloned().unwrap_or_default();
+            DisplayChoice {
+                selected: wanted == id,
+                id,
+                label: if name.is_empty() {
+                    format!("Monitor {}", index + 1)
+                } else {
+                    format!("Monitor {} · {}", index + 1, name)
+                },
+                primary,
+            }
+        }),
+    );
+    choices
+}
+
+#[tauri::command]
+fn set_display(app: AppHandle, id: String) -> Vec<DisplayChoice> {
+    let valid = id == "primary"
+        || app
+            .get_webview_window("notch")
+            .and_then(|w| w.available_monitors().ok())
+            .is_some_and(|monitors| monitors.iter().any(|m| monitor_key(m) == id));
+    if valid {
+        let st = app.state::<AppState>();
+        if let Ok(mut cfg) = st.cfg.lock() {
+            cfg.notch_monitor = id;
+            config::save(&cfg);
+        }
+        place_notch(&app);
+    }
+    get_displays(app)
+}
+
+/// Pins the notch to the right edge of the display selected in Settings. A disconnected explicit
+/// display falls back to the current primary display until it returns.
 pub fn place_notch(app: &AppHandle) {
     let Some(w) = app.get_webview_window("notch") else {
         return;
     };
     let scale = w.scale_factor().unwrap_or(1.0);
-    if let Ok(Some(mon)) = w.primary_monitor() {
+    if let Some(mon) = selected_monitor(app) {
         // Two monitors at different scales (150 % and 200 % in practice): the physical size can
         // end up converted with the *other* monitor's scale factor depending on where the window
         // is created and then moved, leaving the WebView ~256 logical px wide instead of 340.
@@ -198,8 +300,12 @@ fn drag_begin(app: AppHandle) {
             DRAGGING.store(false, std::sync::atomic::Ordering::SeqCst);
             return;
         };
-        let (Ok(start_cur), Ok(start_pos), Ok(size), Ok(Some(mon))) =
-            (app.cursor_position(), w.outer_position(), w.outer_size(), w.primary_monitor())
+        let Some(mon) = selected_monitor(&app) else {
+            DRAGGING.store(false, std::sync::atomic::Ordering::SeqCst);
+            return;
+        };
+        let (Ok(start_cur), Ok(start_pos), Ok(size)) =
+            (app.cursor_position(), w.outer_position(), w.outer_size())
         else {
             DRAGGING.store(false, std::sync::atomic::Ordering::SeqCst);
             return;
@@ -420,14 +526,11 @@ pub fn applog(line: &str) {
 /// the window was sized for the primary monitor's 1.5, so the page was 255 CSS px wide instead of
 /// the designed 340 and every coordinate conversion was off (the watchdog misfired and the card
 /// flashed away). Fix: the page reports its DPR, and when it differs from the primary monitor's
-/// scale, set_zoom pulls the effective DPR back to that scale, restoring the 340 px width.
+/// scale, set_zoom pulls the effective DPR back to that scale, restoring the 360 px width.
 #[tauri::command]
 fn report_dpr(app: AppHandle, dpr: f64, w: f64, h: f64) {
     let Some(win) = app.get_webview_window("notch") else { return };
-    let want = win
-        .primary_monitor()
-        .ok()
-        .flatten()
+    let want = selected_monitor(&app)
         .map(|m| m.scale_factor())
         .unwrap_or_else(|| win.scale_factor().unwrap_or(1.0));
     let mut z = ZOOM.lock().unwrap();
@@ -628,6 +731,26 @@ fn set_scale(app: AppHandle, scale: f64) {
     // The notch draws its own size, so it has to be told. Without this the slider in the settings
     // window saved the value but nothing changed on screen until the app was restarted.
     let _ = app.emit("scale", value);
+}
+
+#[tauri::command]
+fn get_percent_basis(app: AppHandle) -> String {
+    app.state::<AppState>()
+        .cfg
+        .lock()
+        .map(|c| c.percent_basis.clone())
+        .unwrap_or_else(|_| "remaining".into())
+}
+
+#[tauri::command]
+fn set_percent_basis(app: AppHandle, basis: String) -> String {
+    let value = if basis == "used" { "used" } else { "remaining" }.to_string();
+    if let Ok(mut cfg) = app.state::<AppState>().cfg.lock() {
+        cfg.percent_basis = value.clone();
+        config::save(&cfg);
+    }
+    let _ = app.emit("percent_basis", &value);
+    value
 }
 
 // ---------------- tray icon readings ----------------
@@ -1151,6 +1274,24 @@ fn open_settings(app: AppHandle) {
     }
 }
 
+#[tauri::command]
+fn close_settings(window: tauri::WebviewWindow) {
+    // The settings webview is created from tauri.conf at startup and reused. Hiding mirrors the
+    // Mac close button and lets the tray's Settings item show the same window again; destroying it
+    // here would leave open_settings with nothing to reopen.
+    let _ = window.hide();
+}
+
+#[tauri::command]
+fn minimize_settings(window: tauri::WebviewWindow) {
+    let _ = window.minimize();
+}
+
+#[tauri::command]
+fn quit_app(app: AppHandle) {
+    app.exit(0);
+}
+
 pub fn provider_label(id: &str) -> &'static str {
     match id {
         "codex" => "Codex",
@@ -1372,6 +1513,10 @@ fn main() {
             set_lang,
             get_scale,
             set_scale,
+            get_percent_basis,
+            set_percent_basis,
+            get_displays,
+            set_display,
             get_tray_options,
             get_tray_config,
             set_tray_config,
@@ -1400,7 +1545,10 @@ fn main() {
             install_update,
             open_release_page,
             get_always_on_top,
-            set_always_on_top
+            set_always_on_top,
+            close_settings,
+            minimize_settings,
+            quit_app
         ])
         .setup(move |app| {
             let handle = app.handle().clone();

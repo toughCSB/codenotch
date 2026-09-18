@@ -10,8 +10,17 @@
      coloured — no accent, no gradient, no shadow. */
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;height:100%}
+  :root{
+    --settings-sidebar:200px;
+    --selection:#0a84ff;
+    --window-bg:rgba(61,61,63,.94);
+    --sidebar-bg:rgba(39,39,41,.96);
+    --row-rule:rgba(255,255,255,.075);
+    --label:#f5f5f7;
+    --secondary:#aaaab0;
+  }
   body{
-    background:#0a0a0a;color:#fff;font-family:"Segoe UI",system-ui,sans-serif;font-size:13px;
+    background:var(--window-bg);color:#fff;font-family:"Segoe UI",system-ui,sans-serif;font-size:13px;
     overflow:hidden;user-select:none;
   }
 
@@ -22,24 +31,50 @@
   #shell{display:flex;height:100%;min-height:0}
 
   #side{
-    flex:0 0 150px;width:150px;min-width:150px;background:#0d0d0d;border-right:1px solid #1e1e1e;
-    overflow-y:auto;overflow-x:hidden;padding:14px 8px 20px;
+    position:relative;flex:0 0 var(--settings-sidebar);width:var(--settings-sidebar);min-width:var(--settings-sidebar);
+    background:var(--sidebar-bg);border-right:1px solid rgba(255,255,255,.08);
+    overflow-y:auto;overflow-x:hidden;padding:58px 10px 68px;
+    backdrop-filter:blur(32px) saturate(1.2);
   }
+  #window-controls{position:fixed;left:14px;top:14px;z-index:20;display:flex;gap:8px}
+  #drag-region{position:fixed;left:0;right:0;top:0;height:44px;z-index:10}
+  .window-dot{display:block;width:13px;height:13px;border-radius:50%;border:0;padding:0;background:#67676a}
+  button.window-dot{cursor:pointer}
+  .window-dot.close{background:#ff5f57}
+  .window-dot.minimize{background:#febc2e}
+  .window-dot.zoom{background:#28c840;opacity:.45}
+  .quit-app{
+    position:absolute;left:10px;right:10px;bottom:12px;display:flex;align-items:center;gap:8px;
+    border:0;border-radius:7px;background:transparent;color:#f2f2f7;font:600 13px "Segoe UI",system-ui,sans-serif;
+    padding:6px 8px;text-align:left;cursor:pointer;
+  }
+  .quit-app:hover{background:rgba(255,255,255,.08)}
+  .quit-app span{display:grid;place-items:center;width:25px;height:25px;border-radius:6px;background:#ff453a;color:#fff;font-size:16px}
   .s-group{
     font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#6a6a6a;
     padding:14px 8px 6px;
   }
   .s-group.first{padding-top:0}
   .tab{
-    display:block;width:100%;text-align:left;background:none;border:1px solid transparent;
-    border-radius:8px;color:#b0b0b3;font:inherit;font-size:12.5px;padding:7px 9px;cursor:pointer;
-    margin-bottom:2px;
+    --tab-tint:#777;display:flex;width:100%;align-items:center;gap:9px;text-align:left;
+    background:none;border:0;border-radius:7px;color:#e8e8ed;font:inherit;font-size:13px;
+    padding:5px 8px;cursor:pointer;margin-bottom:2px;
   }
-  .tab:hover{background:#141414;color:#e8e8ea}
-  .tab.on{background:#1c1c1c;border-color:#2e2e2e;color:#fff;font-weight:600}
-  .tab:focus-visible{outline:1px solid #8a8a8a;outline-offset:-1px}
+  .tab::before{
+    content:attr(data-icon);display:grid;place-items:center;width:25px;height:25px;flex:0 0 25px;
+    border-radius:6px;background:var(--tab-tint);color:#fff;font-size:14px;font-weight:700;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);
+  }
+  .tab:hover{background:rgba(255,255,255,.07);color:#fff}
+  .tab.on{background:var(--selection);color:#fff;font-weight:600}
+  .tab:focus-visible{outline:2px solid rgba(255,255,255,.85);outline-offset:-2px}
+  #tab-notch{--tab-tint:#1687ee}
+  #tab-tray{--tab-tint:#6f72e8}
+  #tab-hooks{--tab-tint:#ff453a}
+  #tab-behaviour{--tab-tint:#8e8e93}
+  #tab-about{--tab-tint:#5e5ce6}
 
-  #main{flex:1 1 auto;min-width:0;overflow-y:auto;overflow-x:hidden;padding:16px 18px 30px}
+  #main{flex:1 1 auto;min-width:0;overflow-y:auto;overflow-x:hidden;padding:18px 30px 30px;background:rgba(72,72,74,.60)}
 
   /* Error strip — every failed command lands here instead of throwing */
   #strip{
@@ -51,13 +86,13 @@
 
   /* ---- pane furniture ---------------------------------------------------------------- */
   .pane[hidden]{display:none}
-  .p-title{font-size:16px;font-weight:700;color:#fff;margin:0}
-  .p-lede{font-size:11px;color:#808080;margin:4px 0 0;line-height:1.5}
+  .p-title{font-size:18px;font-weight:700;color:var(--label);margin:0}
+  .p-lede{font-size:11px;color:var(--secondary);margin:5px 0 0;line-height:1.5}
 
-  .block{border-top:1px solid #1e1e1e;margin-top:20px;padding-top:16px}
+  .block{border-top:1px solid var(--row-rule);margin-top:18px;padding-top:14px}
   .block.first{border-top:none;margin-top:16px;padding-top:0}
-  .b-head{font-size:13px;font-weight:700;color:#e8e8ea}
-  .b-sub{font-size:11px;color:#808080;margin-top:3px;line-height:1.5}
+  .b-head{font-size:13px;font-weight:700;color:var(--label)}
+  .b-sub{font-size:11px;color:var(--secondary);margin-top:3px;line-height:1.5}
 
   .c-title{font-size:14px;font-weight:700;color:#fff}
   .c-sub{font-size:11px;color:#808080;margin-top:2px;line-height:1.5}
@@ -67,36 +102,36 @@
 
   /* A setting: words on the left, the control on the right */
   .row{display:flex;align-items:flex-start;gap:14px;padding:11px 0}
-  .row + .row{border-top:1px solid #161616}
+  .row + .row{border-top:1px solid var(--row-rule)}
   .r-text{flex:1 1 auto;min-width:0}
-  .r-name{font-size:12.5px;color:#e8e8ea;font-weight:600}
-  .r-why{font-size:11px;color:#808080;margin-top:3px;line-height:1.5;overflow-wrap:anywhere}
+  .r-name{font-size:12.5px;color:var(--label);font-weight:600}
+  .r-why{font-size:11px;color:var(--secondary);margin-top:3px;line-height:1.5;overflow-wrap:anywhere}
   .r-ctl{flex:0 0 auto;margin-top:2px}
 
   /* Real switches, not checkboxes. Greyscale only: pale track when on, dark when off. */
   .sw{
-    position:relative;width:40px;height:22px;border-radius:11px;background:#242424;
-    border:1px solid #2e2e2e;padding:0;cursor:pointer;transition:background .15s,border-color .15s;
+    position:relative;width:40px;height:22px;border-radius:11px;background:#6d6d70;
+    border:0;padding:0;cursor:pointer;transition:background .15s,border-color .15s;
   }
   .sw .knob{
-    position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:8px;background:#6a6a6a;
+    position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:9px;background:#e7e7ea;
     transition:left .15s,background .15s;
   }
   .sw:hover{border-color:#3f3f3f}
-  .sw[aria-checked="true"]{background:#c8c8c8;border-color:#c8c8c8}
-  .sw[aria-checked="true"] .knob{left:20px;background:#0a0a0a}
+  .sw[aria-checked="true"]{background:var(--selection)}
+  .sw[aria-checked="true"] .knob{left:20px;background:#fff}
   .sw[disabled]{opacity:.45;cursor:default}
   .sw:focus-visible{outline:1px solid #8a8a8a;outline-offset:2px}
 
   select{
-    background:#0a0a0a;border:1px solid #2e2e2e;border-radius:9px;color:#e8e8ea;font:inherit;
+    background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:#f5f5f7;font:inherit;
     font-size:12px;padding:6px 8px;max-width:100%;cursor:pointer;
   }
   select:hover{border-color:#3f3f3f}
   select:focus-visible{outline:1px solid #8a8a8a;outline-offset:1px}
 
   .btn{
-    background:#0a0a0a;border:1px solid #2e2e2e;border-radius:9px;color:#e8e8ea;font:inherit;
+    background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.12);border-radius:7px;color:#f5f5f7;font:inherit;
     font-size:12px;padding:7px 12px;cursor:pointer;
   }
   .btn:hover{border-color:#3f3f3f;background:#141414}
@@ -211,9 +246,14 @@
 
   /* Notch providers — the picker's rows again, ticked rather than chosen */
   .np-list{margin-top:12px}
-  .np-row{margin-bottom:10px}
+  .np-row{margin:0;padding:8px 0;border-bottom:1px solid var(--row-rule)}
+  .np-row:last-child{border-bottom:0}
   .np-line{display:flex;align-items:center;gap:6px}
-  .np-line .p-item{flex:1 1 auto;min-width:0}
+  .np-line .p-item{
+    flex:1 1 auto;min-width:0;margin:0;padding:4px 2px;background:transparent;border:0;border-radius:6px;
+  }
+  .np-line .p-item:hover{background:rgba(255,255,255,.07)}
+  .np-line .p-item.on{background:transparent;border:0}
   .np-ag{display:flex;align-items:center;gap:8px;margin:6px 0 0 29px;font-size:11px;color:#808080}
   .np-right{margin-left:auto;display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
   .np-right .p-status{margin-left:0}
@@ -222,7 +262,7 @@
   /* Up/down reorder buttons — the pill and the tray both draw providers in this order */
   .np-move{display:flex;flex-direction:column;flex:0 0 auto;gap:2px}
   .np-arrow{
-    background:#0a0a0a;border:1px solid #2e2e2e;border-radius:6px;color:#b0b0b3;font:inherit;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);border-radius:5px;color:#d1d1d6;font:inherit;
     font-size:10px;line-height:1;width:20px;height:15px;padding:0;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
   }
@@ -237,6 +277,15 @@
   .c-scale input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:12px;height:12px;margin-top:-4.5px;border-radius:50%;background:#8a8a8a;cursor:pointer}
   .c-scale input[type=range]:hover::-webkit-slider-thumb{background:#b0b0b3}
   .c-scale-val{font-size:11px;color:#c8c8c8;min-width:38px;text-align:right;font-variant-numeric:tabular-nums}
+  .size-row .r-ctl{display:none}
+  .size-row .c-scale{max-width:330px}
+
+  /* The remaining editor controls are Windows-specific, but sit in the same soft
+     grouped surfaces as the macOS settings instead of the old black web dashboard. */
+  .mode,.chip,.p-item,.np-arrow,.btn{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.10)}
+  .mode:hover,.chip:hover,.p-item:hover,.btn:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.16)}
+  .mode.on,.chip.on,.p-item.on{background:rgba(10,132,255,.22);border-color:var(--selection);color:#fff}
+  #canvas,.truthstrip{background:rgba(20,20,22,.55);border-color:rgba(255,255,255,.09)}
 
   /* About */
   .about-top{display:flex;align-items:center;gap:12px;margin-top:16px}
@@ -259,16 +308,21 @@
 </head>
 <body>
 <div id="shell">
+  <div id="drag-region" data-tauri-drag-region></div>
+  <div id="window-controls" aria-label="Window controls">
+    <button class="window-dot close" id="btn-close" aria-label="Close"></button>
+    <button class="window-dot minimize" id="btn-minimize" aria-label="Minimize"></button>
+    <span class="window-dot zoom" aria-hidden="true"></span>
+  </div>
 
   <!-- ---- the tab list ------------------------------------------------------------------ -->
   <nav id="side" role="tablist" aria-orientation="vertical" aria-label="Settings sections">
-    <div class="s-group first">Appearance</div>
-    <button class="tab" id="tab-tray" role="tab" aria-controls="pane-tray" aria-selected="false" tabindex="-1">Taskbar icon</button>
-    <button class="tab" id="tab-notch" role="tab" aria-controls="pane-notch" aria-selected="false" tabindex="-1">Notch</button>
-    <div class="s-group">General</div>
-    <button class="tab" id="tab-behaviour" role="tab" aria-controls="pane-behaviour" aria-selected="false" tabindex="-1">Behaviour</button>
-    <button class="tab" id="tab-hooks" role="tab" aria-controls="pane-hooks" aria-selected="false" tabindex="-1">Claude Code</button>
-    <button class="tab" id="tab-about" role="tab" aria-controls="pane-about" aria-selected="false" tabindex="-1">About</button>
+    <button class="tab" id="tab-notch" data-icon="●" role="tab" aria-controls="pane-notch" aria-selected="false" tabindex="-1">Accounts</button>
+    <button class="tab" id="tab-tray" data-icon="✦" role="tab" aria-controls="pane-tray" aria-selected="false" tabindex="-1">Appearance</button>
+    <button class="tab" id="tab-hooks" data-icon="♟" role="tab" aria-controls="pane-hooks" aria-selected="false" tabindex="-1">Notifications</button>
+    <button class="tab" id="tab-behaviour" data-icon="⚙" role="tab" aria-controls="pane-behaviour" aria-selected="false" tabindex="-1">General</button>
+    <button class="tab" id="tab-about" data-icon="i" role="tab" aria-controls="pane-about" aria-selected="false" tabindex="-1">About</button>
+    <button id="btn-quit" class="quit-app"><span>⏻</span> Quit Provider Monitor</button>
   </nav>
 
   <!-- ---- the panes --------------------------------------------------------------------- -->
@@ -277,10 +331,64 @@
 
     <!-- APPEARANCE / Taskbar icon ------------------------------------------------------- -->
     <section class="pane" id="pane-tray" role="tabpanel" aria-labelledby="tab-tray" tabindex="0" hidden>
-      <h1 class="p-title">Taskbar icon</h1>
-      <p class="p-lede">The small icon down by the clock. Provider Monitor draws your usage straight into it — 32 pixels square. Pick a layout, then click a part of the picture to choose what that part shows.</p>
+      <h1 class="p-title">Appearance</h1>
+      <p class="p-lede">The notch and taskbar icon use the same readings. Adjust what stays visible and how large it is.</p>
 
       <div class="block first">
+        <div class="b-head">Notch</div>
+        <div class="row">
+          <div class="r-text">
+            <div class="r-name">Show the notch</div>
+            <div class="r-why">The edge surface with one ring per provider. Turning it off does not stop usage monitoring.</div>
+          </div>
+          <div class="r-ctl"><button class="sw" id="sw-notch" role="switch" aria-checked="true" aria-label="Show the notch"><span class="knob"></span></button></div>
+        </div>
+        <div class="row">
+          <div class="r-text">
+            <div class="r-name">Always on top</div>
+            <div class="r-why">Keep the notch above every other window, including full-screen apps.</div>
+          </div>
+          <div class="r-ctl"><button class="sw" id="sw-aot" role="switch" aria-checked="true" aria-label="Keep the notch above every other window"><span class="knob"></span></button></div>
+        </div>
+        <div class="row size-row">
+          <div class="r-text">
+            <div class="r-name">Size</div>
+            <div class="r-why">Scales rings, text and hover cards together, preserving the macOS proportions.</div>
+            <div class="c-scale">
+              <input id="scale-range" type="range" min="40" max="125" step="5" value="100" aria-label="Notch size">
+              <span class="c-scale-val" id="scale-val">100%</span>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="r-text">
+            <div class="r-name">Ring number</div>
+            <div class="r-why">The graph always fills as usage grows. Choose whether the number below it counts down or up.</div>
+          </div>
+          <div class="r-ctl">
+            <select id="percent-basis" aria-label="Ring number">
+              <option value="remaining">Percent left</option>
+              <option value="used">Percent used</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="r-text">
+            <div class="r-name">Display</div>
+            <div class="r-why" id="display-note">Choose which monitor owns the notch. Follow primary moves with the Windows primary-display setting.</div>
+          </div>
+          <div class="r-ctl">
+            <select id="display-select" aria-label="Display"><option value="primary">Follow primary</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <div class="b-head">Taskbar icon</div>
+        <div class="b-sub">Usage at the Windows clock. Choose a layout, then assign a provider to each part.</div>
+      </div>
+
+      <div class="block">
         <div class="b-head">Layout</div>
         <div class="b-sub">What gets drawn into those 32 pixels.</div>
         <div class="modes" id="modes"></div>
@@ -314,34 +422,21 @@
 
     <!-- APPEARANCE / Notch ---------------------------------------------------------------- -->
     <section class="pane" id="pane-notch" role="tabpanel" aria-labelledby="tab-notch" tabindex="0" hidden>
-      <h1 class="p-title">Notch</h1>
-      <p class="p-lede">The small black pill that floats against the right-hand edge of the screen. Each tool you tick gets one ring on it.</p>
+      <h1 class="p-title">Accounts</h1>
+      <p class="p-lede">Connected providers appear in this order. Change each ring's period without affecting the others.</p>
 
       <div class="block first">
-        <div class="b-head">What appears on the pill</div>
-        <div class="b-sub">Click a name to switch its ring on or off.</div>
+        <div class="b-head">Connected</div>
+        <div class="b-sub">Click a provider to show or hide its ring. Use the arrows to change the order.</div>
         <div class="np-list" id="notch-list"></div>
         <div class="c-note dim" id="notch-note" style="margin-top:6px"></div>
-      </div>
-
-      <div class="block">
-        <div class="b-head">Size</div>
-        <div class="b-sub">How big the pill is drawn. The same slider sits at the foot of the pill's hover card, so it can be changed from either place.</div>
-        <div class="c-scale">
-          <input id="scale-range" type="range" min="40" max="100" step="5" value="100" aria-label="Notch size">
-          <span class="c-scale-val" id="scale-val">100%</span>
-        </div>
-      </div>
-
-      <div class="block">
-        <div class="c-note dim">Whether the pill is on screen at all is a separate switch, under General &rarr; Behaviour.</div>
       </div>
     </section>
 
     <!-- GENERAL / Behaviour ---------------------------------------------------------------- -->
     <section class="pane" id="pane-behaviour" role="tabpanel" aria-labelledby="tab-behaviour" tabindex="0" hidden>
-      <h1 class="p-title">Behaviour</h1>
-      <p class="p-lede">When Provider Monitor runs, and what it puts on your screen.</p>
+      <h1 class="p-title">General</h1>
+      <p class="p-lede">Choose when Provider Monitor runs and where Windows keeps it accessible.</p>
 
       <div class="block first">
         <div class="b-head">Starting up</div>
@@ -355,15 +450,7 @@
       </div>
 
       <div class="block">
-        <div class="b-head">What is on screen</div>
-        <div class="b-sub">One of these two always stays on. If you hide the notch, the taskbar icon is held on for you, because with both of them gone there would be nothing left to click and no way back to this window.</div>
-        <div class="row">
-          <div class="r-text">
-            <div class="r-name">Show the notch</div>
-            <div class="r-why">The black pill against the right-hand edge of the screen, with one ring per tool. Turn it off and the pill disappears; Provider Monitor keeps counting your usage either way.</div>
-          </div>
-          <div class="r-ctl"><button class="sw" id="sw-notch" role="switch" aria-checked="true" aria-label="Show the notch"><span class="knob"></span></button></div>
-        </div>
+        <div class="b-head">App</div>
         <div class="row">
           <div class="r-text">
             <div class="r-name">Show the taskbar icon</div>
@@ -373,17 +460,6 @@
           <div class="r-ctl"><button class="sw" id="sw-tray" role="switch" aria-checked="true" aria-label="Show the taskbar icon"><span class="knob"></span></button></div>
         </div>
         <div class="fix" id="flags-fix" hidden></div>
-      </div>
-
-      <div class="block">
-        <div class="b-head">Always on top</div>
-        <div class="row">
-          <div class="r-text">
-            <div class="r-name">Keep the notch above every other window</div>
-            <div class="r-why">On by default. Turn it off and the pill behaves like an ordinary window, sinking behind whatever you click into instead of staying on top. The same switch is on the notch's own right-click menu.</div>
-          </div>
-          <div class="r-ctl"><button class="sw" id="sw-aot" role="switch" aria-checked="true" aria-label="Keep the notch above every other window"><span class="knob"></span></button></div>
-        </div>
       </div>
 
       <div class="block">
@@ -410,8 +486,8 @@
 
     <!-- GENERAL / Claude Code -------------------------------------------------------------- -->
     <section class="pane" id="pane-hooks" role="tabpanel" aria-labelledby="tab-hooks" tabindex="0" hidden>
-      <h1 class="p-title">Claude Code</h1>
-      <p class="p-lede">Claude Code can tell Provider Monitor the moment something happens in a session, instead of Provider Monitor having to guess from files on disk.</p>
+      <h1 class="p-title">Notifications</h1>
+      <p class="p-lede">Session events drive the working and waiting indicators on the notch.</p>
 
       <div class="block first">
         <div class="b-head">Session messages</div>
@@ -531,6 +607,10 @@ function call(cmd, args, fallback){
   return invoke(cmd, args).catch(e => { strip(cmd + ' failed: ' + errText(e)); return fallback; });
 }
 
+document.getElementById('btn-close').addEventListener('click', () => invoke('close_settings').catch(()=>{}));
+document.getElementById('btn-minimize').addEventListener('click', () => invoke('minimize_settings').catch(()=>{}));
+document.getElementById('btn-quit').addEventListener('click', () => invoke('quit_app').catch(e => strip(errText(e))));
+
 /* Escapes everything that is interpolated into innerHTML. Provider and window labels arrive from
    remote servers, so they are never trusted. */
 function esc(s){
@@ -611,8 +691,24 @@ const RU_STATIC = {
 /* 떡배님's ask: every settings screen in Korean. Same DOM-walking mechanism as RU_STATIC above —
    any exact-match English text node or aria-label/title/alt gets swapped for this. */
 const KO_STATIC = {
-  'Settings sections':'설정 항목', 'Appearance':'화면', 'Taskbar icon':'트레이 아이콘',
-  'Notch':'노치 바', 'General':'일반', 'Behaviour':'동작', 'Claude Code':'Claude Code', 'About':'정보',
+  'Settings sections':'설정 항목', 'Accounts':'계정', 'Appearance':'모양', 'Taskbar icon':'트레이 아이콘',
+  'Notch':'노치', 'Notifications':'알림', 'General':'일반', 'Behaviour':'동작', 'Claude Code':'Claude Code', 'About':'정보',
+  'Close':'닫기', 'Minimize':'최소화', 'Window controls':'창 제어', 'Quit Provider Monitor':'Provider Monitor 종료',
+  'Connected':'연결됨',
+  'Connected providers appear in this order. Change each ring\'s period without affecting the others.':'연결된 프로바이더가 이 순서대로 표시됩니다. 다른 링에는 영향을 주지 않고 각 링의 기간을 바꿀 수 있습니다.',
+  'Click a provider to show or hide its ring. Use the arrows to change the order.':'프로바이더를 클릭하여 링을 표시하거나 숨깁니다. 화살표로 순서를 바꿉니다.',
+  'The notch and taskbar icon use the same readings. Adjust what stays visible and how large it is.':'노치와 트레이 아이콘은 같은 측정값을 사용합니다. 무엇을 계속 표시할지와 크기를 정합니다.',
+  'The edge surface with one ring per provider. Turning it off does not stop usage monitoring.':'화면 가장자리에 프로바이더별 링을 표시합니다. 꺼도 사용량 모니터링은 계속됩니다.',
+  'Keep the notch above every other window, including full-screen apps.':'전체 화면 앱을 포함한 다른 모든 창 위에 노치를 유지합니다.',
+  'Scales rings, text and hover cards together, preserving the macOS proportions.':'macOS 비율을 유지하면서 링, 텍스트, 호버 카드의 크기를 함께 조절합니다.',
+  'Ring number':'링 숫자', 'Percent left':'남은 비율', 'Percent used':'사용한 비율',
+  'The graph always fills as usage grows. Choose whether the number below it counts down or up.':'그래프는 항상 사용량이 늘어날수록 채워집니다. 링 아래 숫자를 잔여량 또는 사용량으로 표시합니다.',
+  'Display':'디스플레이', 'Follow primary':'주 디스플레이 따라가기',
+  'Choose which monitor owns the notch. Follow primary moves with the Windows primary-display setting.':'노치를 표시할 모니터를 고릅니다. 주 디스플레이 따라가기를 선택하면 Windows의 주 디스플레이 설정에 맞춰 이동합니다.',
+  'Usage at the Windows clock. Choose a layout, then assign a provider to each part.':'Windows 시계 옆에 사용량을 표시합니다. 레이아웃을 고른 뒤 각 부분에 프로바이더를 배정합니다.',
+  'Choose when Provider Monitor runs and where Windows keeps it accessible.':'Provider Monitor를 언제 실행하고 Windows에서 어디를 통해 접근할지 정합니다.',
+  'App':'앱',
+  'Session events drive the working and waiting indicators on the notch.':'세션 이벤트로 노치의 작업 중·응답 대기 표시를 갱신합니다.',
   'The small icon down by the clock. Provider Monitor draws your usage straight into it — 32 pixels square. Pick a layout, then click a part of the picture to choose what that part shows.':'시계 옆의 작은 아이콘입니다. Provider Monitor가 사용량을 32×32픽셀 안에 직접 그립니다. 레이아웃을 고른 뒤 그림의 한 부분을 클릭하면 그 부분이 무엇을 보여줄지 정할 수 있습니다.',
   'Layout':'레이아웃', 'What gets drawn into those 32 pixels.':'이 32픽셀 안에 무엇을 그릴지 정합니다.',
   'The plain Provider Monitor logo is used.':'기본 Provider Monitor 로고가 표시됩니다.', 'No numbers are drawn.':'숫자는 표시되지 않습니다.',
@@ -767,7 +863,7 @@ function toast(msg){
    One pane visible at a time. The chosen tab is remembered in localStorage, so reopening the
    window comes back to where the user was. localStorage can throw in a locked-down WebView, so
    both the read and the write are wrapped. */
-const TABS = ['tray', 'notch', 'behaviour', 'hooks', 'about'];
+const TABS = ['notch', 'tray', 'hooks', 'behaviour', 'about'];
 const TAB_KEY = 'codenotch.settings.tab';
 let curTab = TABS[0];
 
@@ -1302,7 +1398,7 @@ document.getElementById('notch-list').addEventListener('change', e => {
 /* ---- notch size -------------------------------------------------------- */
 function clampPct(v){
   const n = Math.round(Number(v));
-  return isFinite(n) ? Math.max(40, Math.min(100, n)) : 100;
+  return isFinite(n) ? Math.max(40, Math.min(125, n)) : 100;
 }
 (function wireScale(){
   const r = document.getElementById('scale-range');
@@ -1318,6 +1414,32 @@ function clampPct(v){
     }, 150);
   });
 })();
+
+/* ---- target display --------------------------------------------------- */
+function displayLabel(choice){
+  if(choice.id === 'primary') return ui('Follow primary', 'Follow primary');
+  let label = String(choice.label || choice.id);
+  if(uiLang === 'ko') label = label.replace(/^Monitor /, '모니터 ');
+  if(choice.primary) label += uiLang === 'ko' ? ' · 주 디스플레이' : ' · Primary';
+  return label;
+}
+function renderDisplays(choices){
+  const select = document.getElementById('display-select');
+  if(!select || !Array.isArray(choices)) return;
+  select.innerHTML = choices.map(choice =>
+    `<option value="${esc(choice.id)}"${choice.selected?' selected':''}>${esc(displayLabel(choice))}</option>`
+  ).join('');
+}
+document.getElementById('display-select').addEventListener('change', e => {
+  invoke('set_display', { id:e.target.value })
+    .then(v => { renderDisplays(v); toast(ui('Saved', 'Saved')); })
+    .catch(err => strip('set_display failed: ' + errText(err)));
+});
+document.getElementById('percent-basis').addEventListener('change', e => {
+  invoke('set_percent_basis', { basis:e.target.value })
+    .then(v => { e.target.value=v; toast(ui('Saved', 'Saved')); })
+    .catch(err => strip('set_percent_basis failed: ' + errText(err)));
+});
 
 /* ---- the truth strip (built once) -------------------------------------- */
 (function buildTruth(){
@@ -1610,6 +1732,11 @@ function boot(){
     if(isFinite(n) && n > 0) scalePct = clampPct(Math.round(n * 100));
     document.getElementById('scale-range').value = String(scalePct);
     document.getElementById('scale-val').textContent = scalePct + '%';
+  });
+
+  call('get_displays', undefined, []).then(renderDisplays);
+  call('get_percent_basis', undefined, 'remaining').then(v => {
+    document.getElementById('percent-basis').value = v === 'used' ? 'used' : 'remaining';
   });
 
   call('get_ui_flags', undefined, null).then(v => {

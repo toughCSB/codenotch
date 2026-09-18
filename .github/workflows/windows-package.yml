@@ -46,6 +46,11 @@ jobs:
         with:
           workspaces: windows
 
+      - name: Check the UI pages and macOS parity contract
+        run: |
+          node scripts/check-ui-scripts.mjs
+          node scripts/check-macos-ui-parity.mjs
+
       # Its own target dir for two reasons. The bundler copies resources next to
       # the app in target/release, so a hook built there would be copied onto
       # itself. And Claude Code runs the hook on machines that may have no

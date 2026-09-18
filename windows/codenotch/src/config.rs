@@ -41,13 +41,22 @@ pub struct Config {
     /// Allow dragging + wheel resizing (tray toggle, off by default to prevent accidental drags)
     #[serde(default)]
     pub drag_enabled: bool,
-    /// Vertical position of the notch: the window centre as a fraction of the primary monitor's height (0 = top, 1 = bottom), default 0.5; saved after a drag
+    /// Vertical position of the notch: the window centre as a fraction of the selected monitor's
+    /// height (0 = top, 1 = bottom), default 0.5; saved after a drag.
     #[serde(default = "default_notch_y")]
     pub notch_y: f64,
+    /// Stable monitor key. "primary" follows the Windows primary display; an explicit key keeps
+    /// the notch on the display chosen in Settings until that display disappears.
+    #[serde(default = "default_notch_monitor")]
+    pub notch_monitor: String,
     /// Notch size as a multiple of the designed size, one of `SIZES`. The whole notch scales: the
     /// window grows and its WebView zooms, so the rings, text and hover card keep their proportions.
     #[serde(default = "default_scale")]
     pub scale: f64,
+    /// The ring's number only: "remaining" counts down (the default) and "used" counts up. The
+    /// arc and card bars always draw usage, matching the macOS app's graph semantics.
+    #[serde(default = "default_percent_basis")]
+    pub percent_basis: String,
     /// Where the weekly limit gets a ring of its own: "off", "inside" or "outside".
     #[serde(default = "default_weekly_ring")]
     pub weekly_ring: String,
@@ -100,8 +109,14 @@ pub struct Config {
 fn default_notch_y() -> f64 {
     0.5
 }
+fn default_notch_monitor() -> String {
+    "primary".into()
+}
 fn default_scale() -> f64 {
     1.0
+}
+fn default_percent_basis() -> String {
+    "remaining".into()
 }
 fn default_weekly_ring() -> String {
     "off".into()
@@ -114,6 +129,9 @@ pub fn weekly_ring_or_off(value: &str) -> String {
         "inside" | "outside" => value.to_string(),
         _ => default_weekly_ring(),
     }
+}
+pub fn percent_basis_or_remaining(value: &str) -> String {
+    if value == "used" { "used" } else { "remaining" }.into()
 }
 fn yes() -> bool {
     true
@@ -148,7 +166,9 @@ impl Default for Config {
             bar_w: None,
             drag_enabled: false,
             notch_y: default_notch_y(),
+            notch_monitor: default_notch_monitor(),
             scale: default_scale(),
+            percent_basis: default_percent_basis(),
             weekly_ring: default_weekly_ring(),
             tray_mode: default_tray_mode(),
             tray_providers: default_tray_providers(),
@@ -232,6 +252,7 @@ pub fn load() -> Config {
 
     // The old slider's 40–100 %, or a hand-edited file, lands on one of the three sizes
     cfg.scale = snap_scale(cfg.scale);
+    cfg.percent_basis = percent_basis_or_remaining(&cfg.percent_basis);
     cfg.weekly_ring = weekly_ring_or_off(&cfg.weekly_ring);
     cfg
 }
@@ -248,7 +269,7 @@ pub fn save(cfg: &Config) {
 
 #[cfg(test)]
 mod tests {
-    use super::{snap_scale, weekly_ring_or_off};
+    use super::{percent_basis_or_remaining, snap_scale, weekly_ring_or_off};
 
     #[test]
     fn a_saved_scale_snaps_to_the_nearest_size() {
@@ -266,5 +287,12 @@ mod tests {
         assert_eq!(weekly_ring_or_off("outside"), "outside");
         assert_eq!(weekly_ring_or_off("Inside"), "off");
         assert_eq!(weekly_ring_or_off(""), "off");
+    }
+
+    #[test]
+    fn ring_number_defaults_to_remaining() {
+        assert_eq!(percent_basis_or_remaining("remaining"), "remaining");
+        assert_eq!(percent_basis_or_remaining("used"), "used");
+        assert_eq!(percent_basis_or_remaining("anything else"), "remaining");
     }
 }
