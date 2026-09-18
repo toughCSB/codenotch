@@ -32,6 +32,24 @@ enum ReleaseNotes {
     static var all: [ReleaseNote] {
         [
             ReleaseNote(
+                version: "1.16.0",
+                headline: L10n.t("Windows now follows the Mac's current design, not its old shell."),
+                changes: [
+                    ReleaseNote.Change(
+                        title: L10n.t("One product geometry"),
+                        detail: L10n.t("The Windows notch now uses the same 70-point body, 44-point rings, spacing, badges and hover-card proportions as the Mac.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Mac-style settings"),
+                        detail: L10n.t("Accounts, Appearance, Notifications, General and About replace the old Windows dashboard, with complete Korean copy.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Correct graphs and placement"),
+                        detail: L10n.t("Graphs fill by usage while the ring number defaults to percent left; monitor selection and the full 125% size are available in Appearance.")
+                    ),
+                ]
+            ),
+            ReleaseNote(
                 version: "1.15.0",
                 headline: L10n.t("Provider Monitor for the Mac and for Windows, one version and one release."),
                 changes: [

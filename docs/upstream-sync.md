@@ -107,9 +107,9 @@ Windows: `windows-package.yml`이 `release: published`에서 깨어나 NSIS 설�
 첨부한다. 그러니 맥에서 릴리스를 먼저 만들면 윈도우 파일은 알아서 붙는다:
 
 ```bash
-gh release create v1.15.0 build/ci/ProviderMonitor-1.15.0-unsigned.dmg \
-  --title "Provider Monitor 1.15.0" --notes-file notes.md
-gh release view v1.15.0 --json assets -q '.assets[].name'   # dmg + Setup.exe 둘 다 확인
+gh release create v1.16.0 build/ci/ProviderMonitor-1.16.0-unsigned.dmg \
+  --title "Provider Monitor 1.16.0" --notes-file notes.md
+gh release view v1.16.0 --json assets -q '.assets[].name'   # dmg + Setup.exe 둘 다 확인
 ```
 
 `workflow_dispatch`로 단독 실행하면 컴파일·설치·`doctor`·제거만 확인하고 첨부하지 않는다.

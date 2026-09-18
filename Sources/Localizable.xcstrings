@@ -4536,6 +4536,16 @@
         }
       }
     },
+    "Accounts, Appearance, Notifications, General and About replace the old Windows dashboard, with complete Korean copy.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "계정, 모양, 알림, 일반, 정보가 기존 Windows 대시보드를 대체하며 모든 화면을 한국어로 제공합니다."
+          }
+        }
+      }
+    },
     "Active": {
       "extractionState": "manual",
       "localizations": {
@@ -9708,6 +9718,16 @@
         }
       }
     },
+    "Correct graphs and placement": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "올바른 그래프와 화면 배치"
+          }
+        }
+      }
+    },
     "Critical limit": {
       "extractionState": "manual",
       "localizations": {
@@ -12631,6 +12651,16 @@
         }
       }
     },
+    "Graphs fill by usage while the ring number defaults to percent left; monitor selection and the full 125% size are available in Appearance.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "그래프는 사용량만큼 채워지고 링 숫자는 기본적으로 잔여량을 표시합니다. 모양 설정에서 모니터 선택과 125% 큰 크기를 사용할 수 있습니다."
+          }
+        }
+      }
+    },
     "Grok Build": {
       "extractionState": "manual",
       "localizations": {
@@ -15510,6 +15540,16 @@
         }
       }
     },
+    "Mac-style settings": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac 스타일 설정"
+          }
+        }
+      }
+    },
     "Matches the Mac's preferred language.": {
       "extractionState": "manual",
       "localizations": {
@@ -18187,6 +18227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "一次短暂失败 — 多半是 Mac 从睡眠唤醒 — 以前会把圆环锁死直到重启应用。现在下次检查会自己解开。"
+          }
+        }
+      }
+    },
+    "One product geometry": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "하나의 제품, 하나의 화면 비율"
           }
         }
       }
@@ -28023,6 +28073,16 @@
         }
       }
     },
+    "The Windows notch now uses the same 70-point body, 44-point rings, spacing, badges and hover-card proportions as the Mac.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Windows 노치가 Mac과 동일한 70포인트 본체, 44포인트 링, 간격, 배지 및 호버 카드 비율을 사용합니다."
+          }
+        }
+      }
+    },
     "The Windows app and its installer are named Provider Monitor now — Provider Monitor.exe and Provider-Monitor-Setup.exe.": {
       "localizations": {
         "ko": {
@@ -30875,6 +30935,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Windows"
+          }
+        }
+      }
+    },
+    "Windows now follows the Mac's current design, not its old shell.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이제 Windows판도 예전 골격이 아니라 현재 Mac 디자인을 따릅니다."
           }
         }
       }
