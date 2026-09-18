@@ -1,10 +1,10 @@
 [package]
 name = "codenotch"
-version = "1.16.0"
+version = "1.16.1"
 edition = "2021"
-description = "Provider Monitor for Windows — usage notch for Claude, Codex, Cursor and Antigravity"
+description = "Provider Monitor for Windows — usage notch for coding assistant providers"
 license = "MIT"
-repository = "https://github.com/Im-Midi/codenotch-windows"
+repository = "https://github.com/toughCSB/provider-monitor"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

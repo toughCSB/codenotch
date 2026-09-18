@@ -15,6 +15,12 @@ mod cursor;
 mod antigravity;
 mod grok;
 mod opencode;
+mod glm;
+mod devin;
+mod command_code;
+mod kimi;
+mod copilot;
+mod kiro;
 mod agy_cli;
 mod glyphs;
 mod trayicon;
@@ -46,6 +52,12 @@ pub struct AppState {
     pub antigravity: Mutex<usage::UsageSnapshot>,
     pub grok: Mutex<usage::UsageSnapshot>,
     pub opencode: Mutex<usage::UsageSnapshot>,
+    pub glm: Mutex<usage::UsageSnapshot>,
+    pub devin: Mutex<usage::UsageSnapshot>,
+    pub commandcode: Mutex<usage::UsageSnapshot>,
+    pub kimi: Mutex<usage::UsageSnapshot>,
+    pub copilot: Mutex<usage::UsageSnapshot>,
+    pub kiro: Mutex<usage::UsageSnapshot>,
     /// Provider glyph cache, collected at launch and again on a tray refresh
     pub glyphs: Mutex<std::collections::HashMap<String, glyphs::Glyph>>,
     /// Working state of the non-Claude providers (Cursor reports it; Codex and Antigravity are inferred from recent writes)
@@ -392,6 +404,12 @@ fn refresh_usage(app: AppHandle) {
     antigravity::request_refresh();
     grok::request_refresh();
     opencode::request_refresh();
+    glm::request_refresh();
+    devin::request_refresh();
+    command_code::request_refresh();
+    kimi::request_refresh();
+    copilot::request_refresh();
+    kiro::request_refresh();
 }
 
 #[tauri::command]
@@ -458,6 +476,36 @@ fn get_opencode(state: tauri::State<AppState>) -> usage::UsageSnapshot {
     state.opencode.lock().unwrap().clone()
 }
 
+#[tauri::command]
+fn get_glm(state: tauri::State<AppState>) -> usage::UsageSnapshot {
+    state.glm.lock().unwrap().clone()
+}
+
+#[tauri::command]
+fn get_devin(state: tauri::State<AppState>) -> usage::UsageSnapshot {
+    state.devin.lock().unwrap().clone()
+}
+
+#[tauri::command]
+fn get_commandcode(state: tauri::State<AppState>) -> usage::UsageSnapshot {
+    state.commandcode.lock().unwrap().clone()
+}
+
+#[tauri::command]
+fn get_kimi(state: tauri::State<AppState>) -> usage::UsageSnapshot {
+    state.kimi.lock().unwrap().clone()
+}
+
+#[tauri::command]
+fn get_copilot(state: tauri::State<AppState>) -> usage::UsageSnapshot {
+    state.copilot.lock().unwrap().clone()
+}
+
+#[tauri::command]
+fn get_kiro(state: tauri::State<AppState>) -> usage::UsageSnapshot {
+    state.kiro.lock().unwrap().clone()
+}
+
 /// A click on a cell opens that provider's usage page
 #[tauri::command]
 fn open_provider_page(provider: String) {
@@ -467,6 +515,12 @@ fn open_provider_page(provider: String) {
         "gemini" => "https://antigravity.google",
         "grok" => "https://grok.com/?_s=usage",
         "opencode" => "https://opencode.ai",
+        "glm" => "https://bigmodel.cn/usercenter/proj-mgmt/apikeys",
+        "devin" => "https://app.devin.ai",
+        "commandcode" => "https://commandcode.ai",
+        "kimi" => "https://www.kimi.com/code/console",
+        "copilot" => "https://github.com/settings/copilot",
+        "kiro" => "https://kiro.dev",
         _ => "https://claude.ai/settings/usage",
     };
     let mut cmd = std::process::Command::new("cmd");
@@ -750,6 +804,7 @@ fn set_percent_basis(app: AppHandle, basis: String) -> String {
         config::save(&cfg);
     }
     let _ = app.emit("percent_basis", &value);
+    repaint_tray(&app);
     value
 }
 
@@ -786,6 +841,12 @@ fn provider_default<'a>(provider: &str, windows: &'a [usage::LimitWindow]) -> Op
         "cursor" => by_id("included").or_else(|| by_id("api")),
         "grok" => by_id("credits"), // Grok Build is already the weekly pool
         "opencode" => by_id("weekly").or_else(|| by_id("rolling")),
+        "glm" => by_id("session").or_else(|| by_id("weekly")),
+        "devin" => windows.first(),
+        "commandcode" => by_id("monthly").or_else(|| windows.first()),
+        "kimi" => by_id("rolling").or_else(|| by_id("weekly")),
+        "copilot" => by_id("premium_interactions").or_else(|| windows.first()),
+        "kiro" => by_id("credits").or_else(|| windows.first()),
         _ => None,
     }
 }
@@ -877,6 +938,12 @@ fn snapshot_of(app: &AppHandle, id: &str) -> usage::UsageSnapshot {
         "gemini" => st.antigravity.lock().unwrap().clone(),
         "grok" => st.grok.lock().unwrap().clone(),
         "opencode" => st.opencode.lock().unwrap().clone(),
+        "glm" => st.glm.lock().unwrap().clone(),
+        "devin" => st.devin.lock().unwrap().clone(),
+        "commandcode" => st.commandcode.lock().unwrap().clone(),
+        "kimi" => st.kimi.lock().unwrap().clone(),
+        "copilot" => st.copilot.lock().unwrap().clone(),
+        "kiro" => st.kiro.lock().unwrap().clone(),
         _ => st.usage.lock().unwrap().clone(),
     }
 }
@@ -894,14 +961,20 @@ fn ring_pct(app: &AppHandle, provider: &str) -> Option<u32> {
     if snap.status == "absent" {
         return None;
     }
-    let (limit, model) = {
+    let (limit, model, basis) = {
         let st = app.state::<AppState>();
         let c = st.cfg.lock().unwrap();
-        (ring_limit_for(&c, provider), c.antigravity_model.clone())
+        (ring_limit_for(&c, provider), c.antigravity_model.clone(), c.percent_basis.clone())
     };
     ring_window(provider, &snap.windows, &limit, &model)
         .filter(|w| w.count.is_none())
-        .map(|w| (w.used * 100.0).round().clamp(0.0, 100.0) as u32)
+        .map(|w| displayed_percent(w.used, &basis))
+}
+
+fn displayed_percent(used: f64, basis: &str) -> u32 {
+    let used = used.clamp(0.0, 1.0);
+    let displayed = if basis == "used" { used } else { 1.0 - used };
+    (displayed * 100.0).round().clamp(0.0, 100.0) as u32
 }
 
 /// What one half of the icon shows: that provider's ring.
@@ -1299,12 +1372,31 @@ pub fn provider_label(id: &str) -> &'static str {
         "gemini" => "Antigravity",
         "grok" => "Grok",
         "opencode" => "OpenCode",
+        "glm" => "GLM",
+        "devin" => "Devin",
+        "commandcode" => "Command Code",
+        "kimi" => "Kimi Code",
+        "copilot" => "GitHub Copilot",
+        "kiro" => "Kiro",
         _ => "Claude",
     }
 }
 
 /// Every provider the tray menu can offer, in the order the notch shows them.
-pub const TRAY_PROVIDER_IDS: [&str; 6] = ["claude", "codex", "cursor", "gemini", "grok", "opencode"];
+pub const TRAY_PROVIDER_IDS: [&str; 12] = [
+    "claude",
+    "codex",
+    "cursor",
+    "gemini",
+    "grok",
+    "opencode",
+    "glm",
+    "devin",
+    "commandcode",
+    "kimi",
+    "copilot",
+    "kiro",
+];
 
 /// Draws the icon and writes the tooltip. Shared by the polling thread and by the settings window,
 /// so a change made in settings shows up at once rather than on the next poll.
@@ -1487,6 +1579,12 @@ fn main() {
             antigravity: Mutex::new(antigravity::load_persisted()),
             grok: Mutex::new(grok::load_persisted()),
             opencode: Mutex::new(opencode::load_persisted()),
+            glm: Mutex::new(glm::load_persisted()),
+            devin: Mutex::new(devin::load_persisted()),
+            commandcode: Mutex::new(command_code::load_persisted()),
+            kimi: Mutex::new(kimi::load_persisted()),
+            copilot: Mutex::new(copilot::load_persisted()),
+            kiro: Mutex::new(kiro::load_persisted()),
             glyphs: Mutex::new(Default::default()),
             activity: Mutex::new(Vec::new()),
         })
@@ -1498,6 +1596,12 @@ fn main() {
             get_antigravity,
             get_grok,
             get_opencode,
+            get_glm,
+            get_devin,
+            get_commandcode,
+            get_kimi,
+            get_copilot,
+            get_kiro,
             get_glyphs,
             get_activity,
             open_data_dir,
@@ -1581,6 +1685,12 @@ fn main() {
             antigravity::start(handle.clone());
             grok::start(handle.clone());
             opencode::start(handle.clone());
+            glm::start(handle.clone());
+            devin::start(handle.clone());
+            command_code::start(handle.clone());
+            kimi::start(handle.clone());
+            copilot::start(handle.clone());
+            kiro::start(handle.clone());
             activity::start(handle.clone());
             // Collecting glyphs may read icon resources out of a few executables; do it off the main thread and push when done
             let gh = handle.clone();
@@ -1626,7 +1736,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{cursor_in_hot, ring_window, HOT_PAD};
+    use super::{cursor_in_hot, displayed_percent, ring_window, HOT_PAD};
     use crate::usage::LimitWindow;
 
     /// Real values from the run.log in #106: a 2560×1600 display at 150 %.
@@ -1827,5 +1937,13 @@ mod tests {
             LimitWindow { id: "secondary".into(), label: "Monthly limit".into(), used: 0.6, ..Default::default() },
         ];
         assert_eq!(ring_for("codex", &codex_ws, "monthly"), Some("secondary"));
+    }
+
+    #[test]
+    fn tray_graph_and_number_follow_the_selected_percent_basis() {
+        assert_eq!(displayed_percent(0.2, "used"), 20);
+        assert_eq!(displayed_percent(0.2, "remaining"), 80);
+        assert_eq!(displayed_percent(1.4, "remaining"), 0);
+        assert_eq!(displayed_percent(-0.4, "remaining"), 100);
     }
 }

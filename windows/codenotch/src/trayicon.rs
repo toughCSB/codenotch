@@ -260,12 +260,9 @@ pub fn to_data_url(rgba: &[u8]) -> Option<String> {
 
 /// The application's own icon, at tray size.
 ///
-/// NOT `icons/tray.png`: that one is a monochrome outline in pure black, which reads on a light
-/// taskbar and is invisible on a dark one — the Windows 11 default. Recolouring it does not rescue
-/// it either, because the shape is an outline with an empty middle: only 98 of its 1024 pixels are
-/// fully opaque, so at 16 pixels it is a faint grey ring whichever colour it is drawn in.
-/// `icons/tray-color.png` is the 32x32 frame lifted straight out of `icons/icon.ico`, the real
-/// application icon, which carries its own colour and is legible on any taskbar.
+/// `icons/tray-color.png` is generated from the same macOS Provider Monitor app icon as the
+/// executable's PNG/ICO. Settings and About use that mark too, so no historical CodeNotch artwork
+/// remains in the Windows bundle.
 pub fn app_mark() -> Option<tauri::image::Image<'static>> {
     tauri::image::Image::from_bytes(include_bytes!("../icons/tray-color.png")).ok()
 }

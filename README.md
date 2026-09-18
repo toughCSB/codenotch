@@ -55,9 +55,9 @@
 
 ## 릴리스
 
-한 릴리스에 두 플랫폼이 함께 실립니다. 같은 `v1.16.0` 태그에 macOS dmg와 Windows 설치 프로그램이 같이 붙습니다.
+한 릴리스에 두 플랫폼이 함께 실립니다. 같은 `v1.16.1` 태그에 macOS dmg와 Windows 설치 프로그램이 같이 붙습니다.
 
-- **macOS** — [ProviderMonitor-1.16.0-unsigned.dmg](../../releases/download/v1.16.0/ProviderMonitor-1.16.0-unsigned.dmg) · 유니버설(Apple Silicon + Intel), macOS 15 이상
+- **macOS** — [ProviderMonitor-1.16.1-unsigned.dmg](../../releases/download/v1.16.1/ProviderMonitor-1.16.1-unsigned.dmg) · 유니버설(Apple Silicon + Intel), macOS 15 이상
 - **Windows** — [Provider-Monitor-Setup.exe](../../releases/latest/download/Provider-Monitor-Setup.exe) · Windows 11 (WebView2 런타임 기본 포함)
 
 `main`의 최신 커밋을 바로 써보려면 [preview 릴리스](../../releases/tag/preview)에 push마다 새 dmg가 올라옵니다.
@@ -107,7 +107,13 @@ npx @tauri-apps/cli@2 build --config tauri.bundle.conf.json
 
 ## 지원 프로바이더
 
-macOS는 원본 앱의 provider를 전부 그대로 지원하고, Windows 포트는 그중 여섯을 구현했습니다.
+macOS는 원본 앱의 provider를 전부 그대로 지원합니다. Windows 포트는 실제 Windows 자격증명
+경로와 API까지 검증 가능한 12개 provider를 구현했으며, 이름만 보이는 가짜 항목은 추가하지
+않았습니다.
+
+Windows의 12개 수집기는 앱이 실행되는 동안 설치·로그인 상태를 계속 확인합니다. 지금 사용하지
+않아 `absent`인 provider도 나중에 해당 CLI나 데스크톱 앱을 설치하고 로그인하면 별도 등록 없이
+자동으로 감지되어 설정과 노치에 나타납니다.
 
 | 프로바이더 | macOS | Windows | 읽는 곳 |
 | --- | :---: | :---: | --- |
@@ -117,18 +123,24 @@ macOS는 원본 앱의 provider를 전부 그대로 지원하고, Windows 포트
 | **Antigravity** | ✅ | ✅ | 공식 `agy` CLI, 없으면 로컬 language server |
 | **Grok** | ✅ | ✅ | `~/.grok/auth.json` |
 | **OpenCode (Go)** | ✅ | ✅ | `~/.local/share/opencode/auth.json` |
-| **Devin** | ✅ | — | 로컬에 로그인된 세션 |
-| **Gemini API** | ✅ | — | 직접 넣은 API 키 |
-| **GLM** | ✅ | — | Z.ai Coding Plan, 이미 있는 키를 빌려 씀 |
+| **Devin** | ✅ | ✅ | Devin/Windsurf의 로컬 읽기 전용 세션 |
+| **Gemini API** | ✅ | — | Gemini CLI·OpenCode·Hermes의 로컬 토큰 기록과 선택적 월간 예산 |
+| **GLM** | ✅ | ✅ | Z.ai Coding Plan, 이미 있는 키를 빌려 씀 |
 | **MiniMax** | ✅ | — | 설정에 넣은 키 또는 앱 안에서 로그인 |
 | **DeepSeek** | ✅ | — | 앱 안에서 직접 로그인 (브라우저 쿠키는 읽지 않음) |
-| **Command Code** | ✅ | — | `~/.commandcode/auth.json` |
-| **GitHub Copilot** | ✅ | — | 이미 로그인돼 있는 `gh` 세션 |
-| **Kimi** | ✅ | — | `~/.kimi-code/credentials/kimi-code.json` |
-| **Kiro** | ✅ | — | kiro-cli 세션 |
+| **Command Code** | ✅ | ✅ | `~/.commandcode/auth.json` |
+| **GitHub Copilot** | ✅ | ✅ | 이미 로그인돼 있는 `gh` 세션 |
+| **Kimi** | ✅ | ✅ | `~/.kimi-code/credentials/kimi-code.json` |
+| **Kiro** | ✅ | ✅ | kiro-cli 세션 |
 | **Ollama / LM Studio** | ✅ | — | 같은 맥에서 돌고 있는 로컬 런타임 |
 
 대부분의 provider는 이미 그 맥에 로그인돼 있는 도구의 세션을 **읽기만** 합니다. 토큰을 복사하거나 갱신하지 않습니다. DeepSeek과 MiniMax만 예외로 앱 안에서 직접 로그인하며, 브라우저의 쿠키 저장소는 열지 않습니다. 쓰지 않는 provider는 설정에서 끄면 폴링을 멈추고 읽은 값을 지웁니다.
+
+Windows에서 아직 수집기를 이식하지 않은 항목은 별도 브라우저 세션이 필요한 DeepSeek·MiniMax,
+로컬 토큰 기록과 예산 설정이 필요한 Gemini API, 로컬 런타임 모델 구조가 필요한 Ollama·LM
+Studio, 별도 계정 키를 쓰는 Ollama Cloud입니다. 이들도 같은 등록 구조에 수집기를 추가하면 이후
+설치·로그인을 자동 감지하게 됩니다. 현재는 실제 값을 읽지 못하는 빈 설정 행만 미리 만들지 않은
+상태입니다.
 
 ## 원본 Codenotch와의 관계
 

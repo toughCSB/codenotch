@@ -264,6 +264,6 @@ mod tests {
     /// same-version release must not be reported as an update.
     #[test]
     fn the_current_shipped_release_is_not_flagged_as_an_update() {
-        assert!(!newer("0.3.0", env!("CARGO_PKG_VERSION")));
+        assert!(!newer(env!("CARGO_PKG_VERSION"), env!("CARGO_PKG_VERSION")));
     }
 }

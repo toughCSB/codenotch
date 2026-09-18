@@ -53,8 +53,8 @@ pub struct Config {
     /// window grows and its WebView zooms, so the rings, text and hover card keep their proportions.
     #[serde(default = "default_scale")]
     pub scale: f64,
-    /// The ring's number only: "remaining" counts down (the default) and "used" counts up. The
-    /// arc and card bars always draw usage, matching the macOS app's graph semantics.
+    /// The ring's number and its graph: "remaining" counts down (the default) and "used" counts
+    /// up. The arc and card bars follow the same basis, so the number and painted length agree.
     #[serde(default = "default_percent_basis")]
     pub percent_basis: String,
     /// Where the weekly limit gets a ring of its own: "off", "inside" or "outside".

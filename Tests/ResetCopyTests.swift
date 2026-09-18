@@ -216,7 +216,7 @@ final class WindowSummaryTests: XCTestCase {
 
     /// A tenth of nothing is not zero: it says so rather than pretending.
     func testVanishingFractionsSaySo() {
-        XCTAssertEqual(window(0.0004).summary, "<0.1% Used · >99.9% left")
+        XCTAssertEqual(window(0.0004).summary, "<0.1% Used · 99.9% left")
     }
 
     /// The ring's label keeps the same honesty, one decimal under one percent

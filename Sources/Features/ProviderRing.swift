@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// The ring around a provider glyph: a grey track with a coloured arc that
-/// starts at 12 o'clock and sweeps clockwise by the fraction used.
+/// The ring around a provider glyph: a grey track with a coloured arc that starts at 12 o'clock
+/// and sweeps clockwise by the same used/remaining fraction printed below it.
 ///
 /// When that provider is doing something right now, a second, much thinner arc
 /// appears *inside* the ring, in the gap between the glyph and the track. It is
@@ -12,6 +12,9 @@ struct ProviderRing: View {
     /// Nil when the provider reports what is left but never says out of what —
     /// there is no arc to draw, and inventing one would be a lie in a shape.
     let usedFraction: Double?
+    /// The arc's direction can follow the user's remaining/used choice while the colour continues
+    /// to describe exhaustion risk from `usedFraction`.
+    var displayedFraction: Double? = nil
     let glyph: ProviderGlyph
     var isStale: Bool = false
     /// Blocked right now. Shown as spent whatever the arc says, because that is
@@ -43,7 +46,7 @@ struct ProviderRing: View {
         guard !isBlocked else { return .exhausted }
         return UsageBand.band(for: usedFraction ?? 0, watchLimit: watchLimit, criticalLimit: criticalLimit)
     }
-    private var sweep: CGFloat { CGFloat(min(max(usedFraction ?? 0, 0), 1)) }
+    private var sweep: CGFloat { CGFloat(min(max(displayedFraction ?? usedFraction ?? 0, 0), 1)) }
     private var localSweep: CGFloat { CGFloat(min(max(localContextFraction ?? 1, 0), 1)) }
     private var primaryColor: Color {
         isStale ? Palette.textSecondary : band.color(accent: accentColor)
@@ -276,6 +279,7 @@ struct ProviderCell: View {
         VStack(spacing: NotchLayout.ringLabelGap) {
             ProviderRing(
                 usedFraction: snapshot.localModel == nil && snapshot.hasReading ? snapshot.ringFraction : nil,
+                displayedFraction: snapshot.localModel == nil && snapshot.hasReading ? snapshot.displayedRingFraction : nil,
                 glyph: snapshot.glyph,
                 isStale: snapshot.status.isStale || !snapshot.hasReading,
                 isBlocked: snapshot.block != nil,

@@ -34,6 +34,12 @@ Claude의 hover 카드: "표시 기준"에서 그 provider의 링만 주간/월�
 | **Antigravity** | Official `agy` CLI `/usage` print when installed; otherwise the existing local `language_server` bridge, Google Cloud Code API, or transcript model count | Official four quota rows (Gemini & Claude/GPT 5h/weekly) without running the full IDE. When CLI is absent, falls back to legacy local bridge/API. |
 | **Grok** | `~/.grok/auth.json` (only a session minted by `auth.x.ai` is trusted), read only | `GET cli-chat-proxy.grok.com/v1/billing?format=credits` — the weekly Grok Build allowance, with a "Weekly limit" placeholder at 0% on a fresh plan that has not metered anything yet. |
 | **OpenCode (Go)** | The `opencode-go` key in `~/.local/share/opencode/auth.json`, written by OpenCode's own sign-in | `GET opencode.ai/zen/go/v1/usage` — rolling (5h) / weekly / monthly Go-plan windows; a key with no Go plan reads as "nothing metered", not an error. |
+| **GLM** | Existing Z.ai/GLM coding-plan credentials from Claude Code, ZCode or OpenCode | Session, weekly and MCP windows from the Z.ai usage API, with region-aware endpoints and persisted rate-limit backoff. |
+| **Devin** | Devin or Windsurf's read-only local session database, with CLI credential fallback | Daily/weekly quota and reset times; the source database is never opened for writing. |
+| **Command Code** | `~/.commandcode/auth.json` or `COMMAND_CODE_API_KEY` | Monthly credits plus published 5h/weekly windows from Command Code's own APIs. |
+| **Kimi Code** | `~/.kimi-code/credentials/kimi-code.json` or `KIMI_CODE_HOME` | Weekly and 5h windows from Kimi Code's usage endpoint. |
+| **GitHub Copilot** | Existing GitHub CLI login (`GH_TOKEN`, `hosts.yml`, or `gh auth token`) | Premium, chat and completion quotas from GitHub Copilot's usage endpoint. |
+| **Kiro** | Kiro CLI plus its read-only local session database | Credits, bonus and reset data from `kiro-cli /usage`, optionally enriched by Kiro's usage-limits endpoint. |
 
 Providers that are not installed simply do not get a cell.
 
@@ -111,9 +117,10 @@ inside forks until the pull request is opened here.
 This project ([toughCSB/provider-monitor](https://github.com/toughCSB/provider-monitor)) adds on top of the
 `windows/` tree above:
 
-- **Two more providers**: Grok (`~/.grok/auth.json` → the weekly Grok Build allowance) and
-  OpenCode Go (`~/.local/share/opencode/auth.json`'s `opencode-go` key → rolling/weekly/monthly
-  Go-plan windows). Same read-only, never-refresh-the-token discipline as every other provider here.
+- **Eight more providers**: Grok, OpenCode Go, GLM, Devin, Command Code, Kimi Code, GitHub Copilot
+  and Kiro, each with a real Windows collector. Their existing CLI or desktop credentials are read
+  without modifying or refreshing them. A provider that is absent today is detected automatically
+  after its tool is installed and signed in later.
 - **Shows remaining, not used**: the ring, the percentage under it, and the hover card's window
   bars all read `100% − used%` now — e.g. a plan at 24% used shows **76%**, not 24%. The colour
   bands (green/yellow/red) still key off actual usage, unchanged.
@@ -160,7 +167,8 @@ the same conservative way (back off, mark stale, never invent a number).
 이 프로젝트([toughCSB/provider-monitor](https://github.com/toughCSB/provider-monitor))는 위 `windows/` 트리에 다음을
 추가했습니다:
 
-- **Provider 2개 추가**: Grok(`~/.grok/auth.json` → 주간 Grok Build 사용량)과 OpenCode Go
+- **Provider 8개 추가**: Grok, OpenCode Go, GLM, Devin, Command Code, Kimi Code, GitHub Copilot,
+  Kiro를 Windows에 실제 수집기까지 추가했습니다. Grok(`~/.grok/auth.json` → 주간 Grok Build 사용량)과 OpenCode Go
   (`~/.local/share/opencode/auth.json`의 `opencode-go` 키 → rolling/weekly/monthly Go 플랜 윈도우).
   다른 provider들과 동일하게 읽기 전용이며 토큰을 절대 새로 발급/갱신하지 않습니다.
 - **사용량이 아니라 잔여량 표시**: 링, 그 아래 퍼센트 숫자, hover 카드의 window 막대가 모두

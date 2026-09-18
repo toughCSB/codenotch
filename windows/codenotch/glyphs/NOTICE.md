@@ -15,6 +15,11 @@ The SVG files in this directory come from the npm package `@lobehub/icons-static
 | gemini-alt.svg | icons/gemini.svg | alternative: the Gemini spark |
 | grok.svg | icons/grok.svg | Grok cell |
 | opencode.svg | icons/opencode.svg | OpenCode cell |
+| copilot.svg | icons/githubcopilot.svg | GitHub Copilot cell |
+| kiro.svg | icons/kiro.svg | Kiro cell |
+
+`glm.svg`, `commandcode.svg` and `kimi.svg` are the same geometric Provider Monitor outlines used
+by the macOS app. `devin.png` is copied from the macOS app's `glyph-devin` asset.
 
 Only Claude and Antigravity have an official colour variant in this package — OpenAI, Cursor, xAI
 (Grok) and OpenCode all publish monochrome-only logos. OpenAI, Cursor and xAI's cells tint that
@@ -24,8 +29,7 @@ left untinted rather than inventing a colour it doesn't actually have.
 
 MIT License — Copyright (c) LobeHub. See that repository's LICENSE.
 
-**Trademarks**: these marks are trademarks of Anthropic, OpenAI, Anysphere (Cursor), Google, xAI
-(Grok) and OpenCode respectively, and are used here only to identify the product whose usage is
+**Trademarks**: these marks are trademarks of their respective providers and are used here only to identify the product whose usage is
 displayed. Whether
 they stay in a distributed build is the repository owner's call under each brand's guidelines;
 they can be swapped for generated glyphs without touching any code.

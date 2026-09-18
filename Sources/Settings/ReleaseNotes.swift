@@ -32,6 +32,24 @@ enum ReleaseNotes {
     static var all: [ReleaseNote] {
         [
             ReleaseNote(
+                version: "1.16.1",
+                headline: L10n.t("Numbers, graphs and Windows providers now tell the same truth."),
+                changes: [
+                    ReleaseNote.Change(
+                        title: L10n.t("One basis for every graph"),
+                        detail: L10n.t("Ring arcs, hover bars and percentages now all follow the selected remaining or used basis, and near-full Antigravity values no longer carry a stray greater-than sign.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Windows recognises twelve providers"),
+                        detail: L10n.t("GLM, Devin, Command Code, Kimi Code, GitHub Copilot and Kiro now join the original six collectors and appear automatically after their tools are installed and signed in.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Reliable local installs and updates"),
+                        detail: L10n.t("Local ad-hoc installs can load Sparkle correctly, the update row stays hidden when this version is current, and Windows uses the same Provider Monitor icon as the Mac.")
+                    ),
+                ]
+            ),
+            ReleaseNote(
                 version: "1.16.0",
                 headline: L10n.t("Windows now follows the Mac's current design, not its old shell."),
                 changes: [
@@ -45,7 +63,7 @@ enum ReleaseNotes {
                     ),
                     ReleaseNote.Change(
                         title: L10n.t("Correct graphs and placement"),
-                        detail: L10n.t("Graphs fill by usage while the ring number defaults to percent left; monitor selection and the full 125% size are available in Appearance.")
+                        detail: L10n.t("The graph and ring number now follow the same selected used or remaining basis; monitor selection and the full 125% size are available in Appearance.")
                     ),
                 ]
             ),

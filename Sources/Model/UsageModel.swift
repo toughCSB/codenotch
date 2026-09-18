@@ -100,9 +100,9 @@ enum Percent {
             return ("\(used)", "\(max(0, 100 - used))")
         }
         let left = max(0, 100 - value)
-        // "<0.1" has no number to subtract from a hundred, so the far half
-        // makes the same claim from its own end: ">99.9".
-        return (small(value), left > 99.9 ? ">99.9" : small(left))
+        // Keep the compact upper bound free of a comparison sign. The number is a display value,
+        // not an inequality, and a leading `>` looked like corrupted usage in the notch.
+        return (small(value), left > 99.9 ? "99.9" : small(left))
     }
 
     /// One percentage, as display text — the ring's label.
@@ -112,11 +112,16 @@ enum Percent {
         return small(value)
     }
 
+    static func displayedFraction(for usedFraction: Double, basis: Basis) -> Double {
+        let used = min(max(usedFraction, 0), 1)
+        return basis == .used ? used : 1 - used
+    }
+
     private static func small(_ value: Double) -> String {
         if value <= 0 { return "0" }
         let tenths = (value * 10).rounded() / 10
         if tenths < 0.1 { return "<0.1" }
-        if tenths > 99.9 { return ">99.9" }
+        if tenths > 99.9 { return "99.9" }
         // Fixed locale: the decimal point is not up to the system settings,
         // any more than "%" is.
         return String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), tenths)
@@ -429,6 +434,14 @@ struct ProviderSnapshot: Identifiable, Equatable {
     /// A ring can only be drawn when the provider said what the limit was. A
     /// local model has no limit; its arc is how full the context was.
     var ringFraction: Double? { kind == .localRuntime ? localContextFraction : usedFraction }
+
+    /// The fraction the arc draws. Cloud quotas follow the same basis as the number below them;
+    /// local context rings have no remaining/used preference and keep their measured fill.
+    var displayedRingFraction: Double? {
+        guard let fraction = ringFraction else { return nil }
+        guard kind != .localRuntime else { return fraction }
+        return Percent.displayedFraction(for: fraction, basis: percentBasis)
+    }
 
     /// Rows the tooltip adds for a logged runtime: context used, tokens and
     /// requests today, reasoning share, draft acceptance. Counted here so the

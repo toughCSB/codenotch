@@ -26,7 +26,8 @@ Third-party notices
 
 - Provider marks in codenotch/glyphs/ are from @lobehub/icons-static-svg (MIT,
   Copyright (c) LobeHub); see codenotch/glyphs/NOTICE.md. The marks remain the
-  trademarks of Anthropic, OpenAI, Anysphere (Cursor) and Google respectively.
-- codenotch/icons/icon.ico and tray.png are derived from the upstream Codenotch
-  app icon by @vinzdg and are used here only for the upstream contribution;
-  their license follows the upstream repository.
+  trademarks of their respective providers. GLM, Command Code and Kimi use the
+  same geometric Provider Monitor outlines as the macOS app; Devin uses the
+  same bundled artwork as the macOS app.
+- codenotch/icons/icon.ico, icon.png and tray-color.png are generated from this
+  repository's Provider Monitor macOS app icon.

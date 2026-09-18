@@ -48,6 +48,8 @@ DEV_TEAM := $(if $(DEV_IDENTITY),$(shell security find-certificate -c "$(DEV_IDE
 ifeq (,$(HAS_DEVELOPER_ID))
 ifeq (,$(DEV_TEAM))
 DEV_SIGN := CODE_SIGN_IDENTITY="-" DEVELOPMENT_TEAM="" CODE_SIGN_STYLE=Automatic
+LOCAL_INSTALL_ADHOC := 1
+LOCAL_INSTALL_ENTITLEMENTS := $(CURDIR)/build/local/adhoc.entitlements
 else
 DEV_SIGN := CODE_SIGN_IDENTITY="Apple Development" CODE_SIGN_STYLE=Manual \
 	DEVELOPMENT_TEAM="$(DEV_TEAM)" PROVISIONING_PROFILE_SPECIFIER=""
@@ -102,11 +104,25 @@ run: build
 # and binary carry different Team IDs, so the whole bundle is signed with one
 # identity rather than left unsigned.
 install: gen
+	@if [ "$(LOCAL_INSTALL_ADHOC)" = "1" ]; then \
+		mkdir -p "$(dir $(LOCAL_INSTALL_ENTITLEMENTS))"; \
+		printf '%s\n' \
+			'<?xml version="1.0" encoding="UTF-8"?>' \
+			'<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+			'<plist version="1.0"><dict>' \
+			'<key>com.apple.security.cs.disable-library-validation</key><true/>' \
+			'</dict></plist>' > "$(LOCAL_INSTALL_ENTITLEMENTS)"; \
+	fi
 	xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
-		-configuration Release $(DEV_SIGN) build
+		-configuration Release $(DEV_SIGN) \
+		$(if $(LOCAL_INSTALL_ADHOC),CODE_SIGN_ENTITLEMENTS="$(LOCAL_INSTALL_ENTITLEMENTS)") build
 	@APP="$$(xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
 		-configuration Release -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/$(APP_BUNDLE)"; \
+	if [ "$(LOCAL_INSTALL_ADHOC)" = "1" ]; then \
+		codesign --force --options runtime --entitlements "$(LOCAL_INSTALL_ENTITLEMENTS)" \
+			--sign - "$$APP"; \
+	fi; \
 	pkill -x "$(APP_PROCESS)" || true; \
 	cp -R "$$APP" /Applications/; \
 	open "/Applications/$(APP_BUNDLE)"

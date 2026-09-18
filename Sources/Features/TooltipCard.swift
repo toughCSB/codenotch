@@ -364,9 +364,10 @@ private struct StatusRing: View {
 // MARK: - Providers
 
 /// One metered window: label and reset copy on a line, a track bar, then the
-/// percentage burned.
+/// percentage in the same used/remaining basis as that bar.
 private struct LimitWindowRow: View {
     let window: LimitWindow
+    let percentBasis: Percent.Basis
     var inset: CGFloat = 0
     let fidelity: Fidelity
     let now: Date
@@ -379,7 +380,8 @@ private struct LimitWindowRow: View {
     private var band: UsageBand { UsageBand.band(for: window.usedFraction ?? 0, watchLimit: watchLimit, criticalLimit: criticalLimit) }
     private var trackWidth: CGFloat { NotchLayout.cardWidth - 2 * NotchLayout.cardPadding - inset }
     private var fillWidth: CGFloat {
-        let fraction = CGFloat(min(max(window.usedFraction ?? 0, 0), 1))
+        let fraction = CGFloat(Percent.displayedFraction(for: window.usedFraction ?? 0,
+                                                         basis: percentBasis))
         return max(NotchLayout.barHeight, trackWidth * fraction)
     }
 
@@ -609,7 +611,7 @@ private struct ProviderTooltip: View {
 
                                 VStack(alignment: .leading, spacing: NotchLayout.blockSpacing) {
                                     ForEach(Array(group.windows.enumerated()), id: \.element.id) { windowIndex, window in
-                                        LimitWindowRow(window: window, inset: 2 * Design.px(16), fidelity: snapshot.fidelity, now: now, resetTimeFormat: resetTimeFormat, showsUsagePace: showUsagePace)
+                                        LimitWindowRow(window: window, percentBasis: snapshot.percentBasis, inset: 2 * Design.px(16), fidelity: snapshot.fidelity, now: now, resetTimeFormat: resetTimeFormat, showsUsagePace: showUsagePace)
                                             .padding(.top, windowIndex == 0 ? 0 : NotchLayout.blockSpacing)
                                     }
                                 }
@@ -622,7 +624,7 @@ private struct ProviderTooltip: View {
                             .padding(.top, groupIndex == 0 ? firstRowSpacing : Design.px(28))
                         } else {
                             ForEach(Array(group.windows.enumerated()), id: \.element.id) { windowIndex, window in
-                                LimitWindowRow(window: window, fidelity: snapshot.fidelity, now: now, resetTimeFormat: resetTimeFormat, showsUsagePace: showUsagePace)
+                                LimitWindowRow(window: window, percentBasis: snapshot.percentBasis, fidelity: snapshot.fidelity, now: now, resetTimeFormat: resetTimeFormat, showsUsagePace: showUsagePace)
                                     .padding(.top, (groupIndex == 0 && windowIndex == 0) ? firstRowSpacing : NotchLayout.blockSpacing)
                             }
                         }

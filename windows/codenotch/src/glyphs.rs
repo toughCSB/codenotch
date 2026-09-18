@@ -29,7 +29,10 @@ pub struct Glyph {
     pub source: String,
 }
 
-pub const IDS: [&str; 6] = ["claude", "codex", "cursor", "gemini", "grok", "opencode"];
+pub const IDS: [&str; 12] = [
+    "claude", "codex", "cursor", "gemini", "grok", "opencode", "glm", "devin",
+    "commandcode", "kimi", "copilot", "kiro",
+];
 
 /// Built-in artwork (@lobehub/icons-static-svg, MIT): the OpenAI mark for codex (matching upstream's
 /// glyph choice), the Antigravity mark for gemini. Claude and Antigravity have an official full-colour
@@ -38,14 +41,21 @@ pub const IDS: [&str; 6] = ["claude", "codex", "cursor", "gemini", "grok", "open
 /// official colour mark (OpenAI, Cursor, xAI and OpenCode all publish monochrome logos), so the page
 /// tints their monochrome outline with a distinguishing (not official) accent — see BRAND_TINT in
 /// ui/notch.html.
-const BUILTIN: [(&str, &str); 6] = [
+const BUILTIN: [(&str, &str); 11] = [
     ("claude", include_str!("../glyphs/claude-color.svg")),
     ("codex", include_str!("../glyphs/codex.svg")),
     ("cursor", include_str!("../glyphs/cursor.svg")),
     ("gemini", include_str!("../glyphs/antigravity-color.svg")),
     ("grok", include_str!("../glyphs/grok.svg")),
     ("opencode", include_str!("../glyphs/opencode.svg")),
+    ("glm", include_str!("../glyphs/glm.svg")),
+    ("commandcode", include_str!("../glyphs/commandcode.svg")),
+    ("kimi", include_str!("../glyphs/kimi.svg")),
+    ("copilot", include_str!("../glyphs/copilot.svg")),
+    ("kiro", include_str!("../glyphs/kiro.svg")),
 ];
+
+const BUILTIN_PNG: [(&str, &[u8]); 1] = [("devin", include_bytes!("../glyphs/devin.png"))];
 
 /// Minimal SVG sanitising before inlining into the DOM: drop <script> blocks and on*="…" event
 /// attributes (the built-in files have none; this guards user files). Every slice position comes
@@ -319,7 +329,21 @@ pub fn collect(prev: &HashMap<String, Glyph>) -> HashMap<String, Glyph> {
                 found = Some(Glyph {
                     kind: "svg".into(),
                     svg: sanitize_svg(svg),
-                    source: "built-in · @lobehub/icons-static-svg 1.95.0 (MIT)".into(),
+                    source: if matches!(id, "glm" | "commandcode" | "kimi") {
+                        "built-in Provider Monitor artwork".into()
+                    } else {
+                        "built-in · @lobehub/icons-static-svg 1.95.0 (MIT)".into()
+                    },
+                    ..Default::default()
+                });
+            }
+        }
+        if found.is_none() {
+            if let Some((_, png)) = BUILTIN_PNG.iter().find(|(k, _)| *k == id) {
+                found = Some(Glyph {
+                    kind: "png".into(),
+                    url: format!("data:image/png;base64,{}", b64(png)),
+                    source: "built-in Provider Monitor artwork".into(),
                     ..Default::default()
                 });
             }
@@ -334,7 +358,7 @@ pub fn collect(prev: &HashMap<String, Glyph>) -> HashMap<String, Glyph> {
 /// For doctor — a one-shot diagnostic with no previous run to stick with
 pub fn probe() -> String {
     let m = collect(&HashMap::new());
-    let mut lines = vec![format!("glyph directory: {} (drop claude/codex/cursor/gemini/grok/opencode .svg or .png files here)", user_dir().display())];
+    let mut lines = vec![format!("glyph directory: {} (drop a provider id such as claude, glm or kimi as .svg/.png here)", user_dir().display())];
     for id in IDS {
         lines.push(match m.get(id) {
             Some(g) => format!("  {id}: {} ← {}", g.kind, g.source),

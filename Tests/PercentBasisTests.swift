@@ -34,6 +34,16 @@ final class PercentBasisTests: XCTestCase {
         XCTAssertEqual(snapshot(0.12, basis: .remaining).headlineText, "88%")
     }
 
+    func testTheRingGraphUsesTheSameBasisAsItsNumber() {
+        XCTAssertEqual(snapshot(0.12, basis: .used).displayedRingFraction, 0.12)
+        XCTAssertEqual(snapshot(0.12, basis: .remaining).displayedRingFraction, 0.88)
+    }
+
+    func testNearFullRemainingTextHasNoComparisonSign() {
+        XCTAssertEqual(snapshot(0.0004, basis: .remaining).headlineText, "99.9%")
+        XCTAssertFalse(snapshot(0.0004, basis: .remaining).headlineText.contains(">"))
+    }
+
     /// Both halves come off the same rounding, or the ring and the card would
     /// contradict each other about the same window.
     func testTheHalvesAgreeAtEveryFraction() {

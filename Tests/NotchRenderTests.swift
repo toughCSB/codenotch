@@ -117,6 +117,32 @@ final class NotchRenderTests: XCTestCase {
         XCTAssertGreaterThan(colour(.outside), off, "outside painted no arc")
     }
 
+    /// The number and the arc are one reading. In remaining mode a 20%-used window prints 80%
+    /// and must paint the long 80% arc; the old renderer always painted the short used arc.
+    func testTheArcFollowsTheSamePercentBasisAsTheNumber() {
+        func rendered(_ basis: Percent.Basis) -> (text: String, colour: Double) {
+            let model = model(edge: .right)
+            model.snapshots = model.snapshots.map { snapshot in
+                ProviderSnapshot(
+                    id: snapshot.id, displayName: snapshot.displayName,
+                    glyph: snapshot.glyph, fidelity: snapshot.fidelity,
+                    status: snapshot.status,
+                    windows: [LimitWindow(id: "w", label: "Weekly", usedFraction: 0.2)],
+                    headlineID: "w", percentBasis: basis
+                )
+            }
+            guard let rep = render(model) else { return ("", -1) }
+            return (model.snapshots[0].headlineText, colouredFraction(rep))
+        }
+
+        let used = rendered(.used)
+        let remaining = rendered(.remaining)
+        XCTAssertEqual(used.text, "20%")
+        XCTAssertEqual(remaining.text, "80%")
+        XCTAssertGreaterThan(remaining.colour, used.colour + 0.002,
+                             "80% remaining still painted the shorter 20%-used arc")
+    }
+
     /// A week nobody has spent yet still has to be visible.
     ///
     /// At 0% the arc has no length, so without a track behind it the ring is

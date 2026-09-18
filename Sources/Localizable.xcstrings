@@ -12651,12 +12651,12 @@
         }
       }
     },
-    "Graphs fill by usage while the ring number defaults to percent left; monitor selection and the full 125% size are available in Appearance.": {
+    "The graph and ring number now follow the same selected used or remaining basis; monitor selection and the full 125% size are available in Appearance.": {
       "localizations": {
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "그래프는 사용량만큼 채워지고 링 숫자는 기본적으로 잔여량을 표시합니다. 모양 설정에서 모니터 선택과 125% 큰 크기를 사용할 수 있습니다."
+            "value": "그래프와 링 숫자가 이제 선택한 사용량 또는 잔여량 기준을 동일하게 따릅니다. 모양 설정에서 모니터 선택과 125% 큰 크기를 사용할 수 있습니다."
           }
         }
       }
@@ -31481,6 +31481,76 @@
           "stringUnit": {
             "state": "translated",
             "value": "简体中文"
+          }
+        }
+      }
+    },
+    "Numbers, graphs and Windows providers now tell the same truth.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "숫자, 그래프, Windows 프로바이더가 이제 같은 사실을 보여줍니다."
+          }
+        }
+      }
+    },
+    "One basis for every graph": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모든 그래프에 하나의 표시 기준"
+          }
+        }
+      }
+    },
+    "Ring arcs, hover bars and percentages now all follow the selected remaining or used basis, and near-full Antigravity values no longer carry a stray greater-than sign.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "링, 호버 막대와 퍼센트 숫자가 선택한 잔여량 또는 사용량 기준을 모두 동일하게 따르며, 잔여량이 거의 가득 찬 Antigravity 값에서 잘못된 부등호를 제거했습니다."
+          }
+        }
+      }
+    },
+    "Windows recognises twelve providers": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Windows에서 12개 프로바이더 자동 인식"
+          }
+        }
+      }
+    },
+    "GLM, Devin, Command Code, Kimi Code, GitHub Copilot and Kiro now join the original six collectors and appear automatically after their tools are installed and signed in.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GLM, Devin, Command Code, Kimi Code, GitHub Copilot과 Kiro 수집기를 추가했습니다. 해당 도구를 설치하고 로그인하면 자동으로 나타납니다."
+          }
+        }
+      }
+    },
+    "Reliable local installs and updates": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "안정적인 로컬 설치와 업데이트"
+          }
+        }
+      }
+    },
+    "Local ad-hoc installs can load Sparkle correctly, the update row stays hidden when this version is current, and Windows uses the same Provider Monitor icon as the Mac.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "로컬 ad-hoc 설치에서 Sparkle을 정상 로드하고, 현재 버전이면 업데이트 안내를 숨기며, Windows에서도 Mac과 같은 Provider Monitor 아이콘을 사용합니다."
           }
         }
       }
