@@ -5,6 +5,42 @@ use std::path::PathBuf;
 /// The Mac's notch sizes, as multiples of the designed size: Small, Medium, Large.
 pub const SIZES: [f64; 3] = [0.8, 1.0, 1.25];
 
+/// The physical screen edge the Windows notch is attached to. The strings intentionally match
+/// macOS `NotchEdge.RawValue`, so settings and diagnostics use the same vocabulary on both apps.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NotchEdge {
+    Right,
+    Left,
+    Top,
+    Bottom,
+}
+
+impl NotchEdge {
+    pub const ALL: [Self; 4] = [Self::Right, Self::Left, Self::Top, Self::Bottom];
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Right => "right",
+            Self::Left => "left",
+            Self::Top => "top",
+            Self::Bottom => "bottom",
+        }
+    }
+
+    pub fn is_vertical(self) -> bool {
+        matches!(self, Self::Right | Self::Left)
+    }
+}
+
+pub fn notch_edge_or_right(value: &str) -> NotchEdge {
+    match value {
+        "left" => NotchEdge::Left,
+        "top" => NotchEdge::Top,
+        "bottom" => NotchEdge::Bottom,
+        _ => NotchEdge::Right,
+    }
+}
+
 /// The nearest of `SIZES`, so a scale saved by the old 40–100 % slider still lands on a size that
 /// exists. 0.9, halfway between Small and Medium, counts as Medium.
 pub fn snap_scale(scale: f64) -> f64 {
@@ -45,6 +81,13 @@ pub struct Config {
     /// height (0 = top, 1 = bottom), default 0.5; saved after a drag.
     #[serde(default = "default_notch_y")]
     pub notch_y: f64,
+    /// Screen edge, matching the four choices in the macOS Appearance pane.
+    #[serde(default = "default_notch_edge")]
+    pub notch_edge: String,
+    /// Position along each edge, 0 = the visible pill touches the start of that edge and 1 = it
+    /// touches the end. Remembered per edge so switching sides does not discard a placement.
+    #[serde(default)]
+    pub notch_positions: HashMap<String, f64>,
     /// Stable monitor key. "primary" follows the Windows primary display; an explicit key keeps
     /// the notch on the display chosen in Settings until that display disappears.
     #[serde(default = "default_notch_monitor")]
@@ -109,6 +152,9 @@ pub struct Config {
 fn default_notch_y() -> f64 {
     0.5
 }
+fn default_notch_edge() -> String {
+    NotchEdge::Right.as_str().into()
+}
 fn default_notch_monitor() -> String {
     "primary".into()
 }
@@ -166,6 +212,8 @@ impl Default for Config {
             bar_w: None,
             drag_enabled: false,
             notch_y: default_notch_y(),
+            notch_edge: default_notch_edge(),
+            notch_positions: HashMap::new(),
             notch_monitor: default_notch_monitor(),
             scale: default_scale(),
             percent_basis: default_percent_basis(),
@@ -254,7 +302,40 @@ pub fn load() -> Config {
     cfg.scale = snap_scale(cfg.scale);
     cfg.percent_basis = percent_basis_or_remaining(&cfg.percent_basis);
     cfg.weekly_ring = weekly_ring_or_off(&cfg.weekly_ring);
+    cfg.notch_edge = notch_edge_or_right(&cfg.notch_edge).as_str().into();
+    // `notch_y` was the right-edge position before all four edges existed. Carry it into the new
+    // per-edge map once, while leaving the field in the file for older builds that may read it.
+    if cfg.notch_positions.is_empty() {
+        cfg.notch_positions
+            .insert(NotchEdge::Right.as_str().into(), cfg.notch_y.clamp(0.0, 1.0));
+    }
+    for value in cfg.notch_positions.values_mut() {
+        *value = if value.is_finite() { value.clamp(0.0, 1.0) } else { 0.5 };
+    }
     cfg
+}
+
+impl Config {
+    pub fn edge(&self) -> NotchEdge {
+        notch_edge_or_right(&self.notch_edge)
+    }
+
+    pub fn notch_position(&self, edge: NotchEdge) -> f64 {
+        self.notch_positions
+            .get(edge.as_str())
+            .copied()
+            .filter(|v| v.is_finite())
+            .unwrap_or(0.5)
+            .clamp(0.0, 1.0)
+    }
+
+    pub fn set_notch_position(&mut self, edge: NotchEdge, value: f64) {
+        let value = if value.is_finite() { value.clamp(0.0, 1.0) } else { 0.5 };
+        self.notch_positions.insert(edge.as_str().into(), value);
+        if edge == NotchEdge::Right {
+            self.notch_y = value;
+        }
+    }
 }
 
 pub fn save(cfg: &Config) {
@@ -269,7 +350,7 @@ pub fn save(cfg: &Config) {
 
 #[cfg(test)]
 mod tests {
-    use super::{percent_basis_or_remaining, snap_scale, weekly_ring_or_off};
+    use super::{notch_edge_or_right, percent_basis_or_remaining, Config, NotchEdge, snap_scale, weekly_ring_or_off};
 
     #[test]
     fn a_saved_scale_snaps_to_the_nearest_size() {
@@ -294,5 +375,25 @@ mod tests {
         assert_eq!(percent_basis_or_remaining("remaining"), "remaining");
         assert_eq!(percent_basis_or_remaining("used"), "used");
         assert_eq!(percent_basis_or_remaining("anything else"), "remaining");
+    }
+
+    #[test]
+    fn all_four_mac_edges_are_valid_and_unknown_values_fall_back_to_right() {
+        assert_eq!(NotchEdge::ALL.map(NotchEdge::as_str), ["right", "left", "top", "bottom"]);
+        assert_eq!(notch_edge_or_right("left"), NotchEdge::Left);
+        assert_eq!(notch_edge_or_right("top"), NotchEdge::Top);
+        assert_eq!(notch_edge_or_right("bottom"), NotchEdge::Bottom);
+        assert_eq!(notch_edge_or_right("somewhere"), NotchEdge::Right);
+    }
+
+    #[test]
+    fn placement_is_remembered_per_edge_and_the_legacy_right_value_stays_in_sync() {
+        let mut cfg = Config::default();
+        cfg.set_notch_position(NotchEdge::Right, 0.1);
+        cfg.set_notch_position(NotchEdge::Top, 0.9);
+        assert_eq!(cfg.notch_position(NotchEdge::Right), 0.1);
+        assert_eq!(cfg.notch_position(NotchEdge::Top), 0.9);
+        assert_eq!(cfg.notch_position(NotchEdge::Left), 0.5);
+        assert_eq!(cfg.notch_y, 0.1);
     }
 }

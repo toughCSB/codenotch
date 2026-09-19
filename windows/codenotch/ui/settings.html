@@ -382,6 +382,20 @@
             <select id="display-select" aria-label="Display"><option value="primary">Follow primary</option></select>
           </div>
         </div>
+        <div class="row">
+          <div class="r-text">
+            <div class="r-name">Edge</div>
+            <div class="r-why">Attach the notch to the right, left, top or bottom of the selected monitor, like the macOS version.</div>
+          </div>
+          <div class="r-ctl">
+            <select id="notch-edge" aria-label="Edge">
+              <option value="right">Right</option>
+              <option value="left">Left</option>
+              <option value="top">Top</option>
+              <option value="bottom">Bottom</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div class="block">
@@ -515,7 +529,7 @@
           <img class="about-mark" data-logo src="tray.png" alt="Provider Monitor">
           <div>
             <div class="about-name">Provider Monitor</div>
-            <div class="about-ver">Version <span id="about-version">1.16.1</span></div>
+            <div class="about-ver">Version <span id="about-version">1.17.0</span></div>
           </div>
         </div>
         <div class="c-note dim" style="margin-top:10px">Shows supported providers' allowance in the taskbar icon and in a pill at the edge of the screen.</div>
@@ -573,7 +587,7 @@
         <div class="row">
           <div class="r-text">
             <div class="r-name">Put the notch back</div>
-            <div class="r-why">The pill can be dragged up and down the right-hand edge. If it has ended up somewhere you cannot see it — off the bottom of a screen you have unplugged, say — this drops it back into the middle of the edge.</div>
+            <div class="r-why">Drag the pill all the way along the selected edge. If a monitor change leaves it somewhere you cannot see, this puts it back in the middle of that edge.</div>
           </div>
           <div class="r-ctl"><button class="btn" id="btn-resetpos">Reset position</button></div>
         </div>
@@ -674,6 +688,9 @@ const RU_STATIC = {
   'Shows supported providers\' allowance in the taskbar icon and in a pill at the edge of the screen.':'Показывает лимиты поддерживаемых провайдеров в значке панели задач и на панели у края экрана.',
   'Everything Provider Monitor remembers lives in one folder: your settings, its log file, and the "glyphs" folder where you can drop your own icons. Opens in File Explorer.':'Все данные Provider Monitor хранятся в одной папке: настройки, журнал и папка «glyphs» для собственных значков. Открывается в Проводнике.',
   'The pill can be dragged up and down the right-hand edge. If it has ended up somewhere you cannot see it — off the bottom of a screen you have unplugged, say — this drops it back into the middle of the edge.':'Панель можно перетаскивать вверх и вниз вдоль правого края. Если она оказалась за пределами экрана, эта кнопка возвращает её в середину края.',
+  'Edge':'Край', 'Right':'Справа', 'Left':'Слева', 'Top':'Сверху', 'Bottom':'Снизу',
+  'Attach the notch to the right, left, top or bottom of the selected monitor, like the macOS version.':'Прикрепляет панель к правому, левому, верхнему или нижнему краю выбранного монитора, как в версии для macOS.',
+  'Drag the pill all the way along the selected edge. If a monitor change leaves it somewhere you cannot see, this puts it back in the middle of that edge.':'Перетаскивайте панель по всей длине выбранного края. Если после смены монитора она пропала из виду, эта кнопка вернёт её в центр края.',
   'The plain Provider Monitor logo is used.':'Используется обычный логотип Provider Monitor.', 'No numbers are drawn.':'Числа не отображаются.',
   'This is how big it really is in the taskbar.':'Такой размер значок имеет в панели задач.',
   'Windows picks one of these depending on the display. If a number is unreadable here, it will be unreadable in the taskbar.':'Windows выбирает один из вариантов в зависимости от масштаба экрана. Если число не читается здесь, в панели задач оно тоже не будет читаться.',
@@ -752,6 +769,9 @@ const KO_STATIC = {
   'Shows supported providers\' allowance in the taskbar icon and in a pill at the edge of the screen.':'지원하는 프로바이더의 한도를 트레이 아이콘과 화면 끝의 바에 표시합니다.',
   'Everything Provider Monitor remembers lives in one folder: your settings, its log file, and the "glyphs" folder where you can drop your own icons. Opens in File Explorer.':'Provider Monitor가 기억하는 모든 것은 한 폴더에 있습니다: 설정, 로그 파일, 직접 아이콘을 넣을 수 있는 "glyphs" 폴더. 탐색기로 열립니다.',
   'The pill can be dragged up and down the right-hand edge. If it has ended up somewhere you cannot see it — off the bottom of a screen you have unplugged, say — this drops it back into the middle of the edge.':'바는 화면 오른쪽 끝을 따라 위아래로 끌 수 있습니다. 연결을 끊은 모니터 아래쪽처럼 보이지 않는 곳으로 가버렸다면, 이 버튼으로 가운데로 되돌릴 수 있습니다.',
+  'Edge':'위치', 'Right':'오른쪽', 'Left':'왼쪽', 'Top':'위', 'Bottom':'아래',
+  'Attach the notch to the right, left, top or bottom of the selected monitor, like the macOS version.':'macOS 버전처럼 선택한 모니터의 오른쪽·왼쪽·위·아래 가장자리에 노치를 붙입니다.',
+  'Drag the pill all the way along the selected edge. If a monitor change leaves it somewhere you cannot see, this puts it back in the middle of that edge.':'선택한 가장자리의 끝에서 끝까지 노치를 끌어 이동할 수 있습니다. 모니터 변경 후 보이지 않으면 이 버튼으로 해당 가장자리 중앙에 되돌립니다.',
   'Notch size':'노치 바 크기', 'Provider Monitor':'Provider Monitor', 'Tray icon preview':'트레이 아이콘 미리보기', 'Provider Monitor logo':'Provider Monitor 로고', 'Tray icon at':'아이콘 크기', 'pixels':'픽셀',
   'Down the right-hand edge':'오른쪽 끝을 따라', 'Down the left-hand edge':'왼쪽 끝을 따라', 'Top half':'위쪽 절반', 'Bottom half':'아래쪽 절반', 'Column':'열', 'Remove column':'열 삭제',
   'Model data':'모델 데이터',
@@ -1435,6 +1455,11 @@ document.getElementById('display-select').addEventListener('change', e => {
     .then(v => { renderDisplays(v); toast(ui('Saved', 'Saved')); })
     .catch(err => strip('set_display failed: ' + errText(err)));
 });
+document.getElementById('notch-edge').addEventListener('change', e => {
+  invoke('set_notch_edge', { edge:e.target.value })
+    .then(v => { e.target.value=v; toast(ui('Saved', 'Saved')); })
+    .catch(err => strip('set_notch_edge failed: ' + errText(err)));
+});
 document.getElementById('percent-basis').addEventListener('change', e => {
   invoke('set_percent_basis', { basis:e.target.value })
     .then(v => { e.target.value=v; toast(ui('Saved', 'Saved')); })
@@ -1735,6 +1760,9 @@ function boot(){
   });
 
   call('get_displays', undefined, []).then(renderDisplays);
+  call('get_notch_edge', undefined, 'right').then(v => {
+    document.getElementById('notch-edge').value = ['right','left','top','bottom'].includes(v) ? v : 'right';
+  });
   call('get_percent_basis', undefined, 'remaining').then(v => {
     document.getElementById('percent-basis').value = v === 'used' ? 'used' : 'remaining';
   });

@@ -107,7 +107,7 @@ Windows: `windows-package.yml`이 `release: published`에서 깨어나 NSIS 설�
 첨부한다. 그러니 맥에서 릴리스를 먼저 만들면 윈도우 파일은 알아서 붙는다:
 
 ```bash
-VERSION=1.16.1
+VERSION=1.17.0
 gh release create "v${VERSION}" "build/ci/ProviderMonitor-${VERSION}-unsigned.dmg" \
   --title "Provider Monitor ${VERSION}" --notes-file notes.md
 gh release view "v${VERSION}" --json assets -q '.assets[].name'   # dmg + Setup.exe 둘 다 확인

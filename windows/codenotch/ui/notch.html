@@ -11,6 +11,7 @@
     /* macOS Sources/Notch/NotchLayout.swift is the product geometry. Keep these
        explicit: windows/scripts/check-macos-ui-parity.mjs blocks accidental drift. */
     --notch-depth:70px;
+    --horizontal-notch-depth:96px;
     --ring-size:44px;
     --cell-gap:31px;
     --glyph-size:17px;
@@ -173,9 +174,33 @@
   }
   .ctx-item:hover{background:#242424}
   .ctx-check{width:14px;flex:0 0 auto;color:#8ec4ff;font-size:12px}
+  .ctx-sep{height:1px;background:#303030;margin:4px 6px}
+
+  /* Edge parity with macOS. The same DOM rotates rather than maintaining four renderers: side
+     edges stack cells vertically, top/bottom run them horizontally, and every tooltip opens
+     inward from the bezel. */
+  body[data-edge="left"] #pill{
+    left:0;right:auto;border-radius:0 30px 30px 0;border-left:none;border-right:1px solid rgba(255,255,255,.10)
+  }
+  body[data-edge="left"] #pill::before,body[data-edge="left"] #pill::after{left:0;right:auto;transform:scaleX(-1)}
+  body[data-edge="left"] #card{left:100px;right:10px;margin-left:0;margin-right:auto}
+  body[data-edge="left"] #tail{left:69px;right:auto;transform:rotate(180deg)}
+
+  body[data-edge="top"] #pill,body[data-edge="bottom"] #pill{
+    left:50%;right:auto;width:auto;height:var(--horizontal-notch-depth);padding:0 26px 0 26px;
+    flex-direction:row;transform:translateX(-50%)
+  }
+  body[data-edge="top"] #pill{top:0;bottom:auto;border-radius:0 0 30px 30px;border-top:none}
+  body[data-edge="bottom"] #pill{top:auto;bottom:0;border-radius:30px 30px 0 0;border-bottom:none}
+  body[data-edge="top"] #pill::before,body[data-edge="top"] #pill::after,
+  body[data-edge="bottom"] #pill::before,body[data-edge="bottom"] #pill::after{display:none}
+  body[data-edge="top"] #card{top:126px;bottom:auto;right:auto;margin:0;transform:none;max-height:calc(100% - 134px)}
+  body[data-edge="bottom"] #card{top:auto;bottom:126px;right:auto;margin:0;transform:none;max-height:calc(100% - 134px)}
+  body[data-edge="top"] #tail{top:95px;bottom:auto;right:auto;transform:rotate(-90deg)}
+  body[data-edge="bottom"] #tail{top:auto;bottom:95px;right:auto;transform:rotate(90deg)}
 </style>
 </head>
-<body>
+<body data-edge="right">
 <div id="root">
   <div id="card"></div>
   <div id="tail"></div>
@@ -232,6 +257,18 @@ let kiroSnap={status:'absent',windows:[],fetched_at:0,note:''};
 let glyphs={}; // id → {kind:'mark'|'appicon', url}
 let activity=[]; // working state of the non-Claude providers: {provider,state:'busy'|'waiting',name,detail,since}
 let uiLang='en';
+let notchEdge='right';
+function applyEdge(value){
+  notchEdge=['right','left','top','bottom'].includes(value)?value:'right';
+  document.body.dataset.edge=notchEdge;
+  requestAnimationFrame(()=>{
+    reportDpr();
+    requestAnimationFrame(()=>{
+      if(card.classList.contains('show')) placeCard();
+      reportHot();
+    });
+  });
+}
 const RU_TEXT={
   'Included usage':'Включённое использование',
   'API usage':'Использование API',
@@ -281,7 +318,9 @@ const RU_TEXT={
   'Working in':'Работает в',
   'Notch size':'Размер панели',
   'Ring shows':'Кольцо показывает', 'Default':'По умолчанию', 'Weekly':'Недельный', 'Monthly':'Месячный', '5h':'5 часов',
-  'Always on top':'Поверх всех окон'
+  'Always on top':'Поверх всех окон', 'Keep open':'Оставить открытым', 'Refresh now':'Обновить сейчас',
+  'Settings…':'Настройки…', 'Show percent left under the rings':'Показывать оставшийся процент под кольцами',
+  'Quit Provider Monitor':'Выйти из Provider Monitor'
 };
 const KO_TEXT={
   'Usage':'사용량', 'Current session':'현재 세션', 'Current Session':'현재 세션',
@@ -311,7 +350,9 @@ const KO_TEXT={
   'Remaining':'남음', 'needs your input':'응답 필요', 'Working in':'작업 중:',
   'Gemini Models':'Gemini 모델', 'Claude and GPT models':'Claude 및 GPT 모델',
   'Ring shows':'표시 기준', 'Default':'기본', 'Weekly':'주간', 'Monthly':'월간', '5h':'5시간',
-  'Always on top':'항상 위에 표시', 'Settings…':'설정…', 'Notch size':'노치 크기'
+  'Always on top':'항상 위에 표시', 'Settings…':'설정…', 'Notch size':'노치 크기',
+  'Keep open':'열어두기', 'Refresh now':'지금 새로고침',
+  'Show percent left under the rings':'링 아래에 남은 퍼센트 표시', 'Quit Provider Monitor':'Provider Monitor 종료'
 };
 const ZH_TEXT={
   'Gemini Models':'Gemini 模型', 'Claude and GPT models':'Claude 和 GPT 模型',
@@ -728,21 +769,35 @@ function renderCard(){
 function placeCard(){
   const cell=pill.querySelector(`.cell[data-p="${hoverId}"]`)||pill;
   const cr=cell.getBoundingClientRect();
-  const cy=cr.top+cr.height/2;
-  const H=innerHeight, ch=card.offsetHeight||0;
-  let top=Math.round(cy-ch/2); top=Math.max(8,Math.min(top,H-ch-8));
-  card.style.top=top+'px'; card.style.transform='none';
-  // The tail's point on the hovered ring (not the cell, which includes the label below it), kept off the card's rounded corners
-  const rr=(cell.querySelector('.ringwrap')||cell).getBoundingClientRect(), ry=rr.top+rr.height/2;
-  const th=tail.offsetHeight||36, ty=Math.max(top+16+th/2,Math.min(top+ch-16-th/2,ry));
-  tail.style.top=Math.round(ty-th/2)+'px';
+  const rr=(cell.querySelector('.ringwrap')||cell).getBoundingClientRect();
+  card.style.left='';card.style.right='';card.style.top='';card.style.bottom='';card.style.transform='none';
+  tail.style.left='';tail.style.right='';tail.style.top='';tail.style.bottom='';
+  if(notchEdge==='right'||notchEdge==='left'){
+    const cy=cr.top+cr.height/2;
+    const H=innerHeight, ch=card.offsetHeight||0;
+    let top=Math.round(cy-ch/2); top=Math.max(8,Math.min(top,H-ch-8));
+    card.style.top=top+'px';
+    // The tail's point on the hovered ring (not the cell, which includes the label below it), kept off the card's rounded corners
+    const ry=rr.top+rr.height/2;
+    const th=tail.getBoundingClientRect().height||36, ty=Math.max(top+16+th/2,Math.min(top+ch-16-th/2,ry));
+    tail.style.top=Math.round(ty-th/2)+'px';
+  }else{
+    const cx=cr.left+cr.width/2;
+    const W=innerWidth, cw=card.offsetWidth||226;
+    let left=Math.round(cx-cw/2); left=Math.max(8,Math.min(left,W-cw-8));
+    card.style.left=left+'px';
+    const rx=rr.left+rr.width/2;
+    const tw=tail.getBoundingClientRect().width||33;
+    const tx=Math.max(left+16+tw/2,Math.min(left+cw-16-tw/2,rx));
+    tail.style.left=Math.round(tx-tw/2)+'px';
+  }
 }
 
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
 
 /* Hover: stays expanded while either the pill or the card is under the cursor; collapses after a 250 ms grace period (upstream motion rule) */
 const card=document.getElementById('card'), pill=document.getElementById('pill'), tail=document.getElementById('tail'), ctxmenu=document.getElementById('ctxmenu');
-let hideTimer=null;
+let hideTimer=null, menuPinned=false;
 function showCard(){clearTimeout(hideTimer);card.classList.add('show');renderCard();armWatchdog();refreshClock();} // show first, then render: placeCard needs offsetHeight
 // Nothing is broadcast when the Windows clock format changes, so ask again each time the card opens
 function refreshClock(){
@@ -753,7 +808,7 @@ function refreshClock(){
   }).catch(()=>{});
 }
 function hideCard(){card.classList.remove('show');reportHot();}
-function scheduleHide(){clearTimeout(hideTimer);hideTimer=setTimeout(hideCard,250);}
+function scheduleHide(){clearTimeout(hideTimer);if(!menuPinned)hideTimer=setTimeout(hideCard,250);}
 // ===== Diagnostics + geometry =====
 function jslog(m){invoke('log_js',{msg:String(m)}).catch(()=>{});}
 function callq(cmd,args){ // invoke with visible failure: any command error is reported on screen (a silent .catch used to swallow them)
@@ -776,11 +831,27 @@ function reportHot(){
    떡배님's ask: right-clicking the notch is where "keep it on top of every other window" is
    turned on or off, intuitively (a ticked/unticked menu item), without going into Settings. */
 let alwaysOnTop=true;
+function ctxButton(id,label,checked){
+  const role=checked===undefined?'menuitem':'menuitemcheckbox';
+  const aria=checked===undefined?'':` aria-checked="${checked}"`;
+  return `<button class="ctx-item" id="${id}" role="${role}"${aria}><span class="ctx-check">${checked?'&#10003;':''}</span><span>${esc(textCopy(label))}</span></button>`;
+}
 function renderCtxMenu(){
-  const label=textCopy('Always on top');
-  ctxmenu.innerHTML=`<button class="ctx-item" id="ctx-aot" role="menuitemcheckbox" aria-checked="${alwaysOnTop}">`
-    +`<span class="ctx-check">${alwaysOnTop?'&#10003;':''}</span><span>${esc(label)}</span></button>`
-    +`<button class="ctx-item" id="ctx-settings" role="menuitem"><span class="ctx-check"></span><span>${esc(textCopy('Settings…'))}</span></button>`;
+  ctxmenu.innerHTML=ctxButton('ctx-pin','Keep open',menuPinned)
+    +'<div class="ctx-sep"></div>'+ctxButton('ctx-refresh','Refresh now')
+    +'<div class="ctx-sep"></div>'+ctxButton('ctx-settings','Settings…')
+    +ctxButton('ctx-aot','Always on top',alwaysOnTop)
+    +ctxButton('ctx-basis','Show percent left under the rings',percentBasis==='remaining')
+    +'<div class="ctx-sep"></div>'+ctxButton('ctx-quit','Quit Provider Monitor');
+  document.getElementById('ctx-pin').addEventListener('click',()=>{
+    menuPinned=!menuPinned;
+    hideCtxMenu();
+    if(menuPinned)showCard();else scheduleHide();
+  });
+  document.getElementById('ctx-refresh').addEventListener('click',()=>{
+    hideCtxMenu();
+    invoke('refresh_usage').catch(e=>notice('refresh_usage failed: '+e));
+  });
   document.getElementById('ctx-aot').addEventListener('click',()=>{
     const want=!alwaysOnTop;
     alwaysOnTop=want; // felt at once; the invoke result corrects it if it somehow could not be set
@@ -790,6 +861,15 @@ function renderCtxMenu(){
   document.getElementById('ctx-settings').addEventListener('click',()=>{
     hideCtxMenu();
     invoke('open_settings').catch(e=>notice('open_settings failed: '+e));
+  });
+  document.getElementById('ctx-basis').addEventListener('click',()=>{
+    const basis=percentBasis==='remaining'?'used':'remaining';
+    hideCtxMenu();
+    invoke('set_percent_basis',{basis}).catch(e=>notice('set_percent_basis failed: '+e));
+  });
+  document.getElementById('ctx-quit').addEventListener('click',()=>{
+    hideCtxMenu();
+    invoke('quit_app').catch(e=>notice('quit_app failed: '+e));
   });
 }
 function showCtxMenu(x,y){
@@ -863,10 +943,12 @@ function loadScale(){
 function armWatchdog(){
   requestAnimationFrame(reportHot); // wait one frame so renderCard's new content is laid out before measuring
 }
-// Viewport fit (pure front-end fallback, independent of Rust): the window is NOTCH_W (360) × primary scale physical px,
-// so if this page's CSS viewport is not 360 wide the WebView's DPR disagrees with the monitor; CSS zoom pulls the layout back to the design size.
+// Viewport fit (pure front-end fallback, independent of Rust): side windows are 360px wide and
+// horizontal windows are 700px wide. Comparing a top/bottom window to 360 made the whole page
+// almost 2× too large and clipped its hover card.
 function fitZoom(){
-  const z=innerWidth/360;
+  const designedWidth=(notchEdge==='top'||notchEdge==='bottom')?700:360;
+  const z=innerWidth/designedWidth;
   document.documentElement.style.zoom=(Math.abs(z-1)>0.02)?String(z):'';
   return z;
 }
@@ -930,9 +1012,10 @@ listen('percent_basis',e=>{
 // Card content changes change its height -> report the hot rectangles again
 listen('usage',()=>{if(card.classList.contains('show'))armWatchdog();}).catch(()=>{});
 listen('state',()=>{if(card.classList.contains('show'))armWatchdog();}).catch(()=>{});
-/* The pill can be dragged up and down the right edge. Press and move more than 4 px = drag (handed to Rust,
-   which follows the system cursor; the card is collapsed first); release without moving = click (opens the provider's usage page). */
-let press=null, dragging=false;
+/* The pill moves along whichever edge Settings selected. A short single click refreshes only that
+   provider; a double click opens its official usage page. The short delay is necessary because a
+   browser reports the first click before it knows a second one is coming. */
+let press=null, dragging=false, providerClickTimer=null, lastClickProvider=null, providerClickDelay=550;
 pill.addEventListener('mousedown',e=>{ if(e.button!==0)return; press={x:e.clientX,y:e.clientY,id:cellAt(e.clientX,e.clientY)||hoverId}; });
 document.addEventListener('mousemove',e=>{
   if(!press||dragging)return;
@@ -943,8 +1026,21 @@ document.addEventListener('mousemove',e=>{
 });
 document.addEventListener('mouseup',e=>{
   if(e.button!==0)return;
-  if(press&&!dragging) invoke('open_provider_page',{provider:press.id}).catch(()=>{});
+  if(press&&!dragging&&press.id){
+    lastClickProvider=press.id;
+    clearTimeout(providerClickTimer);
+    providerClickTimer=setTimeout(()=>{
+      invoke('refresh_provider',{provider:lastClickProvider}).catch(err=>notice('refresh_provider failed: '+err));
+      providerClickTimer=null;
+    },providerClickDelay);
+  }
   press=null;
+});
+pill.addEventListener('dblclick',e=>{
+  if(e.button!==0)return;
+  clearTimeout(providerClickTimer);providerClickTimer=null;
+  const provider=cellAt(e.clientX,e.clientY)||lastClickProvider||hoverId;
+  if(provider)invoke('open_provider_page',{provider}).catch(err=>notice('open_provider_page failed: '+err));
 });
 listen('drag_end',()=>{dragging=false;press=null;reportHot();}).catch(()=>{});
 
@@ -983,6 +1079,10 @@ invoke('get_kiro').then(u=>{kiroSnap=u||kiroSnap;renderRing();}).catch(()=>{});
 loadScale();
 invoke('get_percent_basis').then(v=>{percentBasis=v==='used'?'used':'remaining';renderRing();}).catch(()=>{});
 invoke('get_notch_slots').then(v=>{if(Array.isArray(v)){notchSlots=v;renderRing();}}).catch(()=>{});
+invoke('get_notch_edge').then(applyEdge).catch(()=>applyEdge('right'));
+invoke('get_double_click_time_ms').then(v=>{
+  const n=Number(v); if(isFinite(n)) providerClickDelay=Math.max(250,Math.min(1000,n))+50;
+}).catch(()=>{});
 listen('notch_slots',e=>{
   notchSlots=Array.isArray(e.payload)?e.payload:null;
   renderRing();
@@ -1001,6 +1101,7 @@ invoke('get_usage').then(u=>{usage=u||usage;renderRing();}).catch(e=>notice('get
 invoke('get_state').then(s=>{stateSnap=s||stateSnap;setUiLanguage(stateSnap.lang_resolved);renderRing();}).catch(()=>{});
 invoke('get_always_on_top').then(v=>{if(typeof v==='boolean')alwaysOnTop=v;}).catch(()=>{});
 listen('always_on_top',e=>{if(typeof e.payload==='boolean')alwaysOnTop=e.payload;}).catch(()=>{});
+listen('notch_edge',e=>applyEdge(e.payload)).catch(()=>{});
 setInterval(renderRing,30_000); // stale state and reset copy move with time
 </script>
 </body>

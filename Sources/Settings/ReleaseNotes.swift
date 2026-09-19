@@ -32,6 +32,24 @@ enum ReleaseNotes {
     static var all: [ReleaseNote] {
         [
             ReleaseNote(
+                version: "1.17.0",
+                headline: L10n.t("Windows now follows the Mac around every edge."),
+                changes: [
+                    ReleaseNote.Change(
+                        title: L10n.t("One click refreshes, two clicks open usage"),
+                        detail: L10n.t("Provider icons now refresh on a single click and open the intended official usage or workspace page on a double click.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Every edge, from end to end"),
+                        detail: L10n.t("The Windows notch can sit on the right, left, top or bottom edge, reach both ends while dragging, and remember a separate position for every edge.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("A menu and mark that match the Mac"),
+                        detail: L10n.t("The Windows context menu now mirrors the Mac's controls, always-on-top is reasserted reliably, and Claude uses its proper coral provider mark.")
+                    ),
+                ]
+            ),
+            ReleaseNote(
                 version: "1.16.1",
                 headline: L10n.t("Numbers, graphs and Windows providers now tell the same truth."),
                 changes: [

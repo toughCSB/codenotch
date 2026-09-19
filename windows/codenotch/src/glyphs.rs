@@ -308,6 +308,19 @@ pub fn collect(prev: &HashMap<String, Glyph>) -> HashMap<String, Glyph> {
                 }
             }
         }
+        // Claude Desktop's executable icon is an application tile, not the Claude provider mark.
+        // It used to win merely because the app happened to be installed, which made Windows draw
+        // a rounded app icon where macOS draws the coral Claude burst. Keep an explicit user
+        // override, but otherwise use the bundled official mark before probing executables.
+        if found.is_none() && id == "claude" {
+            let svg = BUILTIN.iter().find(|(key, _)| *key == id).map(|(_, svg)| *svg).unwrap();
+            found = Some(Glyph {
+                kind: "svg".into(),
+                svg: sanitize_svg(svg),
+                source: "built-in macOS-matching Claude mark".into(),
+                ..Default::default()
+            });
+        }
         let candidates = app_candidates(id);
         if found.is_none() {
             for exe in &candidates {

@@ -7,6 +7,8 @@ import { existsSync, readFileSync } from 'node:fs';
 const notch = readFileSync(new URL('../codenotch/ui/notch.html', import.meta.url), 'utf8');
 const settings = readFileSync(new URL('../codenotch/ui/settings.html', import.meta.url), 'utf8');
 const main = readFileSync(new URL('../codenotch/src/main.rs', import.meta.url), 'utf8');
+const config = readFileSync(new URL('../codenotch/src/config.rs', import.meta.url), 'utf8');
+const glyphs = readFileSync(new URL('../codenotch/src/glyphs.rs', import.meta.url), 'utf8');
 const tauri = JSON.parse(readFileSync(new URL('../codenotch/tauri.conf.json', import.meta.url), 'utf8'));
 
 const requiredNotchTokens = new Map([
@@ -43,6 +45,35 @@ if (!settings.includes('--settings-sidebar:200px')) missing.push('--settings-sid
 if (!settings.includes('--selection:#0a84ff')) missing.push('--selection:#0a84ff');
 if (!settings.includes('id="percent-basis"')) missing.push('Appearance: ring-number basis control');
 if (!settings.includes('id="display-select"')) missing.push('Appearance: target-display control');
+if (!settings.includes('id="notch-edge"')) missing.push('Appearance: four-edge notch control');
+if (!settings.includes('id="sw-autostart"')) missing.push('General: start-with-Windows control');
+for (const edge of ['right', 'left', 'top', 'bottom']) {
+  if (!settings.includes(`<option value="${edge}">`)) missing.push(`notch edge option: ${edge}`);
+  if (!config.includes(`"${edge}"`)) missing.push(`saved notch edge: ${edge}`);
+}
+if (!notch.includes("invoke('refresh_provider'")) missing.push('single-click provider refresh');
+if (!notch.includes("addEventListener('dblclick'")) missing.push('double-click provider usage page');
+if (!notch.includes("invoke('get_double_click_time_ms'")) missing.push('Windows double-click timing');
+if (!notch.includes("?700:360")) missing.push('edge-aware WebView zoom baseline');
+for (const item of ['Keep open', 'Refresh now', 'Settings…', 'Always on top', 'Show percent left under the rings', 'Quit Provider Monitor']) {
+  if (!notch.includes(`'${item}'`)) missing.push(`notch context menu: ${item}`);
+}
+const providerPages = [
+  'https://chatgpt.com/codex/cloud/settings/analytics#usage',
+  'https://claude.ai/settings/usage',
+  'https://gemini.google.com/app',
+  'https://grok.com/?_s=usage',
+  'https://opencode.ai/workspace/wrk_01M02ADN1RXR7S9P9S5BYPPAGT/go',
+];
+for (const url of providerPages) {
+  if (!main.includes(url)) missing.push(`provider page: ${url}`);
+}
+if (!main.includes('SetWindowPos') || !main.includes('HWND_TOPMOST')) {
+  missing.push('native Windows topmost reassertion');
+}
+if (!glyphs.includes('built-in macOS-matching Claude mark')) {
+  missing.push('macOS-matching Claude glyph priority');
+}
 if (!notch.includes('svgArc(25,ringPercent(h),tone(h.used),5)')) {
   missing.push('ring graph must follow the selected percent basis');
 }

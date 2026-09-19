@@ -31,10 +31,14 @@ mod watcher;
 
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
+use config::NotchEdge;
 
 /// Logical size of the notch window: the 70 pt pill column on the right plus room for the hover card
 /// and its tail on the left. `fitZoom` in ui/notch.html divides by the same width.
 pub const NOTCH_W: f64 = 360.0;
+/// Horizontal edges need enough inward depth for the 96px body, tail and the tallest hover card.
+/// A simple 360×700 rotation clipped the bottom of cards because the card begins beyond the body.
+pub const HORIZONTAL_NOTCH_H: f64 = 700.0;
 /// Hand-bumped build tag, written to run.log at startup so a log can always be matched to the exe that wrote it.
 pub const BUILD: &str = "r41-macos-parity";
 // The macOS geometry is 526 pt tall for five provider cells before a hover card is considered.
@@ -187,8 +191,83 @@ fn set_display(app: AppHandle, id: String) -> Vec<DisplayChoice> {
     get_displays(app)
 }
 
-/// Pins the notch to the right edge of the display selected in Settings. A disconnected explicit
-/// display falls back to the current primary display until it returns.
+#[tauri::command]
+fn get_notch_edge(app: AppHandle) -> String {
+    let st = app.state::<AppState>();
+    st.cfg
+        .lock()
+        .map(|c| c.edge().as_str().to_string())
+        .unwrap_or_else(|_| NotchEdge::Right.as_str().into())
+}
+
+#[tauri::command]
+fn set_notch_edge(app: AppHandle, edge: String) -> String {
+    let edge = config::notch_edge_or_right(&edge);
+    {
+        let st = app.state::<AppState>();
+        if let Ok(mut cfg) = st.cfg.lock() {
+            cfg.notch_edge = edge.as_str().into();
+            config::save(&cfg);
+        };
+    }
+    // The first rectangle reported after the CSS rotates is the source of truth for full-range
+    // drag clamping. An old right-edge rectangle would stop a horizontal notch short.
+    if let Ok(mut hot) = HOT.lock() {
+        hot.clear();
+    }
+    place_notch(&app);
+    let value = edge.as_str().to_string();
+    let _ = app.emit("notch_edge", &value);
+    value
+}
+
+fn notch_window_size(edge: NotchEdge, scale: f64) -> tauri::PhysicalSize<u32> {
+    let (width, height) = if edge.is_vertical() {
+        (NOTCH_W, NOTCH_H)
+    } else {
+        (NOTCH_H, HORIZONTAL_NOTCH_H)
+    };
+    tauri::PhysicalSize::new((width * scale).round() as u32, (height * scale).round() as u32)
+}
+
+/// The legal window-origin range along an edge. `pill_start` and `pill_length` describe the
+/// visible pill inside the much larger transparent window. Letting the transparent slack leave the
+/// monitor is intentional: it is what allows the visible pill itself to reach both ends.
+fn along_origin_range(
+    monitor_start: i32,
+    monitor_length: i32,
+    window_length: i32,
+    pill: Option<(f64, f64)>,
+) -> (i32, i32) {
+    let (start, length) = pill
+        .filter(|(start, length)| start.is_finite() && length.is_finite() && *start >= 0.0 && *length > 0.0)
+        .unwrap_or((0.0, window_length.max(0) as f64));
+    let lo = monitor_start - start.round() as i32;
+    let hi = monitor_start + monitor_length - (start + length).round() as i32;
+    if lo <= hi { (lo, hi) } else { (monitor_start, monitor_start) }
+}
+
+fn origin_for_ratio(lo: i32, hi: i32, ratio: f64) -> i32 {
+    let ratio = if ratio.is_finite() { ratio.clamp(0.0, 1.0) } else { 0.5 };
+    (lo as f64 + (hi - lo) as f64 * ratio).round() as i32
+}
+
+fn ratio_for_origin(lo: i32, hi: i32, origin: i32) -> f64 {
+    if hi <= lo {
+        0.5
+    } else {
+        ((origin - lo) as f64 / (hi - lo) as f64).clamp(0.0, 1.0)
+    }
+}
+
+fn pill_along_rect(edge: NotchEdge) -> Option<(f64, f64)> {
+    HOT.lock().ok().and_then(|rects| rects.first().map(|rect| {
+        if edge.is_vertical() { (rect[1], rect[3]) } else { (rect[0], rect[2]) }
+    }))
+}
+
+/// Pins the notch to the selected edge of the display selected in Settings. A disconnected
+/// explicit display falls back to the current primary display until it returns.
 pub fn place_notch(app: &AppHandle) {
     let Some(w) = app.get_webview_window("notch") else {
         return;
@@ -200,29 +279,62 @@ pub fn place_notch(app: &AppHandle) {
         // is created and then moved, leaving the WebView ~256 logical px wide instead of 340.
         // So the physical size is pinned straight from mon.scale_factor() before placing the
         // window; if it still reports a different scale afterwards, it is pinned once more.
+        let (edge, ratio) = {
+            let st = app.state::<AppState>();
+            let c = st.cfg.lock().unwrap();
+            let edge = c.edge();
+            (edge, c.notch_position(edge))
+        };
         let ms = mon.scale_factor();
-        let target = tauri::PhysicalSize::new((NOTCH_W * ms).round() as u32, (NOTCH_H * ms).round() as u32);
+        let target = notch_window_size(edge, ms);
         let _ = w.set_size(target);
         // Position from the window's measured physical size — deriving it from the scale factor
         // pushed the window past the right edge at 125 % / 150 % (the ring's right side was clipped).
         let (ww, wh) = w
             .outer_size()
             .map(|s| (s.width as i32, s.height as i32))
-            .unwrap_or(((NOTCH_W * scale) as i32, (NOTCH_H * scale) as i32));
-        let x = mon.position().x + mon.size().width as i32 - ww;
-        // Vertical position comes from the configured ratio (the pill can be dragged; it persists), clamped to the monitor
-        let ratio = {
-            let st = app.state::<AppState>();
-            let c = st.cfg.lock().unwrap();
-            c.notch_y.clamp(0.0, 1.0)
+            .unwrap_or((target.width as i32, target.height as i32));
+        let pill = pill_along_rect(edge);
+        let (x, y) = if edge.is_vertical() {
+            let (lo, hi) = along_origin_range(mon.position().y, mon.size().height as i32, wh, pill);
+            let y = origin_for_ratio(lo, hi, ratio);
+            let x = if edge == NotchEdge::Right {
+                mon.position().x + mon.size().width as i32 - ww
+            } else {
+                mon.position().x
+            };
+            (x, y)
+        } else {
+            let (lo, hi) = along_origin_range(mon.position().x, mon.size().width as i32, ww, pill);
+            let x = origin_for_ratio(lo, hi, ratio);
+            let y = if edge == NotchEdge::Bottom {
+                mon.position().y + mon.size().height as i32 - wh
+            } else {
+                mon.position().y
+            };
+            (x, y)
         };
-        let mh = mon.size().height as i32;
-        let y = (mon.position().y as f64 + mh as f64 * ratio - wh as f64 / 2.0).round() as i32;
-        let y = y.clamp(mon.position().y, mon.position().y + (mh - wh).max(0));
         let _ = w.set_position(tauri::PhysicalPosition::new(x, y));
-        if w.outer_size().map(|s| s.width != target.width).unwrap_or(false) {
+        if w.outer_size().map(|s| s != target).unwrap_or(false) {
             let _ = w.set_size(target);
-            let x = mon.position().x + mon.size().width as i32 - target.width as i32;
+            let (tw, th) = (target.width as i32, target.height as i32);
+            let (x, y) = if edge.is_vertical() {
+                let (lo, hi) = along_origin_range(mon.position().y, mon.size().height as i32, th, pill);
+                let x = if edge == NotchEdge::Right {
+                    mon.position().x + mon.size().width as i32 - tw
+                } else {
+                    mon.position().x
+                };
+                (x, origin_for_ratio(lo, hi, ratio))
+            } else {
+                let (lo, hi) = along_origin_range(mon.position().x, mon.size().width as i32, tw, pill);
+                let y = if edge == NotchEdge::Bottom {
+                    mon.position().y + mon.size().height as i32 - th
+                } else {
+                    mon.position().y
+                };
+                (origin_for_ratio(lo, hi, ratio), y)
+            };
             let _ = w.set_position(tauri::PhysicalPosition::new(x, y));
         }
         // Placement log line: the first thing to check when the notch is not visible
@@ -230,7 +342,8 @@ pub fn place_notch(app: &AppHandle) {
         let _ = std::fs::write(
             log,
             format!(
-                "notch placed build={BUILD}: pos=({x},{y}) size=({ww}x{wh}) inner={:?} win_scale={scale} mon_scale={ms} monitor=({},{} {}x{})\n",
+                "notch placed build={BUILD}: edge={} ratio={ratio:.3} pos=({x},{y}) size=({ww}x{wh}) inner={:?} win_scale={scale} mon_scale={ms} monitor=({},{} {}x{})\n",
+                edge.as_str(),
                 w.inner_size().map(|s| (s.width, s.height)).unwrap_or((0, 0)),
                 mon.position().x,
                 mon.position().y,
@@ -238,6 +351,7 @@ pub fn place_notch(app: &AppHandle) {
                 mon.size().height
             ),
         );
+        enforce_saved_topmost(app);
     }
 }
 
@@ -280,15 +394,16 @@ pub fn reset_bar(app: &AppHandle) {
     {
         let st = app.state::<AppState>();
         let mut c = st.cfg.lock().unwrap();
-        c.notch_y = 0.5;
+        let edge = c.edge();
+        c.set_notch_position(edge, 0.5);
         config::save(&c);
     }
     place_notch(app);
 }
 
-/// Drag along the right edge. The page calls this once after a press on the pill moves more than
+/// Drag along the selected edge. The page calls this once after a press on the pill moves more than
 /// 4 px; from then on a Rust thread follows the system cursor (WebView mousemove is unreliable
-/// once the window itself starts moving). Releasing the left button ends the drag and the centre
+/// once the window itself starts moving). Releasing the left button ends the drag and the per-edge
 /// ratio is written back to the config.
 static DRAGGING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
@@ -322,36 +437,56 @@ fn drag_begin(app: AppHandle) {
             DRAGGING.store(false, std::sync::atomic::Ordering::SeqCst);
             return;
         };
-        let (my, mh) = (mon.position().y, mon.size().height as i32);
-        let wh = size.height as i32;
-        let lo = my;
-        let hi = my + (mh - wh).max(0);
-        let mut last_y = start_pos.y;
+        let edge = {
+            let st = app.state::<AppState>();
+            st.cfg.lock().map(|c| c.edge()).unwrap_or(NotchEdge::Right)
+        };
+        let vertical = edge.is_vertical();
+        let (monitor_start, monitor_length, window_length) = if vertical {
+            (mon.position().y, mon.size().height as i32, size.height as i32)
+        } else {
+            (mon.position().x, mon.size().width as i32, size.width as i32)
+        };
+        let (lo, hi) = along_origin_range(
+            monitor_start,
+            monitor_length,
+            window_length,
+            pill_along_rect(edge),
+        );
+        let mut last = if vertical { start_pos.y } else { start_pos.x };
         let mut moved = false;
         loop {
             if !left_button_down() {
                 break;
             }
             if let Ok(cur) = app.cursor_position() {
-                let ny = (start_pos.y as f64 + (cur.y - start_cur.y)).round() as i32;
-                let ny = ny.clamp(lo, hi);
-                if ny != last_y {
-                    last_y = ny;
+                let delta = if vertical { cur.y - start_cur.y } else { cur.x - start_cur.x };
+                let start = if vertical { start_pos.y } else { start_pos.x };
+                let next = (start as f64 + delta).round() as i32;
+                let next = next.clamp(lo, hi);
+                if next != last {
+                    last = next;
                     moved = true;
-                    let _ = w.set_position(tauri::PhysicalPosition::new(start_pos.x, ny));
+                    let pos = if vertical {
+                        tauri::PhysicalPosition::new(start_pos.x, next)
+                    } else {
+                        tauri::PhysicalPosition::new(next, start_pos.y)
+                    };
+                    let _ = w.set_position(pos);
                 }
             }
             std::thread::sleep(std::time::Duration::from_millis(8));
         }
         if moved {
-            let ratio = ((last_y + wh / 2 - my) as f64 / mh as f64).clamp(0.0, 1.0);
+            let ratio = ratio_for_origin(lo, hi, last);
             let st = app.state::<AppState>();
             let mut c = st.cfg.lock().unwrap();
-            c.notch_y = ratio;
+            c.set_notch_position(edge, ratio);
             config::save(&c);
-            applog(&format!("notch drag: y={last_y} ratio={ratio:.3}"));
+            applog(&format!("notch drag: edge={} origin={last} ratio={ratio:.3}", edge.as_str()));
         }
         DRAGGING.store(false, std::sync::atomic::Ordering::SeqCst);
+        place_notch(&app);
         let _ = app.emit("drag_end", moved);
     });
 }
@@ -506,23 +641,71 @@ fn get_kiro(state: tauri::State<AppState>) -> usage::UsageSnapshot {
     state.kiro.lock().unwrap().clone()
 }
 
-/// A click on a cell opens that provider's usage page
+fn request_provider_refresh(app: &AppHandle, provider: &str) -> bool {
+    match provider {
+        "claude" => {
+            if let Ok(mut snap) = app.state::<AppState>().usage.lock() {
+                snap.backoff_until = 0;
+            }
+            usage::request_refresh();
+        }
+        "codex" => codex::request_refresh(),
+        "cursor" => cursor::request_refresh(),
+        "gemini" => antigravity::request_refresh(),
+        "grok" => grok::request_refresh(),
+        "opencode" => opencode::request_refresh(),
+        "glm" => glm::request_refresh(),
+        "devin" => devin::request_refresh(),
+        "commandcode" => command_code::request_refresh(),
+        "kimi" => kimi::request_refresh(),
+        "copilot" => copilot::request_refresh(),
+        "kiro" => kiro::request_refresh(),
+        _ => return false,
+    }
+    true
+}
+
+/// A single click refreshes just the provider under the pointer, matching the macOS ring action.
 #[tauri::command]
-fn open_provider_page(provider: String) {
-    let url = match provider.as_str() {
-        "codex" => "https://chatgpt.com/#settings/Account",
+fn refresh_provider(app: AppHandle, provider: String) -> bool {
+    request_provider_refresh(&app, &provider)
+}
+
+/// The single-click delay follows Windows' own double-click setting, so a user who deliberately
+/// configured a slower double click never gets an unwanted refresh before the page opens.
+#[tauri::command]
+fn get_double_click_time_ms() -> u64 {
+    #[cfg(windows)]
+    unsafe {
+        return windows::Win32::UI::WindowsAndMessaging::GetDoubleClickTime() as u64;
+    }
+    #[cfg(not(windows))]
+    500
+}
+
+fn provider_page(provider: &str) -> &'static str {
+    match provider {
+        "codex" => "https://chatgpt.com/codex/cloud/settings/analytics#usage",
         "cursor" => "https://cursor.com/dashboard",
-        "gemini" => "https://antigravity.google",
+        "gemini" => "https://gemini.google.com/app",
+        // Kept unchanged at 떡배님's request.
         "grok" => "https://grok.com/?_s=usage",
-        "opencode" => "https://opencode.ai",
+        "opencode" => "https://opencode.ai/workspace/wrk_01M02ADN1RXR7S9P9S5BYPPAGT/go",
         "glm" => "https://bigmodel.cn/usercenter/proj-mgmt/apikeys",
         "devin" => "https://app.devin.ai",
         "commandcode" => "https://commandcode.ai",
         "kimi" => "https://www.kimi.com/code/console",
         "copilot" => "https://github.com/settings/copilot",
         "kiro" => "https://kiro.dev",
+        // Claude's existing Windows target is intentionally retained.
         _ => "https://claude.ai/settings/usage",
-    };
+    }
+}
+
+/// A double click on a cell opens that provider's official usage/account page.
+#[tauri::command]
+fn open_provider_page(provider: String) {
+    let url = provider_page(&provider);
     let mut cmd = std::process::Command::new("cmd");
     cmd.args(["/C", "start", "", url]);
     #[cfg(windows)]
@@ -547,11 +730,29 @@ static HOT: Mutex<Vec<[f64; 4]>> = Mutex::new(Vec::new());
 static EXPANDED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 #[tauri::command]
-fn set_hot(rects: Vec<[f64; 4]>, expanded: bool) {
-    *HOT.lock().unwrap() = rects;
+fn set_hot(app: AppHandle, rects: Vec<[f64; 4]>, expanded: bool) {
+    let layout_changed = {
+        let mut hot = HOT.lock().unwrap();
+        let changed = match (hot.first(), rects.first()) {
+            (None, Some(_)) | (Some(_), None) => true,
+            (Some(old), Some(new)) => old
+                .iter()
+                .zip(new.iter())
+                .any(|(left, right)| (left - right).abs() > 0.5),
+            (None, None) => false,
+        };
+        *hot = rects;
+        changed
+    };
     EXPANDED.store(expanded, std::sync::atomic::Ordering::Relaxed);
     if expanded {
         antigravity::request_hover_refresh();
+    }
+    if layout_changed {
+        // Startup and an edge rotation begin with no trustworthy pill geometry. Once the page has
+        // laid the pill out, re-place from that visible rectangle so saved end positions are exact.
+        // The same applies when provider count or size changes the pill's extent.
+        place_notch(&app);
     }
 }
 
@@ -1171,6 +1372,7 @@ pub fn apply_visibility(app: &AppHandle) {
         if notch {
             let _ = w.show();
             place_notch(app);
+            apply_always_on_top(app);
         } else {
             let _ = w.hide();
         }
@@ -1202,17 +1404,57 @@ fn set_always_on_top(app: AppHandle, on: bool) -> bool {
     on
 }
 
+/// Applies both Tauri's remembered flag and the native Z-order operation. Repeating only
+/// `set_always_on_top(true)` can be a no-op once Tauri already believes the flag is set, even after
+/// another Windows topmost surface has moved above us. `SetWindowPos(HWND_TOPMOST, …)` always
+/// reasserts the actual HWND ordering without activating or focusing the notch.
+fn force_window_topmost(app: &AppHandle, on: bool) {
+    if let Some(w) = app.get_webview_window("notch") {
+        let _ = w.set_always_on_top(on);
+        #[cfg(windows)]
+        if let Ok(tauri_hwnd) = w.hwnd() {
+            use windows::Win32::Foundation::HWND;
+            use windows::Win32::UI::WindowsAndMessaging::{
+                SetWindowPos, HWND_NOTOPMOST, HWND_TOPMOST, SWP_ASYNCWINDOWPOS, SWP_NOACTIVATE,
+                SWP_NOMOVE, SWP_NOSIZE,
+            };
+            let hwnd = HWND(tauri_hwnd.0);
+            let insert_after = if on { HWND_TOPMOST } else { HWND_NOTOPMOST };
+            if let Err(error) = unsafe {
+                SetWindowPos(
+                    hwnd,
+                    insert_after,
+                    0,
+                    0,
+                    0,
+                    0,
+                    SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE,
+                )
+            } {
+                applog(&format!("native topmost={on} failed: {error}"));
+            }
+        }
+    }
+}
+
 /// Puts the saved switch into effect. `false` clears the window's own topmost flag; `true` sets it
-/// once here, and `start_always_on_top_watchdog` keeps reapplying it — a single `set_always_on_top`
-/// call is not trusted to stick, since Windows can hand topmost to another app that asks for it too.
+/// once here, and `start_always_on_top_watchdog` keeps reapplying it.
 pub fn apply_always_on_top(app: &AppHandle) {
     let on = {
         let st = app.state::<AppState>();
         let c = st.cfg.lock().unwrap();
         c.always_on_top
     };
-    if let Some(w) = app.get_webview_window("notch") {
-        let _ = w.set_always_on_top(on);
+    force_window_topmost(app, on);
+}
+
+fn enforce_saved_topmost(app: &AppHandle) {
+    let on = {
+        let st = app.state::<AppState>();
+        st.cfg.lock().map(|c| c.always_on_top).unwrap_or(false)
+    };
+    if on {
+        force_window_topmost(app, true);
     }
 }
 
@@ -1222,16 +1464,14 @@ pub fn apply_always_on_top(app: &AppHandle) {
 /// contests it, and wins the ordering back within a few seconds when something does.
 fn start_always_on_top_watchdog(app: AppHandle) {
     std::thread::spawn(move || loop {
-        std::thread::sleep(std::time::Duration::from_secs(4));
+        std::thread::sleep(std::time::Duration::from_secs(2));
         let on = {
             let st = app.state::<AppState>();
             let c = st.cfg.lock().unwrap();
             c.always_on_top
         };
         if on {
-            if let Some(w) = app.get_webview_window("notch") {
-                let _ = w.set_always_on_top(true);
-            }
+            enforce_saved_topmost(&app);
         }
     });
 }
@@ -1606,6 +1846,8 @@ fn main() {
             get_activity,
             open_data_dir,
             drag_begin,
+            refresh_provider,
+            get_double_click_time_ms,
             open_provider_page,
             refresh_usage,
             open_usage_page,
@@ -1621,6 +1863,8 @@ fn main() {
             set_percent_basis,
             get_displays,
             set_display,
+            get_notch_edge,
+            set_notch_edge,
             get_tray_options,
             get_tray_config,
             set_tray_config,
@@ -1736,13 +1980,45 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{cursor_in_hot, displayed_percent, ring_window, HOT_PAD};
+    use super::{
+        along_origin_range, cursor_in_hot, displayed_percent, notch_window_size,
+        origin_for_ratio, provider_page, ratio_for_origin, ring_window, HOT_PAD,
+    };
+    use crate::config::NotchEdge;
     use crate::usage::LimitWindow;
 
     /// Real values from the run.log in #106: a 2560×1600 display at 150 %.
     const PILL: [f64; 4] = [405.0, 183.5, 105.0, 323.0];
     const CARD: [f64; 4] = [21.0, 142.5, 369.0, 262.0];
     const WINDOW: Option<(f64, f64)> = Some((510.0, 690.0));
+
+    #[test]
+    fn requested_provider_pages_are_exact_and_existing_claude_and_grok_links_stay_put() {
+        assert_eq!(provider_page("codex"), "https://chatgpt.com/codex/cloud/settings/analytics#usage");
+        assert_eq!(provider_page("claude"), "https://claude.ai/settings/usage");
+        assert_eq!(provider_page("gemini"), "https://gemini.google.com/app");
+        assert_eq!(provider_page("grok"), "https://grok.com/?_s=usage");
+        assert_eq!(provider_page("opencode"), "https://opencode.ai/workspace/wrk_01M02ADN1RXR7S9P9S5BYPPAGT/go");
+    }
+
+    #[test]
+    fn horizontal_edges_rotate_the_window_without_changing_its_area() {
+        assert_eq!(notch_window_size(NotchEdge::Right, 1.5), tauri::PhysicalSize::new(540, 1050));
+        assert_eq!(notch_window_size(NotchEdge::Left, 1.5), tauri::PhysicalSize::new(540, 1050));
+        assert_eq!(notch_window_size(NotchEdge::Top, 1.5), tauri::PhysicalSize::new(1050, 1050));
+        assert_eq!(notch_window_size(NotchEdge::Bottom, 1.5), tauri::PhysicalSize::new(1050, 1050));
+    }
+
+    #[test]
+    fn transparent_slack_may_leave_the_screen_so_the_visible_pill_reaches_both_ends() {
+        // 700px window with the visible pill from 100...600 on a 1080px display.
+        let (lo, hi) = along_origin_range(0, 1080, 700, Some((100.0, 500.0)));
+        assert_eq!((lo, hi), (-100, 480));
+        assert_eq!(origin_for_ratio(lo, hi, 0.0), -100);
+        assert_eq!(origin_for_ratio(lo, hi, 1.0), 480);
+        assert_eq!(ratio_for_origin(lo, hi, -100), 0.0);
+        assert_eq!(ratio_for_origin(lo, hi, 480), 1.0);
+    }
 
     #[test]
     fn nothing_is_hot_before_the_page_reports() {
