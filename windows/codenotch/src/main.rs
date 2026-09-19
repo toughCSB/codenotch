@@ -677,7 +677,7 @@ fn refresh_provider(app: AppHandle, provider: String) -> bool {
 fn get_double_click_time_ms() -> u64 {
     #[cfg(windows)]
     unsafe {
-        return windows::Win32::UI::WindowsAndMessaging::GetDoubleClickTime() as u64;
+        return windows::Win32::UI::Input::KeyboardAndMouse::GetDoubleClickTime() as u64;
     }
     #[cfg(not(windows))]
     500
