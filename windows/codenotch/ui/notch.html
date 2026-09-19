@@ -101,7 +101,10 @@
     width:var(--card-width);max-width:var(--card-width);margin-left:auto;background:var(--surface);border-radius:var(--card-radius);padding:var(--card-padding);
     border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(24px) saturate(1.15);
     overflow-wrap:anywhere;min-width:0;
-    max-height:calc(100% - 16px);overflow:hidden; /* never taller than the window, however short it is */
+    /* A provider can expose more rows than fit on a short or heavily scaled display. Never delete
+       those rows: keep the card on-screen and make its body scrollable as the safe fallback. */
+    max-height:calc(100% - 16px);overflow-x:hidden;overflow-y:auto;
+    scrollbar-width:thin;scrollbar-color:#555 transparent;
     display:none;
   }
   #card.show{display:block}
@@ -892,12 +895,22 @@ function hideCtxMenu(){
   ctxmenu.classList.remove('show');
   reportHot();
 }
-document.addEventListener('contextmenu',e=>{
+// WebView2 can omit `contextmenu` on a transparent NOACTIVATE window even though it still sends
+// the right-button pointer event. Open on that earlier event and keep `contextmenu` as the normal
+// browser path; the timestamp prevents the same click from opening twice.
+let contextPointerOpenAt=-Infinity;
+function openCtxFromEvent(e){
   e.preventDefault();
   showCtxMenu(e.clientX,e.clientY);
-});
+  contextPointerOpenAt=performance.now();
+}
+document.addEventListener('pointerdown',e=>{if(e.button===2)openCtxFromEvent(e);},true);
+document.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  if(performance.now()-contextPointerOpenAt>350)showCtxMenu(e.clientX,e.clientY);
+},true);
 document.addEventListener('mousedown',e=>{
-  if(ctxmenu.classList.contains('show') && !ctxmenu.contains(e.target)) hideCtxMenu();
+  if(e.button===0 && ctxmenu.classList.contains('show') && !ctxmenu.contains(e.target)) hideCtxMenu();
 });
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape') hideCtxMenu();

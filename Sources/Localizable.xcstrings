@@ -31554,6 +31554,146 @@
           }
         }
       }
+    },
+    "Install update": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "업데이트 설치"
+          }
+        }
+      }
+    },
+    "Provider Monitor %@ is available.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Provider Monitor %@ 버전을 사용할 수 있습니다."
+          }
+        }
+      }
+    },
+    "Downloading Provider Monitor %@…": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Provider Monitor %@ 버전을 다운로드하는 중…"
+          }
+        }
+      }
+    },
+    "Installing Provider Monitor %@…": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Provider Monitor %@ 버전을 설치하는 중…"
+          }
+        }
+      }
+    },
+    "Provider Monitor %@ is installed. Restarting…": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Provider Monitor %@ 버전을 설치했습니다. 다시 시작하는 중…"
+          }
+        }
+      }
+    },
+    "Couldn't reach the update server. Check your connection and try again.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "업데이트 서버에 연결하지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요."
+          }
+        }
+      }
+    },
+    "Checks Provider Monitor's official GitHub release. Install update downloads the macOS disk image, verifies its published SHA-256 checksum, replaces the copy in /Applications, and restarts the app.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Provider Monitor의 공식 GitHub 릴리스를 확인합니다. 업데이트 설치를 누르면 macOS 디스크 이미지를 내려받아 공개된 SHA-256 체크섬을 확인하고 /Applications의 앱을 교체한 뒤 다시 시작합니다."
+          }
+        }
+      }
+    },
+    "Cards stay readable, Windows menus answer, and the Mac updates Provider Monitor.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "카드는 끝까지 보이고, Windows 메뉴는 응답하며, Mac은 Provider Monitor를 업데이트합니다."
+          }
+        }
+      }
+    },
+    "No usage rows disappear": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "사용량 행이 더 이상 사라지지 않음"
+          }
+        }
+      }
+    },
+    "A long Windows hover card now stays inside the available space and scrolls, so OpenCode and other providers never lose their last rows or size control.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Windows의 긴 호버 카드는 사용 가능한 공간 안에서 스크롤되므로 OpenCode와 다른 프로바이더의 마지막 행이나 크기 조절 기능이 잘리지 않습니다."
+          }
+        }
+      }
+    },
+    "Right-click answers reliably": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "우클릭 메뉴가 안정적으로 열림"
+          }
+        }
+      }
+    },
+    "The Windows notch opens its menu from the native right-button pointer event even when WebView2 omits the later context-menu event.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WebView2가 컨텍스트 메뉴 이벤트를 누락해도 Windows 노치가 우클릭 포인터 이벤트를 직접 받아 메뉴를 엽니다."
+          }
+        }
+      }
+    },
+    "The Mac updates Provider Monitor": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac에서 Provider Monitor 직접 업데이트"
+          }
+        }
+      }
+    },
+    "Check now reads this project's latest GitHub release; Install update verifies its SHA-256, replaces the app in /Applications, and restarts it.": {
+      "localizations": {
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "지금 확인은 이 프로젝트의 최신 GitHub 릴리스를 조회합니다. 업데이트 설치는 SHA-256을 검증하고 /Applications의 앱을 교체한 뒤 다시 시작합니다."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

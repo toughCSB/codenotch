@@ -1,12 +1,7 @@
 import AppKit
 
-/// Installing *this* build, as opposed to reading the original app's feed.
-///
-/// Two different questions with two different answers, which is why the app
-/// asks them in two places. `Updater` reports what upstream Codenotch has
-/// shipped — a fork's view of what there is to port. This puts the build that is
-/// running where an app belongs, so the copy that gets launched is the one whose
-/// readings are on screen. Nothing here touches the network.
+/// Installs the build that is currently running. The network updater uses the
+/// same atomic bundle swap after it mounts a downloaded release image.
 @MainActor
 final class LocalInstall: ObservableObject {
     enum Outcome: Equatable {
@@ -39,8 +34,7 @@ final class LocalInstall: ObservableObject {
     /// Where an app belongs: with every other one on the machine, where
     /// Spotlight, the login item and the Finder all look for it.
     static var defaultDestination: URL {
-        URL(fileURLWithPath: "/Applications", isDirectory: true)
-            .appendingPathComponent("Provider Monitor.app", isDirectory: true)
+        AppBundleInstaller.defaultDestination
     }
 
     /// Writable so the copy can be exercised without touching the real
@@ -69,11 +63,21 @@ final class LocalInstall: ObservableObject {
         }
         outcome = .installing
         do {
-            try copyIntoPlace(from: runningFrom, to: destination)
+            try AppBundleInstaller.copyIntoPlace(from: runningFrom, to: destination)
             outcome = .installed(destination)
         } catch {
             outcome = .failed(error.localizedDescription)
         }
+    }
+}
+
+/// The one bundle replacement primitive used by both local installs and
+/// downloaded updates. It is intentionally not tied to UI or the main actor so
+/// a large release can be staged without freezing Settings.
+enum AppBundleInstaller {
+    static var defaultDestination: URL {
+        URL(fileURLWithPath: "/Applications", isDirectory: true)
+            .appendingPathComponent("Provider Monitor.app", isDirectory: true)
     }
 
     /// Copies the bundle in beside its destination and swaps it into place.
@@ -86,7 +90,7 @@ final class LocalInstall: ObservableObject {
     /// the files inside it: extended attributes, the symlinks inside a framework
     /// and the resource envelope the code signature covers all have to survive,
     /// and `ditto` is the tool that keeps them.
-    private func copyIntoPlace(from source: URL, to destination: URL) throws {
+    static func copyIntoPlace(from source: URL, to destination: URL) throws {
         try FileManager.default.createDirectory(
             at: destination.deletingLastPathComponent(),
             withIntermediateDirectories: true

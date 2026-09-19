@@ -32,6 +32,24 @@ enum ReleaseNotes {
     static var all: [ReleaseNote] {
         [
             ReleaseNote(
+                version: "1.17.1",
+                headline: L10n.t("Cards stay readable, Windows menus answer, and the Mac updates Provider Monitor."),
+                changes: [
+                    ReleaseNote.Change(
+                        title: L10n.t("No usage rows disappear"),
+                        detail: L10n.t("A long Windows hover card now stays inside the available space and scrolls, so OpenCode and other providers never lose their last rows or size control.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("Right-click answers reliably"),
+                        detail: L10n.t("The Windows notch opens its menu from the native right-button pointer event even when WebView2 omits the later context-menu event.")
+                    ),
+                    ReleaseNote.Change(
+                        title: L10n.t("The Mac updates Provider Monitor"),
+                        detail: L10n.t("Check now reads this project's latest GitHub release; Install update verifies its SHA-256, replaces the app in /Applications, and restarts it.")
+                    ),
+                ]
+            ),
+            ReleaseNote(
                 version: "1.17.0",
                 headline: L10n.t("Windows now follows the Mac around every edge."),
                 changes: [

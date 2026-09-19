@@ -27,7 +27,7 @@
 | `.github/workflows/**` | upstream 채택 | CI 정의는 원본을 따른다 |
 | `site/**` | 우리 쪽은 비워 둔다(삭제를 유지한다) | upstream이 서명·공증한 dmg와 appcast를 넣는 자리라 포크에서는 쓸 일이 없다. 이 포크는 GitHub Pages를 쓰지 않는다 |
 | `windows/**` | **우리 것 유지** — `git checkout HEAD -- windows/` | 위 참조 |
-| `project.yml` | downstream 버전·번들 ID·Sparkle 정책은 우리 것, upstream 설정 변경은 채택 | |
+| `project.yml` | downstream 버전·번들 ID·GitHub 릴리스 업데이트 정책은 우리 것, upstream 설정 변경은 채택 | |
 
 같은 키라도 **upstream이 더 새것이면 upstream 값을 택한다.** 이번에 `%lld%% of its %@ limit used.`의
 zh-Hans 번역이 순서만 바꿔 놓은 채 남아 있었고(1.13.1에서 upstream이 `%1$lld`/`%2$@`로 고쳤다),
@@ -107,7 +107,7 @@ Windows: `windows-package.yml`이 `release: published`에서 깨어나 NSIS 설�
 첨부한다. 그러니 맥에서 릴리스를 먼저 만들면 윈도우 파일은 알아서 붙는다:
 
 ```bash
-VERSION=1.17.0
+VERSION=1.17.1
 gh release create "v${VERSION}" "build/ci/ProviderMonitor-${VERSION}-unsigned.dmg" \
   --title "Provider Monitor ${VERSION}" --notes-file notes.md
 gh release view "v${VERSION}" --json assets -q '.assets[].name'   # dmg + Setup.exe 둘 다 확인

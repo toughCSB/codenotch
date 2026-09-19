@@ -1,117 +1,307 @@
+import AppKit
+import CryptoKit
 import Foundation
-import Sparkle
 
-/// Reads the original app's update feed, and reports what it says.
+/// Checks Provider Monitor's own GitHub releases and installs the macOS disk image.
 ///
-/// The feed is upstream Codenotch's — `SUFeedURL` and `SUPublicEDKey` in the
-/// Info.plist are both upstream's own — which makes this the app's view of what
-/// there is to port, and *not* a route by which this build is replaced. A check
-/// allowed to install would quietly turn Provider Monitor back into the original
-/// app the next time upstream shipped, undoing the fork in the background. So
-/// this type only ever reports: `automaticallyDownloadsUpdates` is forced off
-/// at launch and never turned on, and the manual check is Sparkle's probing one.
-///
-/// Putting *this* build where an app belongs is `LocalInstall`' job, and the two
-/// are deliberately two controls in one pane: different questions, different
-/// answers, and only one of them writes anything.
+/// Earlier builds queried the original Codenotch Sparkle feed and deliberately refused to
+/// install from it. That made both controls in Settings misleading for this fork: "Check now"
+/// checked a different product and there was no route to update Provider Monitor at all.
 @MainActor
-final class Updater: NSObject, ObservableObject, SPUUpdaterDelegate {
-    /// What the last check came to, in words the settings sheet can show.
-    ///
-    /// Sparkle's own answer to a failed check is a modal saying "an error
-    /// occurred in retrieving update information" — true, and useless: it names
-    /// no cause and offers nothing to do. Keeping the outcome here lets the one
-    /// place a user goes to think about updates say what actually happened.
+final class Updater: ObservableObject {
+    struct Release: Equatable, Sendable {
+        let version: String
+        let pageURL: URL
+        let assetURL: URL
+        let sha256: String?
+    }
+
     enum Outcome: Equatable {
         case idle
         case checking
         case upToDate(Date)
         case found(String)
+        case downloading(String)
+        case installing(String)
+        case installed(String)
         case unreachable
         case failed(String)
 
         var message: String? {
             switch self {
-            case .idle:          return nil
-            case .checking:      return L10n.t("Checking…")
-            case .upToDate:      return L10n.t("The original app's feed has no newer version.")
-            case .found(let v):  return L10n.t("Codenotch \(v) is available upstream.")
+            case .idle:                 return nil
+            case .checking:             return L10n.t("Checking…")
+            case .upToDate:             return L10n.t("Provider Monitor is up to date.")
+            case .found(let version):   return L10n.t("Provider Monitor \(version) is available.")
+            case .downloading(let version):
+                return L10n.t("Downloading Provider Monitor \(version)…")
+            case .installing(let version):
+                return L10n.t("Installing Provider Monitor \(version)…")
+            case .installed(let version):
+                return L10n.t("Provider Monitor \(version) is installed. Restarting…")
             case .unreachable:
-                // The one people actually hit, and the one Sparkle's wording
-                // hides: nothing is wrong with the app or the machine.
-                return L10n.t("Couldn't reach the update server. Provider Monitor will try again on its own — nothing is wrong with this copy.")
-            case .failed(let why): return why
+                return L10n.t("Couldn't reach the update server. Check your connection and try again.")
+            case .failed(let why):      return why
             }
         }
     }
 
     @Published private(set) var outcome: Outcome = .idle
+    @Published private(set) var availableRelease: Release?
+    @Published var automatic: Bool {
+        didSet {
+            defaults.set(automatic, forKey: Self.automaticKey)
+            if automatic { checkNow() }
+        }
+    }
 
-    private lazy var controller = SPUStandardUpdaterController(
-        startingUpdater: true, updaterDelegate: self, userDriverDelegate: nil
-    )
+    private let defaults: UserDefaults
+    private let session: URLSession
+    private var work: Task<Void, Never>?
 
-    /// Whether the scheduled check runs — a check and never an install,
-    /// whatever this is set to. See the type's own note.
-    var automatic: Bool {
-        get { controller.updater.automaticallyChecksForUpdates }
-        set { controller.updater.automaticallyChecksForUpdates = newValue }
+    private static let automaticKey = "ProviderMonitorAutomaticallyChecksForUpdates"
+    private static let lastCheckedKey = "ProviderMonitorLastUpdateCheck"
+    private nonisolated static let latestReleaseURL = URL(
+        string: "https://api.github.com/repos/toughCSB/provider-monitor/releases/latest"
+    )!
+
+    init(defaults: UserDefaults = .standard, session: URLSession = .shared) {
+        self.defaults = defaults
+        self.session = session
+        self.automatic = defaults.object(forKey: Self.automaticKey) as? Bool ?? true
     }
 
     var currentVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
     }
 
-    var lastChecked: Date? { controller.updater.lastUpdateCheckDate }
+    var lastChecked: Date? { defaults.object(forKey: Self.lastCheckedKey) as? Date }
 
-    /// Starts the scheduled checks. Deliberately not in `init`: the controller
-    /// is lazy so that `self` exists before it is handed over as the delegate.
-    func start() {
-        _ = controller
-        // Set on every launch, not only when the setting moves: a copy whose
-        // preferences were written by an earlier build — or by upstream itself
-        // — must not be able to download its own replacement from a feed that
-        // is not this app's.
-        controller.updater.automaticallyDownloadsUpdates = false
-    }
+    var canInstall: Bool { availableRelease != nil && !isBusy }
 
-    /// The manual path, for someone who does not want to wait for the schedule.
-    ///
-    /// Sparkle's probing check: it fetches the appcast and reports through the
-    /// delegate without ever offering to install what it found. That is the
-    /// whole point — the ordinary check ends in a window with an Install button
-    /// on it, and the update behind that button is the original app, not this
-    /// one. The answer here is the message the pane shows.
-    func checkNow() {
-        outcome = .checking
-        controller.updater.checkForUpdateInformation()
-    }
-
-    // MARK: - SPUUpdaterDelegate
-
-    nonisolated func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
-        Task { @MainActor in self.outcome = .upToDate(Date()) }
-    }
-
-    nonisolated func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
-        let version = item.displayVersionString
-        Task { @MainActor in self.outcome = .found(version) }
-    }
-
-    nonisolated func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
-        let code = (error as NSError).code
-        Task { @MainActor in
-            // A feed that cannot be fetched is the ordinary failure — offline,
-            // or the server is down — and it is not the user's problem to
-            // solve. Anything else is reported as itself.
-            self.outcome = Self.isUnreachable(code)
-                ? .unreachable
-                : .failed(error.localizedDescription)
+    var isBusy: Bool {
+        switch outcome {
+        case .checking, .downloading, .installing: return true
+        default: return false
         }
     }
 
-    /// Sparkle folds every "could not load the feed" case into one code.
-    static func isUnreachable(_ code: Int) -> Bool {
-        code == Int(SUError.appcastError.rawValue)
+    func start() {
+        guard automatic else { return }
+        let due = lastChecked.map { Date().timeIntervalSince($0) >= 24 * 60 * 60 } ?? true
+        if due { checkNow() }
+    }
+
+    func checkNow() {
+        guard !isBusy else { return }
+        outcome = .checking
+        work?.cancel()
+        work = Task { [weak self] in
+            guard let self else { return }
+            defer { self.work = nil }
+            do {
+                let release = try await Self.fetchLatest(using: self.session)
+                guard !Task.isCancelled else { return }
+                let checked = Date()
+                self.defaults.set(checked, forKey: Self.lastCheckedKey)
+                if Self.isNewer(release.version, than: self.currentVersion) {
+                    self.availableRelease = release
+                    self.outcome = .found(release.version)
+                } else {
+                    self.availableRelease = nil
+                    self.outcome = .upToDate(checked)
+                }
+            } catch is CancellationError {
+                return
+            } catch let error as URLError {
+                self.availableRelease = nil
+                self.outcome = error.code == .cancelled ? .idle : .unreachable
+            } catch {
+                self.availableRelease = nil
+                self.outcome = .failed(error.localizedDescription)
+            }
+        }
+    }
+
+    func installAvailable() {
+        guard let release = availableRelease, !isBusy else { return }
+        outcome = .downloading(release.version)
+        work?.cancel()
+        work = Task { [weak self] in
+            guard let self else { return }
+            defer { self.work = nil }
+            do {
+                let image = try await Self.download(release, using: self.session)
+                defer { try? FileManager.default.removeItem(at: image) }
+                guard !Task.isCancelled else { return }
+                self.outcome = .installing(release.version)
+                try await Task.detached(priority: .userInitiated) {
+                    let destination = try Self.installDiskImage(at: image)
+                    _ = try Self.run("/usr/bin/open", ["-n", destination.path])
+                }.value
+                self.outcome = .installed(release.version)
+                try? await Task.sleep(for: .milliseconds(700))
+                NSApp.terminate(nil)
+            } catch is CancellationError {
+                return
+            } catch let error as URLError {
+                self.outcome = error.code == .cancelled ? .idle : .unreachable
+            } catch {
+                self.outcome = .failed(error.localizedDescription)
+            }
+        }
+    }
+
+    nonisolated static func isNewer(_ candidate: String, than current: String) -> Bool {
+        func components(_ value: String) -> [Int] {
+            value.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+                .split(separator: "-", maxSplits: 1).first?
+                .split(separator: ".").map { Int($0) ?? 0 } ?? []
+        }
+        let lhs = components(candidate), rhs = components(current)
+        for index in 0..<max(lhs.count, rhs.count) {
+            let left = index < lhs.count ? lhs[index] : 0
+            let right = index < rhs.count ? rhs[index] : 0
+            if left != right { return left > right }
+        }
+        return false
+    }
+
+    nonisolated static func release(from data: Data) throws -> Release {
+        struct APIRelease: Decodable {
+            struct Asset: Decodable {
+                let name: String
+                let browser_download_url: URL
+                let digest: String?
+            }
+            let tag_name: String
+            let html_url: URL
+            let assets: [Asset]
+        }
+
+        let decoded = try JSONDecoder().decode(APIRelease.self, from: data)
+        let version = decoded.tag_name.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+        guard let asset = decoded.assets.first(where: {
+            $0.name == "ProviderMonitor-\(version)-unsigned.dmg"
+        }) ?? decoded.assets.first(where: {
+            $0.name.hasPrefix("ProviderMonitor-") && $0.name.hasSuffix(".dmg")
+        }) else {
+            throw ProviderUpdateError.missingDiskImage
+        }
+        let digest = asset.digest?.replacingOccurrences(of: "sha256:", with: "")
+        return Release(version: version, pageURL: decoded.html_url,
+                       assetURL: asset.browser_download_url, sha256: digest)
+    }
+
+    private nonisolated static func fetchLatest(using session: URLSession) async throws -> Release {
+        var request = URLRequest(url: latestReleaseURL)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("Provider-Monitor-macOS", forHTTPHeaderField: "User-Agent")
+        let (data, response) = try await session.data(for: request)
+        try requireSuccess(response)
+        return try release(from: data)
+    }
+
+    private nonisolated static func download(_ release: Release,
+                                             using session: URLSession) async throws -> URL {
+        let (temporary, response) = try await session.download(from: release.assetURL)
+        try requireSuccess(response)
+        guard let expected = release.sha256, expected.count == 64 else {
+            throw ProviderUpdateError.missingDigest
+        }
+        let destination = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ProviderMonitor-\(release.version)-\(UUID().uuidString).dmg")
+        try FileManager.default.moveItem(at: temporary, to: destination)
+        do {
+            let data = try Data(contentsOf: destination, options: .mappedIfSafe)
+            let actual = sha256(of: data)
+            guard actual.caseInsensitiveCompare(expected) == .orderedSame else {
+                throw ProviderUpdateError.digestMismatch
+            }
+            return destination
+        } catch {
+            try? FileManager.default.removeItem(at: destination)
+            throw error
+        }
+    }
+
+    private nonisolated static func requireSuccess(_ response: URLResponse) throws {
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw ProviderUpdateError.badResponse((response as? HTTPURLResponse)?.statusCode)
+        }
+    }
+
+    nonisolated static func sha256(of data: Data) -> String {
+        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    private nonisolated static func installDiskImage(at image: URL) throws -> URL {
+        let attached = try run("/usr/bin/hdiutil", ["attach", image.path, "-nobrowse", "-readonly", "-plist"])
+        let plist = try PropertyListSerialization.propertyList(from: attached, options: [], format: nil)
+        guard let root = plist as? [String: Any],
+              let entities = root["system-entities"] as? [[String: Any]],
+              let mountPath = entities.compactMap({ $0["mount-point"] as? String }).last else {
+            throw ProviderUpdateError.couldNotMount
+        }
+        let mount = URL(fileURLWithPath: mountPath, isDirectory: true)
+        defer { _ = try? run("/usr/bin/hdiutil", ["detach", mount.path]) }
+
+        let source = mount.appendingPathComponent("Provider Monitor.app", isDirectory: true)
+        guard FileManager.default.fileExists(atPath: source.path) else {
+            throw ProviderUpdateError.missingApplication
+        }
+        let destination = AppBundleInstaller.defaultDestination
+        try AppBundleInstaller.copyIntoPlace(from: source, to: destination)
+        return destination
+    }
+
+    @discardableResult
+    private nonisolated static func run(_ executable: String, _ arguments: [String]) throws -> Data {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = arguments
+        let output = Pipe(), error = Pipe()
+        process.standardOutput = output
+        process.standardError = error
+        try process.run()
+        process.waitUntilExit()
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        let complaint = error.fileHandleForReading.readDataToEndOfFile()
+        guard process.terminationStatus == 0 else {
+            let why = String(decoding: complaint, as: UTF8.self)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            throw ProviderUpdateError.commandFailed(why.isEmpty ? executable : why)
+        }
+        return data
+    }
+}
+
+private enum ProviderUpdateError: LocalizedError {
+    case badResponse(Int?)
+    case missingDiskImage
+    case missingDigest
+    case digestMismatch
+    case couldNotMount
+    case missingApplication
+    case commandFailed(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .badResponse(let status):
+            return status.map { "The update server returned HTTP \($0)." }
+                ?? "The update server returned an invalid response."
+        case .missingDiskImage:
+            return "The latest release has no Provider Monitor disk image."
+        case .missingDigest:
+            return "The latest release has no SHA-256 checksum."
+        case .digestMismatch:
+            return "The downloaded update did not match its published SHA-256 checksum."
+        case .couldNotMount:
+            return "The downloaded disk image could not be mounted."
+        case .missingApplication:
+            return "The downloaded disk image does not contain Provider Monitor.app."
+        case .commandFailed(let why):
+            return why
+        }
     }
 }

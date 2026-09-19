@@ -55,6 +55,8 @@ if (!notch.includes("invoke('refresh_provider'")) missing.push('single-click pro
 if (!notch.includes("addEventListener('dblclick'")) missing.push('double-click provider usage page');
 if (!notch.includes("invoke('get_double_click_time_ms'")) missing.push('Windows double-click timing');
 if (!notch.includes("?700:360")) missing.push('edge-aware WebView zoom baseline');
+if (!notch.includes('overflow-y:auto')) missing.push('long hover cards stay scrollable instead of clipping');
+if (!notch.includes("e.button===2)openCtxFromEvent")) missing.push('WebView2 right-button fallback menu');
 for (const item of ['Keep open', 'Refresh now', 'Settings…', 'Always on top', 'Show percent left under the rings', 'Quit Provider Monitor']) {
   if (!notch.includes(`'${item}'`)) missing.push(`notch context menu: ${item}`);
 }

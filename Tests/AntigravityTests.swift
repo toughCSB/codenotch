@@ -1,5 +1,4 @@
 import XCTest
-import Sparkle
 @testable import ProviderMonitor
 
 /// Fixtures are the real thing: the keychain payload's shape and the actual
@@ -1218,25 +1217,22 @@ final class AppPresenceTests: XCTestCase {
     }
 }
 
-/// What the settings sheet says after a check. Sparkle's own answer to a failed
-/// one is a modal reading "an error occurred in retrieving update information",
-/// which names no cause and offers nothing to do — so the outcome is kept and
-/// worded here instead.
+/// What the settings sheet says while checking and installing Provider Monitor releases.
 @MainActor
 final class UpdateOutcomeTests: XCTestCase {
-    /// The case people actually hit, and the one that most needs reassuring:
-    /// nothing is wrong with their copy of the app.
+    /// The case people actually hit, and the one that most needs a useful next step.
     func testAnUnreachableFeedSaysSoWithoutBlamingTheApp() throws {
         let message = try XCTUnwrap(Updater.Outcome.unreachable.message)
         XCTAssertTrue(message.contains("Couldn't reach"))
-        XCTAssertTrue(message.contains("nothing is wrong with this copy"))
+        XCTAssertTrue(message.contains("try again"))
         XCTAssertFalse(message.lowercased().contains("error occurred"))
     }
 
     func testEveryOutcomeExceptIdleSaysSomething() {
         XCTAssertNil(Updater.Outcome.idle.message)
         for outcome: Updater.Outcome in [.checking, .upToDate(Date()), .found("1.1.0"),
-                                         .unreachable, .failed("disk full")] {
+                                         .downloading("1.1.0"), .installing("1.1.0"),
+                                         .installed("1.1.0"), .unreachable, .failed("disk full")] {
             XCTAssertNotNil(outcome.message, "\(outcome) says nothing")
         }
     }
@@ -1244,14 +1240,91 @@ final class UpdateOutcomeTests: XCTestCase {
     func testAFoundUpdateNamesTheVersion() throws {
         let message = try XCTUnwrap(Updater.Outcome.found("1.2.0").message)
         XCTAssertTrue(message.contains("1.2.0"))
+        XCTAssertTrue(message.contains("Provider Monitor"))
     }
 
-    /// The distinction the wording depends on: a feed that cannot be fetched is
-    /// routine, anything else is reported as itself.
-    func testOnlyAFeedFailureCountsAsUnreachable() {
-        XCTAssertTrue(Updater.isUnreachable(Int(SUError.appcastError.rawValue)))
-        XCTAssertFalse(Updater.isUnreachable(Int(SUError.installationError.rawValue)))
+    func testVersionComparisonUsesNumericComponents() {
+        XCTAssertTrue(Updater.isNewer("1.17.1", than: "1.17.0"))
+        XCTAssertTrue(Updater.isNewer("1.20.0", than: "1.9.9"))
+        XCTAssertFalse(Updater.isNewer("1.17.0", than: "1.17.0"))
+        XCTAssertFalse(Updater.isNewer("1.16.9", than: "1.17.0"))
     }
+
+    func testGitHubReleaseSelectsTheMacDiskImageAndDigest() throws {
+        let data = Data(#"""
+        {
+          "tag_name":"v1.17.1",
+          "html_url":"https://github.com/toughCSB/provider-monitor/releases/tag/v1.17.1",
+          "assets":[
+            {"name":"Provider-Monitor-Setup.exe","browser_download_url":"https://example.invalid/setup.exe","digest":"sha256:windows"},
+            {"name":"ProviderMonitor-1.17.1-unsigned.dmg","browser_download_url":"https://example.invalid/provider-monitor.dmg","digest":"sha256:abcdef"}
+          ]
+        }
+        """#.utf8)
+
+        let release = try Updater.release(from: data)
+
+        XCTAssertEqual(release.version, "1.17.1")
+        XCTAssertEqual(release.assetURL.absoluteString, "https://example.invalid/provider-monitor.dmg")
+        XCTAssertEqual(release.sha256, "abcdef")
+        XCTAssertEqual(release.pageURL.absoluteString,
+                       "https://github.com/toughCSB/provider-monitor/releases/tag/v1.17.1")
+    }
+
+    func testCheckNowFindsAProviderMonitorReleaseAndEnablesInstall() async throws {
+        let domain = "UpdateOutcomeTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: domain)!
+        defer { defaults.removePersistentDomain(forName: domain) }
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [UpdateReleaseURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        UpdateReleaseURLProtocol.data = Data(#"""
+        {
+          "tag_name":"v99.0.0",
+          "html_url":"https://github.com/toughCSB/provider-monitor/releases/tag/v99.0.0",
+          "assets":[
+            {"name":"ProviderMonitor-99.0.0-unsigned.dmg","browser_download_url":"https://example.invalid/provider-monitor.dmg","digest":"sha256:abcdef"}
+          ]
+        }
+        """#.utf8)
+
+        let updater = Updater(defaults: defaults, session: session)
+        updater.checkNow()
+        for _ in 0..<100 {
+            if updater.outcome == .found("99.0.0") { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+
+        XCTAssertEqual(updater.outcome, .found("99.0.0"))
+        XCTAssertEqual(updater.availableRelease?.version, "99.0.0")
+        XCTAssertTrue(updater.canInstall)
+        XCTAssertNotNil(updater.lastChecked)
+    }
+
+    func testSHA256MatchesThePublishedDigestFormat() {
+        XCTAssertEqual(
+            Updater.sha256(of: Data("abc".utf8)),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        )
+    }
+}
+
+private final class UpdateReleaseURLProtocol: URLProtocol {
+    static var data = Data()
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200,
+                                       httpVersion: "HTTP/1.1",
+                                       headerFields: ["Content-Type": "application/json"])!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Self.data)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
 }
 
 /// The menu bar mark. Loaded from the asset catalogue rather than drawn from

@@ -999,14 +999,18 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
-                    Button(L10n.t("Check now")) { updater.checkNow() }
-                        .controlSize(.small)
+                    if updater.canInstall {
+                        Button(L10n.t("Install update")) { updater.installAvailable() }
+                            .controlSize(.small)
+                    } else {
+                        Button(L10n.t("Check now")) { updater.checkNow() }
+                            .controlSize(.small)
+                            .disabled(updater.isBusy)
+                    }
                 }
 
-                // Says what happened, where the user is already looking.
-                // Sparkle's own answer to a failed check is a modal reading
-                // "an error occurred in retrieving update information", which
-                // names no cause and offers nothing to do about it.
+                // Says what happened where the user is already looking, including download and
+                // install progress after a newer GitHub release is found.
                 if let message = updater.outcome.message {
                     Text(message)
                         .font(.caption)
@@ -1016,11 +1020,7 @@ struct SettingsView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                // The reason the check only reports. Said here rather than left
-                // to the code, because "why will this not update itself?" is
-                // the first thing the row above raises, and the answer is the
-                // fork's whole reason for existing.
-                Text(L10n.t("The check follows the original Codenotch app's update feed, so it reports what upstream has shipped. Installing from that feed would replace this build with the original app, so Provider Monitor never does."))
+                Text(L10n.t("Checks Provider Monitor's official GitHub release. Install update downloads the macOS disk image, verifies its published SHA-256 checksum, replaces the copy in /Applications, and restarts the app."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

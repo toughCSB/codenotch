@@ -55,9 +55,9 @@
 
 ## 릴리스
 
-한 릴리스에 두 플랫폼이 함께 실립니다. 같은 `v1.17.0` 태그에 macOS dmg와 Windows 설치 프로그램이 같이 붙습니다.
+한 릴리스에 두 플랫폼이 함께 실립니다. 같은 `v1.17.1` 태그에 macOS dmg와 Windows 설치 프로그램이 같이 붙습니다.
 
-- **macOS** — [ProviderMonitor-1.17.0-unsigned.dmg](../../releases/download/v1.17.0/ProviderMonitor-1.17.0-unsigned.dmg) · 유니버설(Apple Silicon + Intel), macOS 15 이상
+- **macOS** — [ProviderMonitor-1.17.1-unsigned.dmg](../../releases/download/v1.17.1/ProviderMonitor-1.17.1-unsigned.dmg) · 유니버설(Apple Silicon + Intel), macOS 15 이상
 - **Windows** — [Provider-Monitor-Setup.exe](../../releases/latest/download/Provider-Monitor-Setup.exe) · Windows 11 (WebView2 런타임 기본 포함)
 
 `main`의 최신 커밋을 바로 써보려면 [preview 릴리스](../../releases/tag/preview)에 push마다 새 dmg가 올라옵니다.
@@ -91,7 +91,7 @@ make test               # 유닛 테스트
 make dmg-ci             # 서명 없이 배포용 dmg 만들기
 ```
 
-Debug 빌드와 `make test`는 서명 인증서가 없어도 됩니다. `make release`(Developer ID 서명 + 공증 + Sparkle 피드)는 인증서와 `notarytool` 프로필이 있어야 하고 유지보수자만 실행합니다.
+Debug 빌드와 `make test`는 서명 인증서가 없어도 됩니다. `make release`(Developer ID 서명 + 공증)는 인증서와 `notarytool` 프로필이 있어야 하고 유지보수자만 실행합니다. 앱의 업데이트 확인은 이 저장소의 최신 GitHub 릴리스와 SHA-256을 사용합니다.
 
 ### Windows
 
